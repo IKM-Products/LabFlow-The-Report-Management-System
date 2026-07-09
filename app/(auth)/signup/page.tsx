@@ -5,19 +5,15 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { User, Lock, ArrowRight, CheckCircle2, ShieldCheck, ShieldAlert, Wrench } from "lucide-react";
+import { User, Mail, Lock, ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 
-type UserRole = "admin" | "technician";
-
-export default function LoginPage() {
+export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [activeRole, setActiveRole] = useState<UserRole>("admin");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Control routing backend APIs or redirection rules here based on activeRole
     setTimeout(() => setIsLoading(false), 1200);
   };
 
@@ -82,13 +78,13 @@ export default function LoginPage() {
           <div className="relative z-20 my-auto space-y-8 pt-10 md:pt-0">
             <div className="space-y-4">
               <h1 className="text-3xl xl:text-4xl font-serif font-normal italic tracking-tight text-white leading-tight">
-                Built for Precise <br />
+                Join for Precise <br />
                 <span className="text-transparent bg-clip-text bg-linear-to-r from-white via-emerald-50 to-emerald-200 font-serif font-extrabold not-italic drop-shadow-md">
-                  Report Management.
+                Report Management.
                 </span>
               </h1>
               <p className="justify-center text-emerald-50/75 text-sm font-sans font-light leading-relaxed max-w-[92%] tracking-wide">
-                Simplify laboratory documentation with seamless report submissions, centralized management, and real-time workflow tracking.
+                Simplify laboratory documentation with seamless report submissions, centralized management, and real-time workflow tracking.                
               </p>
             </div>
             
@@ -120,53 +116,42 @@ export default function LoginPage() {
             {/* Header Content Hierarchy */}
             <div className="space-y-1.5">
               <h2 className="text-3xl font-normal font-serif italic text-neutral-900 tracking-tight">
-                Welcome Back!
+                Create Account!
               </h2>
-              <p className="text-[11px] font-sans font-bold text-neutral-400 tracking-widest uppercase transition-all duration-300">
-                Enter Your Credentials Below
+              <p className="text-[11px] font-sans font-bold text-neutral-400 tracking-widest uppercase">
+                Register Your Credentials Below
               </p>
             </div>
 
-            {/* Binary Switcher Framework strictly formatted for 2 roles */}
-            <div className="grid grid-cols-2 gap-1 p-1 bg-neutral-100/80 rounded-xl border border-neutral-200/40 text-center">
-              <button
-                type="button"
-                onClick={() => setActiveRole("admin")}
-                className={`flex items-center justify-center gap-2 py-2.5 text-xs font-bold font-sans tracking-wide rounded-lg transition-all ${
-                  activeRole === "admin"
-                    ? "bg-white text-[#0a7e45] shadow-xs"
-                    : "text-neutral-400 hover:text-neutral-700"
-                }`}
-              >
-                <ShieldAlert className="h-3.5 w-3.5 stroke-[2.5]" />
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveRole("technician")}
-                className={`flex items-center justify-center gap-2 py-2.5 text-xs font-bold font-sans tracking-wide rounded-lg transition-all ${
-                  activeRole === "technician"
-                    ? "bg-white text-[#0a7e45] shadow-xs"
-                    : "text-neutral-400 hover:text-neutral-700"
-                }`}
-              >
-                <Wrench className="h-3.5 w-3.5 stroke-[2.5]" />
-                Technician
-              </button>
-            </div>
-
             {/* Main Interactive Input Fields Framework */}
-            <form onSubmit={handleSubmit} className="space-y-4.5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               
-              {/* Username Input Field */}
+              {/* Full Name Input Field */}
               <div className="space-y-1.5">
-                <Label htmlFor="username" className="text-xs font-sans font-bold tracking-wide text-neutral-500">
-                  Email Address
+                <Label htmlFor="name" className="text-xs font-sans font-bold tracking-wide text-neutral-500">
+                  Full Name
                 </Label>
                 <div className="relative group">
                   <User className="absolute left-4 top-3.5 h-4 w-4 text-neutral-300 group-focus-within:text-[#0a7e45] transition-colors stroke-2" />
                   <Input
-                    id="username"
+                    id="name"
+                    type="text"
+                    placeholder="labflow"
+                    className="pl-12 h-12 bg-neutral-50 border-neutral-200/70 focus:bg-white focus:border-emerald-600 focus-visible:ring-0 rounded-xl font-sans text-sm tracking-wide text-neutral-800 placeholder:text-neutral-400 transition-all shadow-sm"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Email Address Input Field */}
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-xs font-sans font-bold tracking-wide text-neutral-500">
+                  Email Address
+                </Label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-3.5 h-4 w-4 text-neutral-300 group-focus-within:text-[#0a7e45] transition-colors stroke-2" />
+                  <Input
+                    id="email"
                     type="email"
                     placeholder="labflow@gmail.com"
                     className="pl-12 h-12 bg-neutral-50 border-neutral-200/70 focus:bg-white focus:border-emerald-600 focus-visible:ring-0 rounded-xl font-sans text-sm tracking-wide text-neutral-800 placeholder:text-neutral-400 transition-all shadow-sm"
@@ -177,14 +162,9 @@ export default function LoginPage() {
 
               {/* Password Input Field */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-xs font-sans font-bold tracking-wide text-neutral-500">
-                    Password
-                  </Label>
-                  <Link href="/forgot-password" className="text-xs font-bold text-emerald-700 hover:text-emerald-900 transition-colors tracking-wide">
-                    Forgot Password?
-                  </Link>
-                </div>
+                <Label htmlFor="password" className="text-xs font-sans font-bold tracking-wide text-neutral-500">
+                  Password
+                </Label>
                 <div className="relative group">
                   <Lock className="absolute left-4 top-3.5 h-4 w-4 text-neutral-300 group-focus-within:text-[#0a7e45] transition-colors stroke-2" />
                   <Input
@@ -204,55 +184,40 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Utility Feature Layout Layer */}
-              <div className="flex items-center text-xs font-semibold pt-1.5">
+              {/* Terms Checkbox Layer */}
+              <div className="flex items-center text-xs font-semibold pt-1">
                 <label className="flex items-center gap-2.5 cursor-pointer text-neutral-500 hover:text-neutral-800 transition-colors select-none">
                   <input 
                     type="checkbox" 
-                    className="rounded-md border-neutral-300 text-emerald-600 focus:ring-emerald-500 h-4 w-4 accent-emerald-600 cursor-pointer"
+                    className="rounded-md border-neutral-300 text-emerald-600 focus:ring-emerald-500 h-4 w-4 accent-emerald-600 cursor-pointer" 
+                    required
                   />
-                  Remember Me
+                  I agree to the platform's Terms and Privacy Policy.
                 </label>
               </div>
 
               {/* Action Button: Vibrant Jade Green Submit Trigger */}
               <Button 
                 type="submit" 
-                className="w-full h-12 mt-3 bg-[#00a365] hover:bg-[#008f58] text-white font-sans font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 group shadow-md shadow-emerald-950/10 active:scale-[0.98]"
+                className="w-full h-12 mt-2 bg-[#00a365] hover:bg-[#008f58] text-white font-sans font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 group shadow-md shadow-emerald-950/10 active:scale-[0.98]"
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    Sign In as {activeRole === "admin" ? "Admin" : "Technician"}
+                    Sign Up
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 stroke-[2.5]" />
                   </>
                 )}
               </Button>
-
-              {/* Elegant Accent Splitter Divider */}
-              <div className="relative flex py-2.5 items-center">
-                <div className="grow border-t border-neutral-100"></div>
-                <span className="shrink mx-4 text-[10px] text-neutral-400 font-extrabold uppercase tracking-[0.25em]">Or</span>
-                <div className="grow border-t border-neutral-100"></div>
-              </div>
-
-              {/* Outlined Secondary Sign-In Button */}
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-12 bg-white hover:bg-neutral-50 text-neutral-700 font-sans font-bold text-sm rounded-xl border border-neutral-200 transition-all active:scale-[0.99] shadow-sm"
-              >
-                Sign In With Other Accounts
-               </Button>
             </form>
 
-            {/* Sign Up Redirect Text */}
+            {/* Integration Sign In Redirect Text */}
             <div className="text-center pt-2 text-xs text-neutral-400 font-semibold">
-              Don&apos;t have an account?{" "}
-              <Link href="/signup" className="text-emerald-600 hover:text-emerald-700 font-bold transition-colors">
-                Sign Up
+              Already have an account?{" "}
+              <Link href="/login" className="text-emerald-600 hover:text-emerald-700 font-bold transition-colors">
+                Sign In
               </Link>
             </div>
           </div>

@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "LabFlow: The Report Management System",
+  title: "LabFlow",
   description: "Streamlined medical laboratory workflow management system",
 };
 
