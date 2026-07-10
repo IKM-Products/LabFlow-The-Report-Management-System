@@ -5,15 +5,17 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { User, Mail, Lock, ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
+import { User, Mail, Lock, ArrowRight, CheckCircle2, ShieldCheck, ShieldAlert } from "lucide-react";
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<"admin" | "technician">("technician");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    // Passing selectedRole along with credentials to your signup logic
     setTimeout(() => setIsLoading(false), 1200);
   };
 
@@ -123,6 +125,32 @@ export default function SignupPage() {
               </p>
             </div>
 
+            {/* Segmented Role Switcher Framework */}
+            <div className="grid grid-cols-2 p-1 bg-neutral-100/80 rounded-xl border border-neutral-200/40">
+              <button
+                type="button"
+                onClick={() => setSelectedRole("admin")}
+                className={`py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 text-xs font-bold transition-all select-none ${
+                  selectedRole === "admin"
+                    ? "bg-white text-emerald-700 shadow-sm border border-neutral-200/30"
+                    : "text-neutral-400 hover:text-neutral-600"
+                }`}
+              >
+                <ShieldAlert className="h-3.5 w-3.5" /> Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedRole("technician")}
+                className={`py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 text-xs font-bold transition-all select-none ${
+                  selectedRole === "technician"
+                    ? "bg-white text-emerald-700 shadow-sm border border-neutral-200/30"
+                    : "text-neutral-400 hover:text-neutral-600"
+                }`}
+              >
+                <User className="h-3.5 w-3.5" /> Technician
+              </button>
+            </div>
+
             {/* Main Interactive Input Fields Framework */}
             <form onSubmit={handleSubmit} className="space-y-4">
               
@@ -206,7 +234,7 @@ export default function SignupPage() {
                   <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    Sign Up
+                    Sign Up as {selectedRole === "admin" ? "Admin" : "Technician"}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 stroke-[2.5]" />
                   </>
                 )}
