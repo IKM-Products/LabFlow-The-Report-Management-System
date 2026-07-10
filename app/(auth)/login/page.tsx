@@ -2,6 +2,12 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as zod from "zod";
+import axios from "axios";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -9,16 +15,79 @@ import { User, Lock, ArrowRight, CheckCircle2, ShieldCheck, ShieldAlert, Wrench 
 
 type UserRole = "admin" | "technician";
 
+// Login structural criteria validation schema
+const loginSchema = zod.object({
+  email: zod.string().email("Please enter a valid email address"),
+  password: zod.string().min(1, "Password is required"),
+});
+
+type LoginValues = zod.infer<typeof loginSchema>;
+
 export default function LoginPage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [activeRole, setActiveRole] = useState<UserRole>("admin");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+  });
+
+  const onSubmit = async (values: LoginValues) => {
     setIsLoading(true);
-    // Control routing backend APIs or redirection rules here based on activeRole
-    setTimeout(() => setIsLoading(false), 1200);
+
+    try {
+      // Points relatively to the local Next.js server to engage the proxy mechanism
+      const response = await axios.post(
+        "/api/auth/login",
+        {
+          email: values.email,
+          password: values.password,
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      toast.success("Authentication sequence authorized! Redirecting...");
+      
+      // Handle your session storage or tokens here (e.g., localStorage.setItem('token', response.data.token))
+      if (response.data?.token) {
+        localStorage.setItem("token", response.data.token);
+      }
+      
+      localStorage.setItem("userRole", activeRole);
+
+      if (activeRole === "admin") {
+        router.push("/admin");
+      } else {
+      router.push("/technician");
+      }
+      
+    } catch (error: any) {
+      // Prevents crash when error.response is undefined
+      console.error("Login verification loop dropped status:", error.response?.status ?? "NETWORK_ERROR");
+      console.error("Login network failure context payload:", error.response?.data ?? error.message);
+
+      let errorMsg = "Unable to connect with the access control server.";
+
+      if (error.response?.data?.messages && error.response.data.messages.length > 0) {
+        errorMsg = error.response.data.messages[0];
+      } else if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      } else if (error.message === "Network Error") {
+        errorMsg = "Network Error: Check if your backend server is running and accessible.";
+      }
+
+      toast.error(errorMsg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -65,7 +134,6 @@ export default function LoginPage() {
 
               {/* Multi-layered live ring ripples */}
               <span className="absolute inset-0 rounded-full border-2 border-emerald-400 animate-[ping_1.6s_cubic-bezier(0,0,0.2,1)_infinite] opacity-40" />
-              <span className="absolute -inset-1 rounded-full border border-emerald-300/50 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] opacity-25 delay-300" />
             </div>
             
             <div className="flex flex-col">
@@ -132,7 +200,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setActiveRole("admin")}
-                className={`flex items-center justify-center gap-2 py-2.5 text-xs font-bold font-sans tracking-wide rounded-lg transition-all ${
+                className={`flex items-center justify-center gap-2 py-2.5 text-xs font-bold font-sans tracking-wide rounded-lg transition-all select-none ${
                   activeRole === "admin"
                     ? "bg-white text-[#0a7e45] shadow-xs"
                     : "text-neutral-400 hover:text-neutral-700"
@@ -144,7 +212,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setActiveRole("technician")}
-                className={`flex items-center justify-center gap-2 py-2.5 text-xs font-bold font-sans tracking-wide rounded-lg transition-all ${
+                className={`flex items-center justify-center gap-2 py-2.5 text-xs font-bold font-sans tracking-wide rounded-lg transition-all select-none ${
                   activeRole === "technician"
                     ? "bg-white text-[#0a7e45] shadow-xs"
                     : "text-neutral-400 hover:text-neutral-700"
@@ -156,7 +224,7 @@ export default function LoginPage() {
             </div>
 
             {/* Main Interactive Input Fields Framework */}
-            <form onSubmit={handleSubmit} className="space-y-4.5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4.5">
               
               {/* Username Input Field */}
               <div className="space-y-1.5">
@@ -170,9 +238,11 @@ export default function LoginPage() {
                     type="email"
                     placeholder="labflow@gmail.com"
                     className="pl-12 h-12 bg-neutral-50 border-neutral-200/70 focus:bg-white focus:border-emerald-600 focus-visible:ring-0 rounded-xl font-sans text-sm tracking-wide text-neutral-800 placeholder:text-neutral-400 transition-all shadow-sm"
-                    required
+                    disabled={isLoading}
+                    {...register("email")}
                   />
                 </div>
+                {errors.email && <p className="text-xs text-destructive font-semibold mt-1">{errors.email.message}</p>}
               </div>
 
               {/* Password Input Field */}
@@ -192,7 +262,8 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••••••"
                     className="pl-12 pr-16 h-12 bg-neutral-50 border-neutral-200/70 focus:bg-white focus:border-emerald-600 focus-visible:ring-0 rounded-xl font-sans text-sm transition-all text-neutral-800 placeholder:text-neutral-300 shadow-sm"
-                    required
+                    disabled={isLoading}
+                    {...register("password")}
                   />
                   <button 
                     type="button" 
@@ -202,6 +273,7 @@ export default function LoginPage() {
                     {showPassword ? "Hide" : "Show"}
                   </button>
                 </div>
+                {errors.password && <p className="text-xs text-destructive font-semibold mt-1">{errors.password.message}</p>}
               </div>
 
               {/* Utility Feature Layout Layer */}

@@ -18,7 +18,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { type: "text" },
         password: { type: "password" },
-        role: { type: "text" }, // Form selected user role alignment passed from frontend UI
+        role: { type: "text" },
       },
 
       async authorize(credentials) {
@@ -26,17 +26,23 @@ export const authOptions: NextAuthOptions = {
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
+        const apiBaseUrl = "http://192.168.1.90:8080/api";
+        const loginEndpoint = `${apiBaseUrl}/auth/login`;
+
         try {
           // 2. Pointing directly to your local network deployment API base endpoint
           const response = await axios.post<loginResponse>(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/root-login`,
+            loginEndpoint,
             {
               email: parsed.data.email,
               password: parsed.data.password,
-              role: credentials?.role?.toUpperCase(), // Standardizing token authorization headers case
+              role: credentials?.role?.toUpperCase(),
             },
             {
-              headers: { "Content-Type": "application/json" },
+              headers: { 
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+              },
             }
           );
 
@@ -58,7 +64,11 @@ export const authOptions: NextAuthOptions = {
             role: result.data.user_type?.toLowerCase() || credentials?.role?.toLowerCase() || "technician",
           };
         } catch (error: any) {
-          console.error("NextAuth authorize network matrix channel breakdown:", error?.response?.data || error.message);
+          console.error("NextAuth authorize network matrix channel breakdown:", {
+            message: error.message,
+            urlAttempted: loginEndpoint,
+            response: error.response?.data
+          });
           return null;
         }
       },
@@ -73,7 +83,7 @@ export const authOptions: NextAuthOptions = {
         token.sessionId = user.sessionId;
         token.tenantId = user.tenantId;
         token.userType = user.userType;
-        token.role = user.role; // Preserved for edge path routing restrictions checking rules
+        token.role = user.role;
       }
       return token;
     },
@@ -93,6 +103,6 @@ export const authOptions: NextAuthOptions = {
 
   pages: {
     signIn: "/login",
-    error: "/login", // Returns user safely to form UI state if tokens are rejected
+    error: "/login",
   },
 };

@@ -6,22 +6,31 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
-    // Direct guard condition validating role identity markers
-    if (path.startsWith("/dashboard") && !token) {
+    // Extract user role from NextAuth JWT payload (ensure you expose this in your [...nextauth] callbacks configuration)
+    const userRole = token?.role; // "admin" | "technician"
+
+    // Role-based authorization path restrictions
+    if (path.startsWith("/admin") && userRole !== "admin") {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+
+    if (path.startsWith("/technician") && userRole !== "technician") {
       return NextResponse.redirect(new URL("/login", req.url));
     }
   },
   {
     callbacks: {
-      // Ensures the route mapping only processes matching criteria when a valid JWT payload structure exists
+      // Ensures the route mapping only processes when a valid JWT session payload exists
       authorized: ({ token }) => !!token?.accessToken,
     },
   }
 );
 
-// Route parameters configuration matcher arrays tracking features
+// Route parameters configuration matcher tracking all functional system segments
 export const config = { 
   matcher: [
+    "/admin/:path*",
+    "/technician/:path*",
     "/dashboard/:path*",
     "/patients/:path*",
     "/orders/:path*",
