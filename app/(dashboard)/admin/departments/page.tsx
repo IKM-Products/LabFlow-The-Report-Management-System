@@ -93,13 +93,9 @@ export default function DepartmentsPage() {
                   </div>
 
                   <DropdownMenu>
-                    <DropdownMenuTrigger>
-                      <button
-                        type="button"
-                        className="h-8 w-8 p-0 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
+                    {/* Style applied directly to DropdownMenuTrigger to completely omit button nesting */}
+                    <DropdownMenuTrigger className="h-8 w-8 p-0 flex items-center justify-center rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 cursor-pointer transition-colors focus-visible:outline-hidden">
+                      <MoreVertical className="h-4 w-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="rounded-xl border-neutral-200 shadow-sm font-sans text-xs">
                       <DropdownMenuItem className="font-semibold text-neutral-700 focus:text-emerald-700 focus:bg-emerald-50 cursor-pointer">

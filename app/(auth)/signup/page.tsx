@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { User, Mail, Lock, Phone, ArrowRight, CheckCircle2, ShieldCheck, ShieldAlert } from "lucide-react";
 
-// Updated matching validation strategy for the exact backend API payload mapping keys
 const signupSchema = zod.object({
   first_name: zod.string().min(2, "First name must be at least 2 characters long"),
   last_name: zod.string().min(2, "Last name must be at least 2 characters long"),
@@ -43,7 +42,6 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      // Maps configuration data exactly to your expected API payload keys
       await axios.post(
         "/api/user/create", 
         {
@@ -59,31 +57,16 @@ export default function SignupPage() {
         }
       );
 
-      // Successfully triggered Sonner notification banner
       toast.success(`Success! Registered completely as ${selectedRole === "admin" ? "an Admin" : "a Technician"}.`);
-      
-      // Safe routing without triggering unconfigured NextAuth paths
       router.push("/login");
       
     } catch (error: any) {
-      console.error("Signup network chain failure status:", error.response?.status);
-      console.error("Signup network chain failure data:", error.response?.data);
-
-      let errorMsg = "Registration sequence dropped. Check network configuration.";
+      // Pull out the beautifully cleaned error messages built in your proxy route
+      const errorMsg = error.response?.data?.message || "Registration sequence dropped. Check network configuration.";
       
-      // Safely parse out nested error strings returned from your local route proxy
-      if (error.response?.data?.message) {
-        try {
-          const parsedData = JSON.parse(error.response.data.message);
-          if (parsedData.messages && parsedData.messages.length > 0) {
-            errorMsg = parsedData.messages[0];
-          }
-        } catch {
-          errorMsg = error.response.data.message;
-        }
-      }
-
+      // Pop the error cleanly into your UI without letting it crash unhandled
       toast.error(errorMsg);
+      console.warn(`Signup rejected (${error.response?.status}):`, errorMsg);
     } finally {
       setIsLoading(false);
     }
