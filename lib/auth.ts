@@ -1,8 +1,8 @@
+// lib/auth.ts
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import axios from "axios";
 import { loginSchema } from "../schema/auth_schema";
-import { loginResponse } from "../types/auth_types";
+import { technicianApi } from "@/lib/api/technician";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -26,27 +26,13 @@ export const authOptions: NextAuthOptions = {
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        const apiBaseUrl = "http://192.168.1.90:8080/api";
-        const loginEndpoint = `${apiBaseUrl}/auth/login`;
-
         try {
-          // 2. Pointing directly to your local network deployment API base endpoint
-          const response = await axios.post<loginResponse>(
-            loginEndpoint,
-            {
-              email: parsed.data.email,
-              password: parsed.data.password,
-              role: credentials?.role?.toUpperCase(),
-            },
-            {
-              headers: { 
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-              },
-            }
-          );
-
-          const result = response.data;
+          // 2. Pointing to backend using our unified API layer
+          const result = await technicianApi.login({
+            email: parsed.data.email,
+            password: parsed.data.password,
+            role: credentials?.role?.toUpperCase(),
+          }) as { success: boolean; data: any };
 
           // 3. Confirm API returned operational properties securely
           if (!result || !result.success || !result.data) {
@@ -66,8 +52,7 @@ export const authOptions: NextAuthOptions = {
         } catch (error: any) {
           console.error("NextAuth authorize network matrix channel breakdown:", {
             message: error.message,
-            urlAttempted: loginEndpoint,
-            response: error.response?.data
+            response: error.response?.data || "No raw response trace"
           });
           return null;
         }

@@ -62,7 +62,7 @@ export const technicianApi = {
     apiClient(`/report/${reportId}/prints`),
 
   getReportPrintUrl: (reportId: string) => 
-    `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/report/${reportId}/print`,
+    `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000"}/report/${reportId}/print`,
 
   // Workflow PATCH Methods
   updatePatient: (patientId: string, data: any) => 

@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { getSession } from "next-auth/react";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
 
 async function getAuthHeader(): Promise<string | null> {
   if (typeof window === "undefined") {
