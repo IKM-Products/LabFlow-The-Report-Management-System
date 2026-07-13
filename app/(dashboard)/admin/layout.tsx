@@ -8,15 +8,12 @@ import {
   FlaskConical, 
   Building2, 
   Settings, 
-  ShieldAlert,
-  User,
   Menu
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import LogoutButton from "./components/LogoutButton"; 
 
-// 🟢 FIXED: Import the decoupled authOptions object instead of the executable handler
+// 🟢 Explicit Auth Options Configuration Mapping
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 interface AdminLayoutProps {
@@ -25,13 +22,13 @@ interface AdminLayoutProps {
 
 export default async function AdminLayout({ children }: AdminLayoutProps) {
   // 1. SECURE SERVER-SIDE SESSION VALIDATION
-  // 🟢 FIXED: Reference the decoupled configuration options explicitly
   const session = await getServerSession(authOptions);
   
+  // Normalize checking strategy to capture variations cleanly ("ADMIN", "ROLE_ADMIN", etc.)
   const rawRole = session?.user?.role || "";
   const userRole = String(rawRole).toLowerCase().replace("role_", "").trim();
 
-  // 2. HARD FORCE DIRECT EVICTION WALL
+  // 2. RE-ROUTING COMPLIANCE CHECK
   if (!session || userRole !== "admin") {
     redirect("/login?error=UnauthorizedAdminPortal");
   }
@@ -44,73 +41,80 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
     { href: "/admin/settings", label: "Settings", icon: Settings },
   ];
 
+  // SHARED COMPONENT: Sidebar Shell Architecture matching premium design rules
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-neutral-900 text-neutral-200 font-sans">
-      <div className="h-16 flex items-center px-6 border-b border-neutral-800 gap-2.5">
-        <div className="p-1.5 bg-emerald-600 rounded-lg text-white">
-          <ShieldAlert className="h-5 w-5" />
-        </div>
-        <div>
-          <span className="font-serif font-bold text-lg tracking-tight text-white block leading-none">LabFlow</span>
-          <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block mt-0.5">Admin Workspace</span>
+    <div className="flex flex-col h-full bg-linear-to-br from-green-800 via-green-700 to-emerald-900 text-white relative overflow-hidden">
+      {/* Subtle Luxury Dot Grids */}
+      <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] bg-size-[32px_32px] opacity-[0.06] pointer-events-none" />
+
+      {/* Brand Architecture Header */}
+      <div className="h-20 flex items-center px-6 border-b border-white/10 relative z-10 select-none">
+        <div className="flex items-center gap-3 cursor-default group">
+          <div className="w-9 h-9 rounded-xl border border-white/20 flex items-center justify-center bg-white/10 shadow-lg backdrop-blur-md relative overflow-hidden shrink-0">
+            <span className="absolute inset-0 bg-linear-to-t from-emerald-400/20 to-transparent animate-pulse" />
+            <FlaskConical className="w-4 h-4 text-emerald-300 fill-emerald-400/20" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-black tracking-[0.4em] uppercase font-mono">
+              Lab<span className="text-emerald-300 font-light">Flow</span>
+            </span>
+            <span className="text-[8px] font-sans font-bold tracking-[0.18em] text-emerald-200/50 uppercase">
+              Admin Workspace
+            </span>
+          </div>
         </div>
       </div>
 
-      <nav className="flex-1 px-4 py-6 space-y-1">
+      {/* Navigation Stack Links */}
+      <nav className="flex-1 space-y-1.5 p-4 relative z-10">
         {adminNavItems.map((item) => {
           const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800/50 border border-transparent transition-all duration-200 group"
+              className="flex items-center rounded-xl px-4 py-3 text-xs font-bold tracking-wider uppercase text-green-100/70 hover:bg-white/5 hover:text-white transition-all group select-none"
             >
-              <Icon className="h-4 w-4 text-neutral-400 group-hover:text-neutral-200 transition-transform duration-200 group-hover:scale-105" />
-              {item.label}
+              <Icon className="h-4 w-4 shrink-0 mr-3.5 text-green-200/50 group-hover:text-white/90 transition-colors" />
+              <span>{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t border-neutral-800 bg-neutral-950/40">
+      {/* Bottom Fixed Action Triggers */}
+      <div className="p-4 border-t border-white/10 bg-black/10 relative z-10">
         <LogoutButton />
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex bg-neutral-50/50 font-sans">
-      {/* Desktop Sidebar Layout */}
-      <aside className="hidden md:block w-64 border-r border-neutral-200 shrink-0 sticky top-0 h-screen z-20 shadow-sm">
+    <div className="min-h-screen flex bg-[#F4F2EC] font-sans antialiased selection:bg-green-800 selection:text-white relative">
+      
+      {/* Structural Permanent Desktop Sidebar viewport */}
+      <aside className="hidden md:block w-64 shrink-0 sticky top-0 h-screen z-20 shadow-[12px_0_60px_rgba(15,55,30,0.05)]">
         <SidebarContent />
       </aside>
       
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Floating Control Bar */}
-        <header className="h-16 bg-white border-b border-neutral-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10 shadow-sm">
-          <div className="flex items-center gap-4">
-            <Sheet>
-              <SheetTrigger className="md:hidden flex h-9 w-9 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-100 transition-colors focus-visible:outline-hidden">
-                <Menu className="h-5 w-5" />
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-64 border-r-0">
-                <SidebarContent />
-              </SheetContent>
-            </Sheet>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <span className="block text-xs font-bold text-neutral-800 leading-none">{session?.user?.name || "System Admin"}</span>
-              <span className="text-[10px] text-neutral-400 font-medium mt-0.5 block">{session?.user?.email || "Root Authorization"}</span>
-            </div>
-            <div className="h-9 w-9 rounded-xl bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-600">
-              <User className="h-4 w-4" />
-            </div>
-          </div>
-        </header>
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen relative z-10">
         
-        {/* Render Workspace Content Viewports */}
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        {/* Floating Minimal Mobile Hamburger Switch Trigger (Hidden on Desktop) */}
+        <div className="md:hidden fixed top-4 left-4 z-40">
+          <Sheet>
+            <SheetTrigger className="p-2.5 text-stone-500 bg-white/90 backdrop-blur-md hover:text-green-700 hover:bg-green-50 rounded-xl transition-all border border-stone-200/60 shadow-xs focus-visible:outline-hidden cursor-pointer">
+              <Menu className="h-5 w-5 stroke-2" />
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-64 border-r-0 bg-transparent">
+              <SidebarContent />
+            </SheetContent>
+          </Sheet>
+        </div>
+        
+        {/* Main Content Workspace Viewport execution rendering flow */}
+        <main className="flex-1 relative z-0">
+          {children}
+        </main>
       </div>
     </div>
   );
