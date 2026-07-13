@@ -58,22 +58,26 @@ const handler = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
+      // Pass user role from backend profile into the token payload
       if (user) {
-        token.accessToken = user.accessToken;
-        token.role = user.role; // Exposes role marker properties to NextAuth middleware matrix
+        token.role = user.role; 
+        token.accessToken = user.accessToken; // Retains access token in JWT context
       }
       return token;
     },
     async session({ session, token }) {
-      if (token) {
+      // Expose token role payload to client-side session contexts
+      if (session.user && token) {
         session.user.role = token.role;
-        session.user.accessToken = token.accessToken; // Optional: exposes access token structure to client hooks
+        session.user.accessToken = token.accessToken; // Retains access token exposure to client hooks
       }
       return session;
     }
   },
   pages: {
     signIn: "/login", // Redirects NextAuth internal authentication tasks to your custom login page layout
+    signOut: "/login",
+    error: "/login"
   },
   secret: process.env.NEXTAUTH_SECRET,
 });

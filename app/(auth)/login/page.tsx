@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as zod from "zod";
-import axios from "axios";
+import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -42,49 +42,42 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Points relatively to the local Next.js server to engage the proxy mechanism
-      const response = await axios.post(
-        "/api/auth/login",
-        {
-          email: values.email,
-          password: values.password,
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      // Execute the credentials login sequence using NextAuth
+      const res = await signIn("credentials", {
+        email: values.email,
+        password: values.password,
+        role: activeRole,
+        redirect: false, // Prevents NextAuth from navigating away unexpectedly
+      });
+
+      if (res?.error) {
+        console.error("Login verification framework dropped status:", res.error);
+        toast.error(res.error || "Authentication failed. Please verify your credentials.");
+        setIsLoading(false);
+        return;
+      }
+
+      // CRITICAL FIX: Fetch the actual verified session profile directly from the authentication context
+      const sessionRes = await fetch("/api/auth/session");
+      const session = await sessionRes.json();
+      
+      // Extract the ground-truth role configuration assigned by your database model
+      const trueUserRole = session?.user?.role?.toLowerCase() || activeRole;
 
       toast.success("Authentication sequence authorized! Redirecting...");
-      
-      // Handle your session storage or tokens here (e.g., localStorage.setItem('token', response.data.token))
-      if (response.data?.token) {
-        localStorage.setItem("token", response.data.token);
-      }
-      
-      localStorage.setItem("userRole", activeRole);
+      localStorage.setItem("userRole", trueUserRole);
 
-      if (activeRole === "admin") {
+      // Branch application workspaces safely by utilizing verified token definitions
+      if (trueUserRole === "admin") {
         router.push("/admin");
+      } else if (trueUserRole === "technician") {
+        router.push("/technician");
       } else {
-      router.push("/technician");
+        router.push("/dashboard");
       }
-      
     } catch (error: any) {
-      // Prevents crash when error.response is undefined
-      console.error("Login verification loop dropped status:", error.response?.status ?? "NETWORK_ERROR");
-      console.error("Login network failure context payload:", error.response?.data ?? error.message);
-
-      let errorMsg = "Unable to connect with the access control server.";
-
-      if (error.response?.data?.messages && error.response.data.messages.length > 0) {
-        errorMsg = error.response.data.messages[0];
-      } else if (error.response?.data?.message) {
-        errorMsg = error.response.data.message;
-      } else if (error.message === "Network Error") {
-        errorMsg = "Network Error: Check if your backend server is running and accessible.";
-      }
-
-      toast.error(errorMsg);
+      console.error("Critical login process drop:", error);
+      toast.error("An unexpected error occurred during access validation.");
     } finally {
       setIsLoading(false);
     }
@@ -200,7 +193,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setActiveRole("admin")}
-                className={`flex items-center justify-center gap-2 py-2.5 text-xs font-bold font-sans tracking-wide rounded-lg transition-all select-none ${
+                className={`flex items-center justify-center gap-2 py-2.5 text-xs font-bold font-sans tracking-wide rounded-lg transition-all select-none cursor-pointer ${
                   activeRole === "admin"
                     ? "bg-white text-[#0a7e45] shadow-xs"
                     : "text-neutral-400 hover:text-neutral-700"
@@ -212,7 +205,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setActiveRole("technician")}
-                className={`flex items-center justify-center gap-2 py-2.5 text-xs font-bold font-sans tracking-wide rounded-lg transition-all select-none ${
+                className={`flex items-center justify-center gap-2 py-2.5 text-xs font-bold font-sans tracking-wide rounded-lg transition-all select-none cursor-pointer ${
                   activeRole === "technician"
                     ? "bg-white text-[#0a7e45] shadow-xs"
                     : "text-neutral-400 hover:text-neutral-700"
@@ -268,7 +261,7 @@ export default function LoginPage() {
                   <button 
                     type="button" 
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-4 text-[10px] font-black text-neutral-400 hover:text-[#0a7e45] uppercase tracking-widest transition-colors select-none"
+                    className="absolute right-4 top-4 text-[10px] font-black text-neutral-400 hover:text-[#0a7e45] uppercase tracking-widest transition-colors select-none cursor-pointer"
                   >
                     {showPassword ? "Hide" : "Show"}
                   </button>
@@ -290,7 +283,7 @@ export default function LoginPage() {
               {/* Action Button: Vibrant Jade Green Submit Trigger */}
               <Button 
                 type="submit" 
-                className="w-full h-12 mt-3 bg-[#00a365] hover:bg-[#008f58] text-white font-sans font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 group shadow-md shadow-emerald-950/10 active:scale-[0.98]"
+                className="w-full h-12 mt-3 bg-[#00a365] hover:bg-[#008f58] text-white font-sans font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 group shadow-md shadow-emerald-950/10 active:scale-[0.98] cursor-pointer"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -314,7 +307,7 @@ export default function LoginPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12 bg-white hover:bg-neutral-50 text-neutral-700 font-sans font-bold text-sm rounded-xl border border-neutral-200 transition-all active:scale-[0.99] shadow-sm"
+                className="w-full h-12 bg-white hover:bg-neutral-50 text-neutral-700 font-sans font-bold text-sm rounded-xl border border-neutral-200 transition-all active:scale-[0.99] shadow-sm cursor-pointer"
               >
                 Sign In With Other Accounts
                </Button>

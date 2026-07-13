@@ -102,6 +102,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <div className="flex items-center gap-4">
             {/* Mobile Sheet Trigger Menu */}
             <Sheet>
+              {/* SheetTrigger does not accept an 'asChild' prop in this implementation */}
               <SheetTrigger>
                 <Button variant="ghost" size="icon" className="md:hidden rounded-lg text-neutral-500 hover:bg-neutral-100">
                   <Menu className="h-5 w-5" />

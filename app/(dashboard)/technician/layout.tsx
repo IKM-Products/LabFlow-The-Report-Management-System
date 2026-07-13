@@ -95,10 +95,15 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
         <header className="h-16 bg-white border-b border-neutral-200 flex items-center justify-between px-6 sticky top-0 z-10 shadow-sm">
           <div className="flex items-center gap-4 md:hidden">
             <Sheet>
+                {/* SheetTrigger does not accept "asChild" in this implementation; render Button as its child */}
                 <SheetTrigger>
-                  <Button variant="ghost" size="icon"><Menu className="h-5 w-5" /></Button>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-5 w-5" />
+                  </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-64"><SidebarContent /></SheetContent>
+                <SheetContent side="left" className="p-0 w-64">
+                  <SidebarContent />
+                </SheetContent>
               </Sheet>
           </div>
           
