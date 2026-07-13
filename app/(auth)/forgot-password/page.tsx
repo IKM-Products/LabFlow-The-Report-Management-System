@@ -2,208 +2,172 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as zod from "zod";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Mail, ArrowRight, ArrowLeft, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Mail, ArrowRight, ArrowLeft, CheckCircle2, FlaskConical } from "lucide-react";
+
+const forgotPasswordSchema = zod.object({
+  email: zod.string().email("Please enter a valid email address"),
+});
+
+type ForgotPasswordValues = zod.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotPasswordValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: "" },
+  });
+
+  const onSubmit = async (values: ForgotPasswordValues) => {
     setIsLoading(true);
-    // Simulate API verification call matching login timing
+    // Simulate API verification call matching login/signup timing
     setTimeout(() => {
       setIsLoading(false);
       setIsSubmitted(true);
+      toast.success("Recovery instructions transmitted successfully!");
     }, 1200);
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-linear-to-br from-[#062315] via-[#0b3a22] to-[#125835] p-4 sm:p-6 md:p-12 font-sans selection:bg-emerald-100 relative overflow-hidden">
+    <div className="min-h-screen w-full flex bg-[#F4F2EC] text-stone-900 font-sans selection:bg-green-800 selection:text-white antialiased relative overflow-hidden">
       
-      {/* Premium Kinetic Mesh Radial Glow Overlays */}
-      <div className="absolute top-[-20%] left-[-20%] h-225 w-225 rounded-full bg-emerald-400/12 blur-[160px] pointer-events-none animate-pulse duration-8000" />
-      <div className="absolute bottom-[-20%] right-[-20%] h-225 w-225 rounded-full bg-teal-300/8 blur-[160px] pointer-events-none animate-pulse duration-6000" />
+      {/* Premium Ambient Background Textures */}
+      <div className="absolute top-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-emerald-100/40 rounded-full blur-[140px] pointer-events-none z-0" />
+      <div className="absolute bottom-[-10%] left-[30%] w-[50vw] h-[50vw] bg-amber-100/30 rounded-full blur-[120px] pointer-events-none z-0" />
 
-      {/* Main Structural Layout Card */}
-      <div className="w-full max-w-5xl bg-white rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(4,28,16,0.3)] overflow-hidden flex flex-col md:flex-row min-h-160 relative z-10 border border-emerald-950/5">
+      {/* LEFT PANEL: High-Contrast Green Editorial Side */}
+      <div className="hidden lg:flex lg:w-[42%] bg-linear-to-br from-green-800 via-green-700 to-emerald-900 p-16 flex-col justify-between relative overflow-hidden shadow-[12px_0_60px_rgba(15,55,30,0.18)] z-10">
         
-        {/* LEFT PANEL: Geometric Green Canvas with Premium Editorial Typography */}
-        <div className="w-full md:w-[45%] bg-linear-to-b from-[#0e9352] to-[#085a32] p-10 sm:p-12 md:p-14 flex flex-col justify-between relative overflow-hidden text-white min-h-95 md:min-h-auto">
-          
-          {/* Overlapping Organic Geometric Spheres with Smooth Backdrop Gradients */}
-          <div className="absolute top-[-10%] right-[-15%] w-95 h-95 rounded-full bg-linear-to-br from-[#0a7e45] to-[#054b29] shadow-inner opacity-95 pointer-events-none transition-transform duration-700 hover:scale-105" />
-          <div className="absolute bottom-[-12%] left-[-12%] w-70 h-70 rounded-full bg-linear-to-tr from-[#11c26d] to-[#0b834a] shadow-lg opacity-30 pointer-events-none" />
-          <div className="absolute bottom-[10%] right-[5%] w-47.5 h-47.5 rounded-full bg-linear-to-b from-[#14e281]/90 via-[#0cbd6a] to-[#076839] shadow-2xl shadow-emerald-950/50 pointer-events-none" />
-
-          {/* Top Segment: Brand Logo with LIVE, Active Breathing Telemetry Wave */}
-          <div className="flex items-center gap-4 relative z-20 group cursor-default">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#085a32] border border-emerald-100 shadow-md relative transition-transform duration-500 group-hover:scale-105">
-              
-              {/* Animated Live Heartbeat Waveform SVG */}
-              <svg
-                className="w-5.5 h-5.5 text-emerald-600 relative z-10"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path 
-                  d="M22 12h-4l-3 9L9 3l-3 9H2" 
-                  className="animate-[dash_2.5s_linear_infinite]"
-                  style={{
-                    strokeDasharray: '50',
-                    strokeDashoffset: '0'
-                  }}
-                />
-              </svg>
-
-              {/* Multi-layered live ring ripples */}
-              <span className="absolute inset-0 rounded-full border-2 border-emerald-400 animate-[ping_1.6s_cubic-bezier(0,0,0.2,1)_infinite] opacity-40" />
-              <span className="absolute -inset-1 rounded-full border border-emerald-300/50 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] opacity-25 delay-300" />
-            </div>
-            
-            <div className="flex flex-col">
-              <span className="text-xl font-black tracking-[0.2em] font-serif italic bg-clip-text bg-linear-to-r from-white to-emerald-100">
-                LabFlow
-              </span>
-              <span className="text-[9px] font-sans font-bold tracking-[0.25em] text-emerald-200/70 uppercase">
-                Platform
-              </span>
-            </div>
+        {/* Subtle Luxury Overlays */}
+        <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] bg-size-[32px_32px] opacity-[0.07] pointer-events-none" />
+        <div className="absolute -bottom-20 -left-20 w-96 h-96 rounded-full bg-emerald-500/20 blur-[100px] pointer-events-none" />
+        
+        {/* Brand Architecture with LIVE Glowing/Bubbling Flask Logo */}
+        <div className="flex items-center gap-3.5 z-10 cursor-default group select-none">
+          <div className="w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center bg-white/10 shadow-lg backdrop-blur-md relative overflow-hidden transition-all duration-500 group-hover:border-white/40 group-hover:bg-white/15">
+            <span className="absolute inset-0 bg-linear-to-t from-emerald-400/20 to-transparent animate-pulse" />
+            <FlaskConical className="w-5 h-5 text-emerald-300 fill-emerald-400/20 transition-all duration-700 group-hover:scale-110 group-hover:text-white group-hover:fill-white/30 animate-bounce animation-duration-[3s]" />
           </div>
-
-          {/* Central Segment: Main Editorial Copy and Verification Checklist */}
-          <div className="relative z-20 my-auto space-y-8 pt-10 md:pt-0">
-            <div className="space-y-4">
-              <h1 className="text-3xl xl:text-4xl font-serif font-normal italic tracking-tight text-white leading-tight">
-                Recover for Precise <br />
-                <span className="text-transparent bg-clip-text bg-linear-to-r from-white via-emerald-50 to-emerald-200 font-serif font-extrabold not-italic drop-shadow-md">
-                  Report Management.
-                </span>
-              </h1>
-              <p className="justify-center text-emerald-50/75 text-sm font-sans font-light leading-relaxed max-w-[92%] tracking-wide">
-                Simplify laboratory documentation with seamless report submissions, centralized management, and real-time workflow tracking.
-              </p>
-            </div>
-            
-            {/* Fine-line Checklist Feature Group */}
-            <div className="space-y-3 pt-6 border-t border-white/15 max-w-[85%]">
-              <div className="flex items-center gap-3 text-xs font-medium tracking-wide text-emerald-50/90">
-                <CheckCircle2 className="h-4 w-4 text-emerald-300 stroke-[2.5] shrink-0" /> Paperless Laboratory Management
-              </div>
-              <div className="flex items-center gap-3 text-xs font-medium tracking-wide text-emerald-50/90">
-                <CheckCircle2 className="h-4 w-4 text-emerald-300 stroke-[2.5] shrink-0" /> Centralized Report Repository
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Segment: Compliance Certification Seal */}
-          <div className="flex items-center gap-2.5 text-[10px] font-sans tracking-[0.2em] text-emerald-100/60 font-bold uppercase relative z-20 mt-6 md:mt-0">
-            <ShieldCheck className="h-4 w-4 text-emerald-300 animate-pulse" /> NHRC Certified
-          </div>
+          <span className="text-base font-black tracking-[0.45em] uppercase text-white font-mono drop-shadow-xs">
+            Lab<span className="text-emerald-300 font-light">Flow</span>
+          </span>
         </div>
 
-        {/* RIGHT PANEL: Crisp White Minimal Presentation Form Screen */}
-        <div className="w-full md:w-[55%] p-8 sm:p-12 md:p-16 flex flex-col justify-between bg-white relative">
-          
-          {/* Decorative Corner Light Ring */}
-          <div className="absolute -bottom-7.5 -right-7.5 w-37.5 h-37.5 rounded-full bg-emerald-50/60 pointer-events-none hidden md:block" />
-
-          <div className="max-w-sm w-full mx-auto my-auto space-y-7 relative z-10">
-            
-            {/* Header Content Hierarchy */}
-            <div className="space-y-1.5">
-              <h2 className="text-3xl font-normal font-serif italic text-neutral-900 tracking-tight">
-                Reset Password!
-              </h2>
-              <p className="text-[11px] font-sans font-bold text-neutral-400 tracking-widest uppercase">
-                Recover Your Account Access
-              </p>
-            </div>
-
-            {/* Verification State Flow Conditional */}
-            {!isSubmitted ? (
-              <form onSubmit={handleSubmit} className="space-y-4.5">
-                <p className="text-xs text-neutral-400 font-medium leading-relaxed font-sans tracking-wide">
-                  Enter your registered email address below. We will send you a link to reset your password.
-                </p>
-                
-                {/* Email Address Input Field */}
-                <div className="space-y-1.5 pt-1">
-                  <Label htmlFor="email" className="text-xs font-sans font-bold tracking-wide text-neutral-500">
-                    Email Address
-                  </Label>
-                  <div className="relative group">
-                    <Mail className="absolute left-4 top-3.5 h-4 w-4 text-neutral-300 group-focus-within:text-[#0a7e45] transition-colors stroke-2" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="labflow@gmail.com"
-                      className="pl-12 h-12 bg-neutral-50 border-neutral-200/70 focus:bg-white focus:border-emerald-600 focus-visible:ring-0 rounded-xl font-sans text-sm tracking-wide text-neutral-800 placeholder:text-neutral-400 transition-all shadow-sm"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Submit Trigger Action Button */}
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 mt-3 bg-[#00a365] hover:bg-[#008f58] text-white font-sans font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 group shadow-md shadow-emerald-950/10 active:scale-[0.98]"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      Send Reset Link
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 stroke-[2.5]" />
-                    </>
-                  )}
-                </Button>
-              </form>
-            ) : (
-              <div className="space-y-4.5 animate-fadeIn">
-                {/* Clean State UI Alert Box */}
-                <div className="p-5 bg-emerald-50/70 border border-emerald-100/50 text-emerald-900 rounded-2xl text-xs font-medium font-sans leading-relaxed tracking-wide shadow-xs flex items-start gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-600 stroke-[2.5] shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="font-bold text-emerald-950 block mb-0.5">Check your inbox!</strong>
-                    A secure cryptographic recovery mechanism has been transmitted to your validated email destination.
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Elegant Accent Splitter Divider */}
-            <div className="relative flex py-1 items-center">
-              <div className="grow border-t border-neutral-100"></div>
-            </div>
-
-            {/* Sign In Navigation Redirect Text */}
-            <div className="text-center pt-1">
-              <Link href="/login" className="inline-flex items-center justify-center gap-2 text-xs text-emerald-600 hover:text-emerald-700 font-bold font-sans tracking-wide transition-colors group">
-                <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5 stroke-[2.5]" /> 
-                Back to Sign In
-              </Link>
-            </div>
-          </div>
+        {/* Premium Typographic Workspace */}
+        <div className="space-y-6 z-10 max-w-sm my-auto">
+          <h1 className="italic text-4xl xl:text-5xl font-light tracking-tight text-white leading-[1.2]">
+            Recover for Precise <br />
+            <span className="font-serif italic font-normal text-transparent bg-clip-text bg-linear-to-r from-emerald-200 via-green-100 to-amber-100 tracking-normal drop-shadow-xs">
+              Report Management.
+            </span>
+          </h1>
+          <div className="h-px w-16 bg-linear-to-r from-amber-300 to-transparent" />
+          <p className="text-green-50/80 text-sm font-light leading-relaxed tracking-wide">
+            A secure laboratory ecosystem designed for seamless report submissions, centralized management and real-time workflow tracking.
+          </p>
         </div>
       </div>
 
-      {/* Embedded CSS Keyframes for custom stroke heartbeat loop animation */}
-      <style jsx global>{`
-        @keyframes dash {
-          to {
-            stroke-dashoffset: -100;
-          }
-        }
-      `}</style>
+      {/* RIGHT PANEL: Floating Form Canvas */}
+      <div className="w-full lg:w-[58%] flex flex-col justify-center px-6 sm:px-12 md:px-20 xl:px-32 py-12 relative z-10">
+        
+        {/* Modern Floating Island Card Layout */}
+        <div className="max-w-md w-full mx-auto bg-white/95 backdrop-blur-xl rounded-[2rem] p-8 md:p-11 shadow-[0_30px_70px_rgba(15,55,30,0.06)] border border-stone-200/50 space-y-8 relative">
+          
+          {/* Header Segment */}
+          <div className="space-y-3">
+            <div className="lg:hidden flex items-center gap-2.5 mb-3 select-none">
+              <div className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center border border-green-100">
+                <FlaskConical className="w-4 h-4 text-green-700 fill-green-700/10 animate-pulse" />
+              </div>
+              <span className="text-xs font-black tracking-[0.3em] uppercase font-mono text-green-800">LabFlow</span>
+            </div>
+            <h2 className="text-3xl font-serif text-stone-900 font-normal tracking-tight">
+              Reset Password!
+            </h2>
+            <p className="text-xs text-stone-500 tracking-wide font-light leading-relaxed uppercase">
+              Recover your account access
+            </p>
+          </div>
+
+          {/* Form Controller Sequence */}
+          {!isSubmitted ? (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              <p className="text-xs text-stone-400 font-light leading-relaxed tracking-wide">
+                Enter your registered email below. We will send you a link to reset your password.
+              </p>
+
+              {/* Email Field Block */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-[0.18em] text-stone-400 block pl-1">
+                  Email
+                </Label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-3.5 h-4 w-4 text-stone-300 group-focus-within:text-green-700 transition-colors" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="labflow@gmail.com"
+                    className="pl-11 h-12 bg-stone-50/50 border-stone-200/80 focus:bg-white focus:border-green-700 focus-visible:ring-4 focus-visible:ring-green-700/10 rounded-xl text-sm text-stone-800 placeholder:text-stone-300 transition-all shadow-xs"
+                    disabled={isLoading}
+                    {...register("email")}
+                  />
+                </div>
+                {errors.email && <p className="text-xs text-red-600 font-medium mt-1 pl-1">{errors.email.message}</p>}
+              </div>
+
+              {/* Submit Trigger Button */}
+              <div className="pt-4">
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 bg-green-700 hover:bg-green-800 text-white font-bold text-xs tracking-[0.15em] uppercase rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-900/15 active:scale-[0.99] cursor-pointer group"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      Send Reset Link
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 stroke-[2.5]" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="space-y-5 animate-in fade-in duration-500">
+              {/* Submission State Box */}
+              <div className="p-5 bg-emerald-50/60 border border-emerald-100/50 text-stone-700 rounded-2xl text-xs font-light leading-relaxed tracking-wide flex items-start gap-3.5 shadow-xs">
+                <CheckCircle2 className="h-5 w-5 text-green-700 stroke-[2.5] shrink-0 mt-0.5" />
+                <div>
+                  <strong className="font-bold text-green-900 block mb-1 uppercase tracking-wider text-[10px]">Check your inbox!</strong>
+                  A secure cryptographic access recovery package has been dispatched to your validated destination configuration.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Secondary Action Navigation Footer */}
+          <div className="text-center text-xs text-stone-400 font-light pt-4 border-t border-stone-100">
+            <Link href="/login" className="inline-flex items-center justify-center gap-2 text-green-700 hover:text-green-800 font-bold transition-colors group">
+              <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5 stroke-[2.5]" />
+              Back to Sign In
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
