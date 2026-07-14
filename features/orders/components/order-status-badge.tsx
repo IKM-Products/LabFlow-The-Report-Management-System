@@ -1,26 +1,45 @@
 "use client";
 
+import React from "react";
+import { OrderStatus } from "../lib/order-types";
+
 interface OrderStatusBadgeProps {
-  status: string;
+  status: OrderStatus | string;
 }
 
 export function OrderStatusBadge({ status }: OrderStatusBadgeProps) {
-  const normalized = status.toLowerCase();
+  // Normalize string from the backend just in case case-matching shifts
+  const normalizedStatus = (status || "").toUpperCase() as OrderStatus;
 
-  const getStyles = () => {
-    switch (normalized) {
-      case "completed":
-        return "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/50";
-      case "sample_collected":
-        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/50";
-      default:
-        return "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/50";
-    }
+  const config: Record<OrderStatus, { text: string; styles: string }> = {
+    PENDING: {
+      text: "Pending",
+      styles: "bg-amber-50 text-amber-700 border-amber-200/60",
+    },
+    PROCESSING: {
+      text: "Processing",
+      styles: "bg-blue-50 text-blue-700 border-blue-200/60",
+    },
+    COMPLETED: {
+      text: "Completed",
+      styles: "bg-emerald-50 text-emerald-700 border-emerald-200/60",
+    },
+    CANCELLED: {
+      text: "Cancelled",
+      styles: "bg-slate-100 text-slate-600 border-slate-200",
+    },
+  };
+
+  const current = config[normalizedStatus] || {
+    text: typeof status === "string" ? status : "Unknown",
+    styles: "bg-slate-50 text-slate-500 border-slate-200",
   };
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border capitalize tracking-wide shadow-sm ${getStyles()}`}>
-      {status.replace("_", " ")}
+    <span 
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide border transition-colors select-none ${current.styles}`}
+    >
+      {current.text}
     </span>
   );
 }

@@ -2,8 +2,8 @@ import NextAuth from "next-auth";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-// We extend the DefaultSession and DefaultUser interfaces cleanly.
-// Making sure every added property is optional (?) prevents collision errors.
+// We extend NextAuth's declarations cleanly. 
+// Forcing optional (?) elements natively prevents matching modifier structural collisions.
 declare module "next-auth" {
   interface User {
     role: string;
@@ -55,7 +55,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://192.168.1.90:8080/api";
+          // 🎯 FIX: Hardcoded absolute address for Node server environments to stop "Failed to parse URL" loops
+          const baseUrl = "http://192.168.1.90:8080/api";
           const res = await fetch(`${baseUrl}/auth/login`, {
             method: "POST",
             body: JSON.stringify({

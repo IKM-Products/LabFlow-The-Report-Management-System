@@ -1,7 +1,7 @@
 // lib/auth.ts
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { loginSchema } from "../schema/auth_schema";
+import { loginSchema } from "../schemas/auth_schema";
 import { technicianApi } from "@/lib/api/technician";
 
 export const authOptions: NextAuthOptions = {
