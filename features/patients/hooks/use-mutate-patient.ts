@@ -1,15 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { apiClient } from "@/lib/api-client";
 import { toast } from "sonner";
-
-interface MutationPayload {
-  full_name: string;
-  age: number;
-  gender: "male" | "female" | "other";
-  phone: string;
-}
+import { patientService } from "../services/patientService";
+import { PatientFormValues } from "../schemas/patientSchema";
 
 interface UseMutatePatientOptions {
   onSuccess?: () => void;
@@ -19,23 +13,52 @@ export function useMutatePatient(options?: UseMutatePatientOptions) {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const registerPatient = async (payload: MutationPayload) => {
+  /**
+   * POST: Create Patient
+   * Submits a fresh entry payload to create a new patient profile.
+   */
+  const registerPatient = async (payload: PatientFormValues): Promise<boolean> => {
     try {
       setIsPending(true);
       setError(null);
 
-      await apiClient("/patients", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+      await patientService.createPatient(payload);
 
-      toast.success("Demographic record successfully registered.");
+      toast.success("Patient successfully registered.");
+      
       if (options?.onSuccess) {
         options.onSuccess();
       }
       return true;
-    } catch (err: any) {
-      const errorMessage = err.message || "Failed to commit registration lifecycle metrics.";
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to register patient.";
+      setError(errorMessage);
+      toast.error(errorMessage);
+      return false;
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  /**
+   * PATCH: Update Patient
+   * Commits modifications to an existing patient file matching their unique ID.
+   */
+  const updatePatient = async (id: string, payload: Partial<PatientFormValues>): Promise<boolean> => {
+    try {
+      setIsPending(true);
+      setError(null);
+
+      await patientService.updatePatient(id, payload);
+
+      toast.success("Patient details successfully updated.");
+      
+      if (options?.onSuccess) {
+        options.onSuccess();
+      }
+      return true;
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to update patient.";
       setError(errorMessage);
       toast.error(errorMessage);
       return false;
@@ -46,6 +69,7 @@ export function useMutatePatient(options?: UseMutatePatientOptions) {
 
   return {
     registerPatient,
+    updatePatient,
     isPending,
     error,
   };

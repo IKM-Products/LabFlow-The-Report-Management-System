@@ -1,42 +1,49 @@
+// lib/api/client.ts
+import axiosInstance from "@/axios/instance";
+import { AxiosRequestConfig } from "axios";
 import { getServerSession } from "next-auth/next";
 import { getSession } from "next-auth/react";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
-
+/**
+ * Dynamically resolves the NextAuth access token depending on the execution context.
+ * Server-side (SSR/RSC/Route Handlers) vs Client-side (Browser components).
+ */
 async function getAuthHeader(): Promise<string | null> {
   if (typeof window === "undefined") {
     const session = await getServerSession(authOptions);
-    return session?.user?.accessToken ? `Bearer ${session.user.accessToken}` : null;
+    return session?.accessToken ? `Bearer ${session.accessToken}` : null;
   }
   const session = await getSession();
-  return session?.user?.accessToken ? `Bearer ${session.user.accessToken}` : null;
+  return session?.accessToken ? `Bearer ${session.accessToken}` : null;
 }
 
-export async function apiClient<T>(
-  endpoint: string, 
-  { method = "GET", body, options }: { method?: string; body?: any; options?: RequestInit } = {}
-): Promise<T> {
-  const url = `${BASE_URL}${endpoint}`;
-  const authHeader = await getAuthHeader();
-
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...(authHeader ? { Authorization: authHeader } : {}),
-    ...(options?.headers || {}),
-  };
-
-  const response = await fetch(url, {
-    ...options,
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData?.message || `HTTP Exception: ${response.status}`);
+// Global Axios Request Interceptor to automatically attach authorization headers
+axiosInstance.interceptors.request.use(
+  async (config) => {
+    const authHeader = await getAuthHeader();
+    if (authHeader) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = authHeader;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
+);
 
-  return response.json() as Promise<T>;
+/**
+ * Centralized request wrapper processing endpoints via our Axios instance
+ * while unpacking the raw .data payload for the rest of your api definitions.
+ */
+export async function apiRequest<T = any>(config: AxiosRequestConfig): Promise<T> {
+  try {
+    const response = await axiosInstance(config);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || error.message || "API Network request failed"
+    );
+  }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { 
@@ -9,18 +9,17 @@ import {
   ArrowLeft, 
   Phone, 
   MapPin, 
-  FileText, 
   Activity, 
   ShieldAlert 
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-// Shared dataset profile dictionary mapping back to the dashboard master feed
+// Normalized dataset matching the registered API and form constraints
 const MOCK_PATIENTS_DATABASE: Record<string, {
   name: string;
   age: number;
-  gender: string;
+  gender: "male" | "female" | "other";
   phone: string;
   address: string;
   lastVisit: string;
@@ -31,7 +30,7 @@ const MOCK_PATIENTS_DATABASE: Record<string, {
   "1": { 
     name: "John Doe", 
     age: 45, 
-    gender: "Male", 
+    gender: "male", 
     phone: "9800000000", 
     address: "Kathmandu, Nepal", 
     lastVisit: "2026-07-08",
@@ -45,7 +44,7 @@ const MOCK_PATIENTS_DATABASE: Record<string, {
   "2": { 
     name: "Jane Smith", 
     age: 32, 
-    gender: "Female", 
+    gender: "female", 
     phone: "9811111111", 
     address: "Lalitpur, Nepal", 
     lastVisit: "2026-07-11",
@@ -61,7 +60,6 @@ export default function PatientDetailPage() {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
   
-  // Safe lookup fallback matching criteria matrix profiles
   const patient = id ? MOCK_PATIENTS_DATABASE[id] : null;
 
   if (!patient) {
@@ -78,6 +76,9 @@ export default function PatientDetailPage() {
       </div>
     );
   }
+
+  // Capitalize normalized enum values for display helper
+  const displayGender = patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1);
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6 font-sans">
@@ -104,7 +105,7 @@ export default function PatientDetailPage() {
               </Badge>
             </div>
             <p className="text-sm font-semibold text-neutral-500 mt-0.5">
-              {patient.age} Years Old <span className="text-neutral-300 mx-1.5">•</span> {patient.gender}
+              {patient.age} Years Old <span className="text-neutral-300 mx-1.5">•</span> {displayGender}
             </p>
           </div>
         </div>

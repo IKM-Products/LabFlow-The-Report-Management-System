@@ -2,6 +2,8 @@ import NextAuth from "next-auth";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
+// We extend the DefaultSession and DefaultUser interfaces cleanly.
+// Making sure every added property is optional (?) prevents collision errors.
 declare module "next-auth" {
   interface User {
     role: string;
@@ -13,16 +15,17 @@ declare module "next-auth" {
 
   interface Session {
     user: {
-      [x: string]: string;
       name?: string | null;
       email?: string | null;
       image?: string | null;
-      role: string;
-      accessToken: string;
-      sessionId: string;
-      tenantId: string;
-      userType: string;
+      role?: string;
+      accessToken?: string;
+      sessionId?: string;
+      tenantId?: string;
+      userType?: string;
+      token?: string;
     };
+    accessToken: string;
   }
 }
 
@@ -119,12 +122,21 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token) {
+      // Initialize session.user if it doesn't exist to prevent write runtime errors
+      if (!session.user) {
+        session.user = {};
+      }
+
+      if (token) {
         session.user.role = token.role;
         session.user.accessToken = token.accessToken; 
         session.user.sessionId = token.sessionId;
         session.user.tenantId = token.tenantId;
         session.user.userType = token.userType;
+
+        // Map the token to fields that your Axios interceptor resolves
+        session.user.token = token.accessToken; 
+        session.accessToken = token.accessToken; 
       }
       return session;
     }

@@ -1,26 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { apiClient } from "@/lib/api-client";
-
-export interface PatientRecord {
-  id: number;
-  full_name: string;
-  test_id: string;
-  age: number;
-  gender: string;
-  phone: string;
-  created_at: string;
-}
+import { patientService, PatientResponse } from "../services/patientService";
 
 export function usePatients(initialDebounceDelay = 300) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [patients, setPatients] = useState<PatientRecord[]>([]);
+  const [patients, setPatients] = useState<PatientResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Synchronize debouncing cycles for optimized system throughput
+  // Synchronize debouncing cycles for optimized data fetching
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(searchQuery);
@@ -33,11 +23,13 @@ export function usePatients(initialDebounceDelay = 300) {
     try {
       setIsLoading(true);
       setError(null);
-      const url = query ? `/patients?search=${encodeURIComponent(query)}` : "/patients";
-      const data = await apiClient<PatientRecord[]>(url);
+      
+      // Utilize the centralized service instead of direct API instance endpoints
+      const data = await patientService.getPatients(query);
       setPatients(data);
-    } catch (err: any) {
-      setError(err.message || "Failed to query patient directory matrix.");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to query patient directory matrix.";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
