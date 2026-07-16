@@ -1,59 +1,32 @@
-// types/next-auth.d.ts
-
-import { DefaultUser } from "next-auth";
-import "next-auth";
-import "next-auth/jwt";
+import NextAuth, { DefaultSession } from "next-auth";
+import { JWT } from "next-auth/jwt";
 
 declare module "next-auth" {
   interface Session {
-    accessToken: string;
-
-    user: DefaultUser & {
+    accessToken?: string;
+    sessionId?: string;
+    userId?: string;
+    userType?: string;
+    user: {
       id: string;
-      user_id: string;
-
-      first_name: string;
-      last_name: string;
-
-      phone: string;
-      email: string;
-
-      role_name: "ROLE_ADMIN" | "ROLE_TECHNICIAN";
-
-      // IMPORTANT
-      accessToken: string;
-    };
+      role?: string;
+    } & DefaultSession["user"];
   }
 
-  interface User extends DefaultUser {
+  interface User {
     id: string;
+    access_token: string;
+    session_id: string;
     user_id: string;
-
-    first_name: string;
-    last_name: string;
-
-    phone: string;
-    email: string;
-
-    role_name: "ROLE_ADMIN" | "ROLE_TECHNICIAN";
-
-    accessToken: string;
+    user_type: string;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    id: string;
-    user_id: string;
-
-    first_name: string;
-    last_name: string;
-
-    phone: string;
-    email: string;
-
-    role_name: "ROLE_ADMIN" | "ROLE_TECHNICIAN";
-
-    accessToken: string;
+    accessToken?: string;
+    sessionId?: string;
+    userId?: string;
+    userType?: string;
   }
 }

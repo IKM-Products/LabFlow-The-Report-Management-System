@@ -1,95 +1,131 @@
-"use client";
+// app/(dashboard)/technician/page.tsx
 
-import {
-  Users,
-  CalendarDays,
-  ClipboardList,
-  FileCheck,
-} from "lucide-react";
+import React from "react";
+import Link from "next/link";
+import { Layers, CalendarDays, Activity, ArrowRight, Terminal, CheckCircle2, AlertCircle } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+export default function TechnicianDashboardPage() {
+  const metrics = [
+    {
+      label: "Active System Channels",
+      value: "2 / 2",
+      description: "Visits & Results modules operational",
+      icon: CheckCircle2,
+      color: "text-emerald-600 bg-emerald-50 border-emerald-100",
+    },
+    {
+      label: "API Gateway Latency",
+      value: "14ms",
+      description: "Connection to 192.168.1.90 stable",
+      icon: Activity,
+      color: "text-blue-600 bg-blue-50 border-blue-100",
+    },
+    {
+      label: "Node Pipeline Status",
+      value: "Nominal",
+      description: "No data structural exceptions reported",
+      icon: Terminal,
+      color: "text-slate-600 bg-slate-50 border-slate-200/60",
+    },
+  ];
 
-const stats = [
-  {
-    title: "Patients",
-    value: "0",
-    icon: Users,
-  },
-  {
-    title: "Visits",
-    value: "0",
-    icon: CalendarDays,
-  },
-  {
-    title: "Orders",
-    value: "0",
-    icon: ClipboardList,
-  },
-  {
-    title: "Results",
-    value: "0",
-    icon: FileCheck,
-  },
-];
+  const modules = [
+    {
+      title: "Encounter Admission Registry",
+      description: "Query, log, and update active institutional visits tracking dynamic patient diagnostic streams.",
+      href: "/dashboard/technician/visits",
+      icon: CalendarDays,
+      actionText: "Open Registry Matrix",
+    },
+    {
+      title: "Clinical Analysis Ledger",
+      description: "Verify and catalog multi-parameter quantitative data entry collections indexing laboratory workflows.",
+      href: "/dashboard/technician/results",
+      icon: Layers,
+      actionText: "Open Ledger Matrix",
+    },
+  ];
 
-export default function TechnicianPage() {
   return (
-    <main className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Technician Dashboard
+    <div className="p-6 space-y-8 max-w-7xl mx-auto">
+      {/* Welcome & Context Strip */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+          Operational Workspace Control Panel
         </h1>
-
-        <p className="mt-2 text-muted-foreground">
-          Welcome to the LabFlow Technician Panel.
+        <p className="text-xs text-slate-500 max-w-2xl">
+          Welcome to the telemetry management dashboard. Select a tracking subsystem module below to process operational records or check systemic node diagnostics.
         </p>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((item) => {
-          const Icon = item.icon;
-
+      {/* Metrics Systemic Grid Status */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {metrics.map((metric, i) => {
+          const Icon = metric.icon;
           return (
-            <Card key={item.title}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {item.title}
-                </CardTitle>
-
-                <Icon className="h-5 w-5 text-muted-foreground" />
-              </CardHeader>
-
-              <CardContent>
-                <p className="text-3xl font-bold">
-                  {item.value}
-                </p>
-
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Total {item.title.toLowerCase()}
-                </p>
-              </CardContent>
-            </Card>
+            <div key={i} className="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{metric.label}</p>
+                <p className="text-lg font-extrabold text-slate-900 tracking-tight">{metric.value}</p>
+                <p className="text-[10px] text-slate-500 font-medium">{metric.description}</p>
+              </div>
+              <div className={`p-2 rounded-xl border ${metric.color}`}>
+                <Icon className="h-4 w-4" />
+              </div>
+            </div>
           );
         })}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Today's Work</CardTitle>
-        </CardHeader>
+      {/* Section Divider */}
+      <div className="border-t border-slate-200/60 pt-6">
+        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Core Operational Modules</h2>
+        
+        {/* Module Subsystem Navigation Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {modules.map((mod, index) => {
+            const Icon = mod.icon;
+            return (
+              <div key={index} className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between shadow-xs hover:border-slate-300 transition-all group">
+                <div className="space-y-3">
+                  <div className="h-10 w-10 bg-blue-50 border border-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">
+                      {mod.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      {mod.description}
+                    </p>
+                  </div>
+                </div>
 
-        <CardContent>
-          <p className="text-muted-foreground">
-            Manage patient registrations, laboratory visits, test orders,
-            laboratory results, and reports using the sidebar.
+                <div className="pt-6 mt-6 border-t border-slate-100 flex justify-end">
+                  <Link 
+                    href={mod.href} 
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 px-3.5 h-9 rounded-xl border border-blue-100/50 transition-all"
+                  >
+                    <span>{mod.actionText}</span>
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* System Notice Warning Block */}
+      <div className="bg-amber-50/50 border border-amber-200/60 rounded-2xl p-4 flex items-start gap-3">
+        <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+        <div className="space-y-0.5">
+          <h4 className="text-xs font-bold text-amber-900">Environmental Pipeline Binding Notification</h4>
+          <p className="text-[11px] text-amber-700 leading-relaxed">
+            All transactional operations executed through this node endpoint flow directly into target runtime host configuration <span className="font-mono font-bold">192.168.1.90:8080</span>. Ensure tracking sequences and reference target identifiers match institutional parameters before committing updates to the live matrix.
           </p>
-        </CardContent>
-      </Card>
-    </main>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,71 +1,36 @@
-// src/config/axios.ts
-
+// config/axios.ts
 import axios from "axios";
-import { getSession, signOut } from "next-auth/react";
+import { getSession } from "next-auth/react";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "http://192.168.1.90:8080/api";
-
-/* -------------------------------------------------------------------------- */
-/*                                  PUBLIC API                                */
-/* -------------------------------------------------------------------------- */
-
-export const publicApi = axios.create({
-  baseURL: BASE_URL,
-  timeout: 10000,
+export const axiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   headers: {
-    Accept: "application/json",
     "Content-Type": "application/json",
   },
 });
 
-/* -------------------------------------------------------------------------- */
-/*                                 PRIVATE API                                */
-/* -------------------------------------------------------------------------- */
-
-export const privateApi = axios.create({
-  baseURL: BASE_URL,
-  timeout: 10000,
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  },
-});
-
-/* -------------------------------------------------------------------------- */
-/*                            Attach Access Token                             */
-/* -------------------------------------------------------------------------- */
-
-privateApi.interceptors.request.use(
+axiosInstance.interceptors.request.use(
   async (config) => {
-    const session = await getSession();
-
-    if (session?.accessToken) {
-      config.headers.Authorization = `Bearer ${session.accessToken}`;
+    if (typeof window !== "undefined") {
+      const session = await getSession();
+      if (session?.accessToken) {
+        config.headers.Authorization = `Bearer ${session.accessToken}`;
+      }
     }
-
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-/* -------------------------------------------------------------------------- */
-/*                          Handle Unauthorized                               */
-/* -------------------------------------------------------------------------- */
-
-privateApi.interceptors.response.use(
+axiosInstance.interceptors.response.use(
   (response) => response,
-
-  async (error) => {
-    if (error.response?.status === 401) {
-      await signOut({
-        callbackUrl: "/login",
-      });
+  (error) => {
+    if (error.response && error.response.data) {
+      return Promise.reject(error.response.data);
     }
-
-    return Promise.reject(error);
+    return Promise.reject({
+      success: false,
+      messages: [error.message || "An unexpected network error occurred."],
+    });
   }
 );
-
-export default privateApi;

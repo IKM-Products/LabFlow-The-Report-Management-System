@@ -1,181 +1,134 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { signIn, getSession } from "next-auth/react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { LoginSchema } from "@/schemas/auth.schema";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useUserStore } from "@/store/userStore";
+import { ShieldCheck, Loader2, AlertTriangle, KeyRound } from "lucide-react";
+import * as z from "zod";
 
-import {
-  loginSchema,
-  type LoginFormValues,
-} from "@/schemas/auth.schema";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+type FormData = z.infer<typeof LoginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [serverError, setServerError] = useState("");
+  const setAuthSession = useUserStore((state) => state.setAuthSession);
+  const [globalErrors, setGlobalErrors] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(LoginSchema),
   });
 
-  async function onSubmit(values: LoginFormValues) {
-    console.log("Submitted:", values);
+  const onSubmit = async (data: FormData) => {
+    setIsLoading(true);
+    setGlobalErrors([]);
+    try {
+      const result = await signIn("credentials", {
+        redirect: false,
+        email: data.email,
+        password: data.password,
+      });
 
-    const result = await signIn("credentials", {
-      email: values.email,
-      password: values.password,
-      redirect: false,
-    });
-
-    if (result?.error) {
-      setServerError("Invalid email or password.");
-      return;
+      if (result?.error) {
+        setGlobalErrors(result.error.split(", "));
+        setIsLoading(false);
+      } else {
+        // Fetch active session attributes to initialize state store safely
+        const res = await fetch("/api/auth/session");
+        const session = await res.json();
+        if (session?.userId) {
+          setAuthSession(session.userId, session.userType || "USER", session.sessionId || "");
+          
+          if (session.userType === "ADMIN") {
+            router.push("/dashboard/admin");
+          } else {
+            router.push("/dashboard/technician");
+          }
+        }
+      }
+    } catch (err) {
+      setGlobalErrors(["Fatal synchronization breakdown crossing gateway route boundaries."]);
+      setIsLoading(false);
     }
-
-    const session = await getSession();
-
-    router.refresh();
-
-    if (session?.user?.role_name === "ROLE_ADMIN") {
-      router.push("/admin");
-    } else {
-      router.push("/technician");
-    }
-  }
+  };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 p-6">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardContent className="p-8">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold">LabFlow</h1>
-            <p className="mt-2 text-muted-foreground">
-              Sign in to continue
-            </p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4 font-sans selection:bg-blue-500 selection:text-white">
+      <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl border border-slate-100 flex flex-col space-y-6 relative overflow-hidden">
+        
+        <div className="flex flex-col items-center text-center space-y-2">
+          <div className="h-12 w-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 shadow-xs">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <h2 className="text-xl font-black text-slate-900 tracking-tight">Telemetry System Authorization</h2>
+          <p className="text-xs text-slate-400 font-medium">Initialize connection vector mapping to core node variables</p>
+        </div>
+
+        {globalErrors.length > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex gap-3 items-start">
+            <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-xs font-bold text-red-900">Handshake Validation Exceptions:</p>
+              <ul className="list-disc list-inside text-[11px] text-red-700 space-y-0.5 font-medium">
+                {globalErrors.map((msg, i) => (
+                  <li key={i}>{msg}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Node Identifier Email</label>
+            <input
+              type="email"
+              {...register("email")}
+              disabled={isLoading}
+              placeholder="operator@network.local"
+              className="w-full h-11 px-4 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all disabled:opacity-60"
+            />
+            {errors.email && <p className="text-[10px] text-red-600 font-semibold mt-0.5">{errors.email.message}</p>}
           </div>
 
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="space-y-6"
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Cryptographic Access Token</label>
+            <input
+              type="password"
+              {...register("password")}
+              disabled={isLoading}
+              placeholder="••••••••••••"
+              className="w-full h-11 px-4 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all disabled:opacity-60"
+            />
+            {errors.password && <p className="text-[10px] text-red-600 font-semibold mt-0.5">{errors.password.message}</p>}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full h-11 bg-slate-900 hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-md transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:bg-slate-300 disabled:cursor-not-allowed"
           >
-            {/* Email */}
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Email
-              </label>
-
-              <Input
-                type="text"
-                placeholder="Enter your email"
-                disabled={isSubmitting}
-                {...register("email")}
-              />
-
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Password
-              </label>
-
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  disabled={isSubmitting}
-                  {...register("password")}
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
-
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            {serverError && (
-              <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-600">
-                {serverError}
-              </div>
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Synchronizing Session Interface...</span>
+              </>
+            ) : (
+              <>
+                <KeyRound className="h-4 w-4" />
+                <span>Establish Handshake Connection</span>
+              </>
             )}
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" />
-                Remember me
-              </label>
-
-              <Button
-                variant="link"
-                type="button"
-                onClick={() => router.push("/forgot-password")}
-              >
-                Forgot Password?
-              </Button>
-            </div>
-
-            <Button
-              className="w-full"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing In...
-                </>
-              ) : (
-                "Login"
-              )}
-            </Button>
-
-            <div className="text-center text-sm">
-              Don't have an account?{" "}
-              <Button
-                variant="link"
-                type="button"
-                onClick={() => router.push("/signup")}
-              >
-                Sign Up
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </main>
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
