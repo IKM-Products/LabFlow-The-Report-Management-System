@@ -1,104 +1,197 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  ClipboardList, 
-  Search, 
-  FlaskConical, 
-  ChevronRight, 
-  Clock, 
-  User, 
-  ArrowRight
-} from "lucide-react";
+import { RefreshCw, ShieldAlert, Search, Calendar, FileText, ClipboardList } from "lucide-react";
+import { orderService } from "@/services/order.service";
+import { Order } from "@/types/order.types";
+
+import OrderForm from "./_components/OrderForm";
+import EditOrder from "./_components/EditOrder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-// Mock Data representing pending order_items linked to patient visits
-const MOCK_QUEUE = [
-  { id: 101, patient_name: "John Doe", test_name: "Complete Blood Count", status: "pending", priority: "normal" },
-  { id: 102, patient_name: "Jane Smith", test_name: "Fasting Blood Sugar", status: "pending", priority: "high" },
-  { id: 103, patient_name: "Ram Bahadur", test_name: "Lipid Profile", status: "in-progress", priority: "normal" },
-];
+export default function TechnicianOrdersPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [visitIdInput, setVisitIdInput] = useState("");
+  const [activeVisitId, setActiveVisitId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
-export default function OrderQueuePage() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const fetchOrders = async (targetId: string) => {
+    if (!targetId.trim()) return;
+    setIsLoading(true);
+    setHasSearched(true);
+    try {
+      const data = await orderService.getOrdersByVisitId(targetId);
+      setOrders(data);
+      setActiveVisitId(targetId);
+    } catch (error) {
+      console.error("Critical issue querying order dataset schema structure:", error);
+      setOrders([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const filteredQueue = MOCK_QUEUE.filter(item => 
-    item.patient_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.test_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchOrders(visitIdInput);
+  };
+
+  const reloadActiveRecords = () => {
+    if (activeVisitId) {
+      fetchOrders(activeVisitId);
+    }
+  };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 font-sans">
-      
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-serif font-normal italic tracking-tight text-neutral-900">
-          Order Queue
-        </h1>
-        <p className="text-xs font-medium tracking-wider text-neutral-400 uppercase mt-1">
-          Pending clinical tests awaiting result entry
-        </p>
+    <div className="space-y-8 p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Technician Orders Registry
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Track diagnostic order lifecycles and collection operations mapped to visit profiles.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {activeVisitId && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={reloadActiveRecords}
+              disabled={isLoading}
+              className="rounded-xl h-10 border-slate-200 text-slate-600"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            </Button>
+          )}
+
+          <OrderForm defaultVisitId={activeVisitId} onSuccess={reloadActiveRecords} />
+        </div>
       </div>
 
-      {/* Controls */}
-      <div className="relative w-full sm:max-w-md group">
-        <Search className="absolute left-4 top-3.5 h-4 w-4 text-neutral-400" />
-        <Input 
-          placeholder="Search patient or test name..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-11 h-11 bg-white border-neutral-200 focus:border-emerald-600 focus-visible:ring-0 rounded-xl"
-        />
-      </div>
+      {/* Visit Filter Input Bar */}
+      <form onSubmit={handleSearchSubmit} className="flex gap-2 max-w-md bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="relative flex-1 flex items-center pl-3">
+          <Search className="absolute left-3 h-4 w-4 text-slate-400 pointer-events-none" />
+          <Input
+            type="text"
+            placeholder="Query orders by Visit ID..."
+            value={visitIdInput}
+            onChange={(e) => setVisitIdInput(e.target.value)}
+            className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent h-8 text-xs font-mono pl-6"
+          />
+        </div>
+        <Button type="submit" size="sm" className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs h-9 px-4 font-medium">
+          Load Orders
+        </Button>
+      </form>
 
-      {/* Queue Table */}
-      <div className="bg-white rounded-2xl border border-neutral-200/60 shadow-xs overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-neutral-50/70 border-b border-neutral-200 text-xs font-bold text-neutral-500 uppercase">
-            <tr>
-              <th className="px-6 py-4">Patient</th>
-              <th className="px-6 py-4">Test Requested</th>
-              <th className="px-6 py-4">Priority</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-100">
-            {filteredQueue.map((item) => (
-              <tr key={item.id} className="hover:bg-neutral-50/50 transition-colors">
-                <td className="px-6 py-4 font-semibold text-neutral-900 flex items-center gap-2">
-                  <User className="h-4 w-4 text-neutral-400" />
-                  {item.patient_name}
-                </td>
-                <td className="px-6 py-4 text-neutral-600">
-                  <div className="flex items-center gap-2">
-                    <FlaskConical className="h-4 w-4 text-emerald-600" />
-                    {item.test_name}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <Badge className={item.priority === "high" ? "bg-rose-50 text-rose-700" : "bg-blue-50 text-blue-700"}>
-                    {item.priority}
-                  </Badge>
-                </td>
-                <td className="px-6 py-4 text-neutral-500 font-mono text-xs uppercase">
-                  {item.status}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <Link href={`/technician/order-queue/${item.id}`}>
-                    <Button variant="ghost" className="text-emerald-700 font-bold hover:bg-emerald-50">
-                      Process <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                </td>
+      {isLoading ? (
+        <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 animate-pulse bg-white border rounded-2xl">
+          Parsing operational clinical workflows...
+        </div>
+      ) : !hasSearched ? (
+        <div className="flex flex-col items-center justify-center border border-dashed border-slate-200 bg-slate-50/50 rounded-2xl p-12 text-center">
+          <ClipboardList className="h-8 w-8 text-slate-300 mb-2" />
+          <p className="text-sm font-medium text-slate-500">Provide a Visit ID parameters set to extract targeted metrics.</p>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <Table>
+            <TableCaption className="text-xs text-slate-400 pb-4">
+              Diagnostic matrix payload showing data segments loaded for Visit ID: {activeVisitId || "N/A"}
+            </TableCaption>
+            <TableHeader>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="font-bold text-slate-600">Order Ref ID</TableHead>
+                <TableHead className="font-bold text-slate-600">Test / Panel Mapping</TableHead>
+                <TableHead className="font-bold text-slate-600">Assigned Cost</TableHead>
+                <TableHead className="font-bold text-slate-600">Collection Metadata</TableHead>
+                <TableHead className="font-bold text-slate-600">Status</TableHead>
+                <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-150">
+              {orders.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-12 text-center text-sm text-slate-400">
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <ShieldAlert className="h-6 w-6 text-slate-300" />
+                      <p className="font-medium text-slate-500">No laboratory pipeline orders matched this identifier.</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                orders.map((order) => (
+                  <TableRow key={order.id} className="hover:bg-slate-50/60 transition-colors group">
+                    <TableCell className="font-mono text-xs text-slate-500 max-w-30 truncate">
+                      {order.id}
+                    </TableCell>
+                    
+                    <TableCell className="space-y-1 py-3">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-700">
+                        <FileText className="h-3.5 w-3.5 text-slate-400" />
+                        <span className="font-semibold text-slate-900">Test:</span>
+                        <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-[10px]">{order.test_id}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                        <span className="w-3.5" />
+                        <span className="font-medium">Panel:</span>
+                        <span className="font-mono text-[10px] text-slate-500">{order.panel_id}</span>
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="font-medium text-slate-950 text-xs">
+                      ${order.price.toFixed(2)}
+                    </TableCell>
+
+                    <TableCell className="text-xs text-slate-600 space-y-0.5">
+                      {order.collected_at ? (
+                        <>
+                          <div className="flex items-center gap-1 text-slate-700 font-medium">
+                            <Calendar className="h-3 w-3 text-slate-400" />
+                            <span>{new Date(order.collected_at).toLocaleString()}</span>
+                          </div>
+                          <div className="text-[10px] text-slate-400">By: {order.collected_by || "System Process"}</div>
+                        </>
+                      ) : (
+                        <span className="text-slate-400 italic">Pending collection event</span>
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                        order.status === "completed" 
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-amber-50 text-amber-700 border-amber-200"
+                      }`}>
+                        {order.status}
+                      </span>
+                    </TableCell>
+
+                    <TableCell className="text-right whitespace-nowrap">
+                      <EditOrder order={order} onSuccess={reloadActiveRecords} />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }

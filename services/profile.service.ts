@@ -1,45 +1,22 @@
-// src/services/profile.service.ts
+import api from "@/config/axios";
+import { BaseApiResponse, Profile, ProfileUpdateRequest } from "@/types/profile.types";
 
-import axiosInstance from "@/config/axios";
-import {
-  Profile,
-  UpdateProfilePayload,
-} from "@/types/profile.types";
+export const profileService = {
+  // GET {{base_url}}/profile/getme
+  getMe: async (): Promise<Profile> => {
+    const response = await api.get<BaseApiResponse<Profile>>("/profile/getme");
+    return response.data.data;
+  },
 
-/* -------------------------------------------------------------------------- */
-/*                                   GET ME                                   */
-/* -------------------------------------------------------------------------- */
+  // GET {{base_url}}/profile
+  getProfiles: async (): Promise<Profile[]> => {
+    const response = await api.get<BaseApiResponse<Profile[]>>("/profile");
+    return response.data.data;
+  },
 
-export async function getMe(): Promise<Profile> {
-  const response = await axiosInstance.get("/profile/getme");
-
-  return response.data.data;
-}
-
-/* -------------------------------------------------------------------------- */
-/*                               GET PROFILES                                 */
-/* -------------------------------------------------------------------------- */
-
-export async function getProfiles(): Promise<Profile[]> {
-  const response = await axiosInstance.get(
-    "/admin/profile/profile-details"
-  );
-
-  return response.data.data;
-}
-
-/* -------------------------------------------------------------------------- */
-/*                              UPDATE PROFILE                                */
-/* -------------------------------------------------------------------------- */
-
-export async function updateProfile(
-  id: string,
-  data: UpdateProfilePayload
-): Promise<Profile> {
-  const response = await axiosInstance.patch(
-    `/profile/update-profile/${id}`,
-    data
-  );
-
-  return response.data.data;
-}
+  // PATCH {{base_url}}/profile/update-profile/{id}
+  updateProfile: async (id: string, payload: ProfileUpdateRequest): Promise<string> => {
+    const response = await api.patch<BaseApiResponse<string>>(`/profile/update-profile/${id}`, payload);
+    return response.data.data;
+  },
+};

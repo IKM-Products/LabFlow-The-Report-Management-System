@@ -3,11 +3,12 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Loader2 } from "lucide-react";
+import { Edit2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { labFormSchema, LabFormValues } from "@/schemas/lab.schema";
 import { labService } from "@/services/lab.service";
+import { LabListItem } from "@/types/lab.types";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,44 +22,39 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-interface LabFormProps {
+interface EditLabProps {
+  lab: LabListItem;
   onSuccess: () => void;
 }
 
-export default function LabForm({ onSuccess }: LabFormProps) {
+export default function EditLab({ lab, onSuccess }: EditLabProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm<LabFormValues>({
     resolver: zodResolver(labFormSchema),
     defaultValues: {
-      lab_name: "",
-      tagline: "",
-      address: "",
-      phone: "",
-      email: "",
-      registration_no: "",
-      report_footer: "",
+      lab_name: lab.lab_name,
+      tagline: lab.tagline,
+      address: lab.address,
+      phone: lab.phone,
+      email: lab.email,
+      registration_no: lab.registration_no,
+      report_footer: lab.report_footer,
     },
   });
-
-  const handleClose = () => {
-    setIsOpen(false);
-    reset();
-  };
 
   const onSubmit = async (values: LabFormValues) => {
     setIsSubmitting(true);
     try {
-      await labService.createLab(values);
-      toast.success("New laboratory profile initiated successfully.");
+      await labService.updateLab(lab.id, values);
+      toast.success("Laboratory profile updated successfully.");
       onSuccess();
-      handleClose();
+      setIsOpen(false);
     } catch (error: any) {
       const serverMessages = error.response?.data?.messages;
       const errorMsg = serverMessages ? serverMessages.join(", ") : "Operation failed.";
@@ -69,21 +65,25 @@ export default function LabForm({ onSuccess }: LabFormProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => (!open ? handleClose() : setIsOpen(true))}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger>
-        <Button type="button" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-xs">
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Lab
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 h-8 px-2 border border-transparent hover:border-blue-100"
+        >
+          <Edit2 className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight">
-            Register New Laboratory
+            Modify Laboratory Details
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Define structural information parameters for the facility profile setup.
+            Edit parameters to update configuration properties for this laboratory instance.
           </DialogDescription>
         </DialogHeader>
 
@@ -128,12 +128,12 @@ export default function LabForm({ onSuccess }: LabFormProps) {
 
           <div className="space-y-1">
             <Label className="text-xs font-semibold text-slate-700">Report PDF Footer Text</Label>
-            <Input {...register("report_footer")} placeholder="System footer copyright or terms statement" disabled={isSubmitting} className="rounded-xl border-slate-200" />
+            <Input {...register("report_footer")} disabled={isSubmitting} className="rounded-xl border-slate-200" />
             {errors.report_footer && <p className="text-[10px] text-red-500 font-medium">{errors.report_footer.message}</p>}
           </div>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="rounded-xl text-xs h-10">
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting} className="rounded-xl text-xs h-10">
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">

@@ -1,14 +1,15 @@
-// app/(dashboard)/technician/patients/_components/PatientForm.tsx
+// app/(dashboard)/technician/patients/_components/EditPatient.tsx
 "use client";
 
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus, Loader2 } from "lucide-react";
+import { Edit2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { patientSchema, PatientFormValues } from "@/schemas/patient.schema";
 import { patientService } from "@/services/patient.service";
+import { Patient } from "@/types/patient.types";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,45 +23,40 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-interface PatientFormProps {
+interface EditPatientProps {
+  patient: Patient;
   onSuccess: () => void;
 }
 
-export default function PatientForm({ onSuccess }: PatientFormProps) {
+export default function EditPatient({ patient, onSuccess }: EditPatientProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm<PatientFormValues>({
     resolver: zodResolver(patientSchema) as any,
     defaultValues: {
-      first_name: "",
-      last_name: "",
-      email: "",
-      phone: "",
-      dob: "",
-      gender: "M",
-      address: "",
-      mrn: "",
+      first_name: patient.first_name,
+      last_name: patient.last_name,
+      email: patient.email,
+      phone: patient.phone,
+      dob: patient.dob,
+      gender: patient.gender,
+      address: patient.address,
+      mrn: patient.mrn,
     },
   });
-
-  const handleClose = () => {
-    setIsOpen(false);
-    reset();
-  };
 
   const onSubmit = async (values: PatientFormValues) => {
     setIsSubmitting(true);
     try {
-      await patientService.createPatient(values);
-      toast.success("New medical record registry established successfully.");
+      await patientService.updatePatient(patient.id, values);
+      toast.success("Demographic profiling parameters modified successfully.");
       onSuccess();
-      handleClose();
+      setIsOpen(false);
     } catch (error: any) {
       const serverMessages = error.response?.data?.messages;
       const errorMsg = serverMessages ? serverMessages.join(", ") : "Operation failed.";
@@ -71,21 +67,25 @@ export default function PatientForm({ onSuccess }: PatientFormProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => (!open ? handleClose() : setIsOpen(true))}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger>
-        <Button type="button" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-xs text-xs h-10">
-          <UserPlus className="h-4 w-4 mr-2" />
-          Add New Patient
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 h-8 px-2 border border-transparent hover:border-blue-100"
+        >
+          <Edit2 className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-xl bg-white rounded-2xl border border-slate-200 p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight">
-            Register Medical Patient
+            Modify Patient Demographics
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Initialize new record tracking metadata for diagnostic monitoring.
+            Adjust processing identity attributes for records verification pipelines.
           </DialogDescription>
         </DialogHeader>
 
@@ -151,11 +151,11 @@ export default function PatientForm({ onSuccess }: PatientFormProps) {
           </div>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="rounded-xl text-xs h-10">
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting} className="rounded-xl text-xs h-10">
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">
-              {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Verify Register"}
+              {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save Profile"}
             </Button>
           </div>
         </form>

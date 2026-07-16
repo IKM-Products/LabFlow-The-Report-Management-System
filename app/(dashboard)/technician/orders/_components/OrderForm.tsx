@@ -1,92 +1,140 @@
 "use client";
 
 import React, { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { 
-  FlaskConical, 
-  Save, 
-  ArrowLeft, 
-  AlertCircle,
-  CheckCircle2
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-// Mock data representing test_parameters for a specific Order Item
-const TEST_PARAMS = [
-  { id: 1, name: "Hemoglobin", unit: "g/dL", ref_range: "13.5 - 17.5" },
-  { id: 2, name: "WBC Count", unit: "10^9/L", ref_range: "4.5 - 11.0" },
-  { id: 3, name: "Platelets", unit: "10^9/L", ref_range: "150 - 450" },
-];
+import { orderFormSchema, OrderFormValues } from "@/schemas/order.schema";
+import { orderService } from "@/services/order.service";
 
-export default function OrderEntryPage() {
-  const params = useParams();
-  const router = useRouter();
-  const [isSaving, setIsSaving] = useState(false);
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
-  const handleSaveResults = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-    
-    // Simulate API call to save to 'results' table
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    toast.success("Result recorded successfully.");
-    setIsSaving(false);
-    router.push("/technician/order-queue");
+interface OrderFormProps {
+  defaultVisitId?: string;
+  onSuccess: () => void;
+}
+
+export default function OrderForm({ defaultVisitId = "", onSuccess }: OrderFormProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<OrderFormValues>({
+    resolver: zodResolver(orderFormSchema) as any,
+    defaultValues: {
+      panel_id: "",
+      price: 0,
+      status: "pending",
+      test_id: "",
+      visit_id: defaultVisitId,
+    },
+  });
+
+  const handleClose = () => {
+    setIsOpen(false);
+    reset({
+      panel_id: "",
+      price: 0,
+      status: "pending",
+      test_id: "",
+      visit_id: defaultVisitId,
+    });
+  };
+
+  const onSubmit = async (values: OrderFormValues) => {
+    setIsSubmitting(true);
+    try {
+      await orderService.createOrder(values);
+      toast.success("New diagnostic order generated successfully.");
+      onSuccess();
+      handleClose();
+    } catch (error: any) {
+      const serverMessages = error.response?.data?.messages;
+      const errorMsg = serverMessages ? serverMessages.join(", ") : "Operation failed.";
+      toast.error(errorMsg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-8 font-sans">
-      
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="h-5 w-5" />
+    <Dialog open={isOpen} onOpenChange={(open) => (!open ? handleClose() : setIsOpen(true))}>
+      <DialogTrigger>
+        <Button type="button" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-xs">
+          <Plus className="h-4 w-4 mr-2" />
+          Create Order
         </Button>
-        <div>
-          <h1 className="text-2xl font-serif">Result Entry</h1>
-          <p className="text-sm text-neutral-500">Processing Order Item: #{params.orderItemId}</p>
-        </div>
-      </div>
+      </DialogTrigger>
 
-      <form onSubmit={handleSaveResults} className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm space-y-6">
-        <div className="flex items-center gap-3 pb-4 border-b border-neutral-100">
-          <FlaskConical className="h-5 w-5 text-emerald-600" />
-          <h2 className="font-bold text-neutral-800">Parameters</h2>
-        </div>
+      <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 p-6">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight">
+            Generate Lab Order
+          </DialogTitle>
+          <DialogDescription className="text-xs text-slate-500">
+            Provision processing steps for laboratory data panels.
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Dynamic Parameter Inputs */}
-        <div className="space-y-4">
-          {TEST_PARAMS.map((param) => (
-            <div key={param.id} className="grid grid-cols-12 gap-4 items-center">
-              <div className="col-span-4">
-                <Label className="text-sm font-semibold text-neutral-700">{param.name}</Label>
-                <p className="text-xs text-neutral-400">Range: {param.ref_range}</p>
-              </div>
-              <div className="col-span-4">
-                <Input type="number" required placeholder={`Value in ${param.unit}`} className="rounded-xl" />
-              </div>
-              <div className="col-span-4 text-sm font-medium text-neutral-500">{param.unit}</div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-slate-700">Visit ID Mapping</Label>
+              <Input {...register("visit_id")} disabled={isSubmitting} className="rounded-xl border-slate-200 text-xs font-mono" />
+              {errors.visit_id && <p className="text-[10px] text-red-500 font-medium">{errors.visit_id.message}</p>}
             </div>
-          ))}
-        </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-slate-700">Test ID Target</Label>
+              <Input {...register("test_id")} disabled={isSubmitting} className="rounded-xl border-slate-200 text-xs font-mono" />
+              {errors.test_id && <p className="text-[10px] text-red-500 font-medium">{errors.test_id.message}</p>}
+            </div>
+          </div>
 
-        <div className="pt-4 border-t border-neutral-100">
-          <Label className="text-sm font-bold text-neutral-700">Technician Remarks</Label>
-          <Textarea className="mt-2 rounded-xl" placeholder="Add observations..." />
-        </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-slate-700">Panel ID Link</Label>
+              <Input {...register("panel_id")} disabled={isSubmitting} className="rounded-xl border-slate-200 text-xs font-mono" />
+              {errors.panel_id && <p className="text-[10px] text-red-500 font-medium">{errors.panel_id.message}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-slate-700">Assigned Price</Label>
+              <Input type="number" step="0.01" {...register("price")} disabled={isSubmitting} className="rounded-xl border-slate-200 text-xs" />
+              {errors.price && <p className="text-[10px] text-red-500 font-medium">{errors.price.message}</p>}
+            </div>
+          </div>
 
-        <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={() => router.back()} className="rounded-xl">Cancel</Button>
-          <Button type="submit" disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700 rounded-xl px-6">
-            {isSaving ? "Saving..." : "Save Results"}
-          </Button>
-        </div>
-      </form>
-    </div>
+          <div className="space-y-1">
+            <Label className="text-xs font-semibold text-slate-700">Initial Status</Label>
+            <Input {...register("status")} disabled={isSubmitting} className="rounded-xl border-slate-200 text-xs" />
+            {errors.status && <p className="text-[10px] text-red-500 font-medium">{errors.status.message}</p>}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="rounded-xl text-xs h-10">
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">
+              {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save Target"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

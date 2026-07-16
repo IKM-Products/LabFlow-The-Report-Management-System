@@ -1,30 +1,43 @@
-// src/types/lab.types.ts
+export interface BaseApiResponse<T> {
+  data: T;
+  message: string;
+  success: boolean;
+}
 
-export interface Lab {
+// Maps response from GET {{base_url}}/admin/lab/all
+export interface LabListItem {
   id: string;
   lab_name: string;
-  tagline?: string | null;
-  address?: string | null;
-  phone?: string | null;
-  email?: string | null;
-  website?: string | null;
-  logo_path?: string | null;
-  registration_no?: string | null;
-  report_footer?: string | null;
-  updated_at?: string;
-  updated_by?: string | number | null;
+  tagline: string;
+  address: string;
+  phone: string;
+  email: string;
+  registration_no: string;
+  report_footer: string;
+  updated_by?: string;
 }
 
-export interface CreateLabPayload {
+// Maps response from single GET or POST responses
+export interface LabDetailedData {
+  id: string;
+  labName: string;
+  tagline: string;
+  address: string;
+  phone: string;
+  email: string;
+  registrationNo: string;
+  reportFooter: string;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+// Standard payload interface for POST and PATCH operations
+export interface LabRequestPayload {
+  address: string;
+  email: string;
   lab_name: string;
-  tagline?: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  logo_path?: string;
-  registration_no?: string;
-  report_footer?: string;
+  phone: string;
+  registration_no: string;
+  report_footer: string;
+  tagline: string;
 }
-
-export type UpdateLabPayload = CreateLabPayload;

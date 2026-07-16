@@ -1,30 +1,11 @@
-// schemas/profile.schema.ts
+import * as z from "zod";
 
-import { z } from "zod";
-
-export const profileSchema = z.object({
-  full_name: z
-    .string()
-    .trim()
-    .min(2, "Full name must contain at least 2 characters")
-    .max(150, "Full name cannot exceed 150 characters"),
-
-  phone: z
-    .string()
-    .trim()
-    .max(20, "Phone cannot exceed 20 characters")
-    .optional()
-    .or(z.literal("")),
-
-  email: z
-    .string()
-    .trim()
-    .email("Enter a valid email")
-    .max(150, "Email cannot exceed 150 characters")
-    .optional()
-    .or(z.literal("")),
+export const profileFormSchema = z.object({
+  first_name: z.string().min(2, "First name must contain at least 2 characters"),
+  last_name: z.string().min(2, "Last name must contain at least 2 characters"),
+  email: z.string().email("Please provide a valid email address"),
+  phone: z.string().min(7, "Phone number must contain at least 7 digits"),
+  role_name: z.string().min(2, "Role designation title is required"),
 });
 
-export type ProfileFormValues = z.infer<
-  typeof profileSchema
->;
+export type ProfileFormValues = z.infer<typeof profileFormSchema>;

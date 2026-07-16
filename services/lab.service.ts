@@ -1,78 +1,36 @@
-// src/services/lab.service.ts
-
-import api from "@/axios/instance";
-import { API_ENDPOINTS } from "@/config/axios";
-import {
-  extractApiData,
-  extractApiList,
-} from "@/lib/api-response";
-import type {
-  CreateLabPayload,
-  Lab,
-  UpdateLabPayload,
+import api from "@/config/axios";
+import { 
+  BaseApiResponse, 
+  LabListItem, 
+  LabDetailedData, 
+  LabRequestPayload 
 } from "@/types/lab.types";
 
-function cleanPayload(
-  payload: CreateLabPayload | UpdateLabPayload,
-) {
-  return {
-    lab_name: payload.lab_name.trim(),
-    tagline: payload.tagline?.trim() || undefined,
-    address: payload.address?.trim() || undefined,
-    phone: payload.phone?.trim() || undefined,
-    email: payload.email?.trim() || undefined,
-    website: payload.website?.trim() || undefined,
-    logo_path: payload.logo_path?.trim() || undefined,
-    registration_no:
-      payload.registration_no?.trim() || undefined,
-    report_footer:
-      payload.report_footer?.trim() || undefined,
-  };
-}
-
 export const labService = {
-  async create(payload: CreateLabPayload): Promise<Lab> {
-    const response = await api.post(
-      API_ENDPOINTS.labs.create,
-      cleanPayload(payload),
-    );
-
-    return extractApiData<Lab>(response.data);
+  // GET {{base_url}}/admin/lab/all
+  getAllLabs: async (): Promise<LabListItem[]> => {
+    const response = await api.get<BaseApiResponse<LabListItem[]>>("/admin/lab/all");
+    return response.data.data;
   },
 
-  async getAll(): Promise<Lab[]> {
-    const response = await api.get(
-      API_ENDPOINTS.labs.getAll,
-    );
-
-    return extractApiList<Lab>(response.data);
+  // GET {{base_url}}/admin/lab/:id
+  getLabById: async (id: string): Promise<LabDetailedData> => {
+    const response = await api.get<BaseApiResponse<LabDetailedData>>(`/admin/lab/${id}`);
+    return response.data.data;
   },
 
-  async getById(labId: string): Promise<Lab> {
-    if (!labId.trim()) {
-      throw new Error("Lab ID is required.");
-    }
-
-    const response = await api.get(
-      API_ENDPOINTS.labs.getById(labId),
-    );
-
-    return extractApiData<Lab>(response.data);
+  // POST {{base_url}}/admin/lab
+  createLab: async (payload: LabRequestPayload): Promise<LabDetailedData> => {
+    const response = await api.post<BaseApiResponse<LabDetailedData>>("/admin/lab", payload);
+    return response.data.data;
   },
 
-  async update(
-    labId: string,
-    payload: UpdateLabPayload,
-  ): Promise<Lab> {
-    if (!labId.trim()) {
-      throw new Error("Lab ID is required.");
-    }
-
-    const response = await api.patch(
-      API_ENDPOINTS.labs.update(labId),
-      cleanPayload(payload),
-    );
-
-    return extractApiData<Lab>(response.data);
+  // PATCH {{base_url}}/admin/lab-test/update-department?id=:id (or matching your endpoint format)
+  updateLab: async (id: string, payload: LabRequestPayload): Promise<string> => {
+    // Passes the ID context as a parameter matching standard edit inputs
+    const response = await api.patch<BaseApiResponse<string>>(`/admin/lab-test/update-department`, payload, {
+      params: { id }
+    });
+    return response.data.data;
   },
 };

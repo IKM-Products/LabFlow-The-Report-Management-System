@@ -1,138 +1,100 @@
+// app/(dashboard)/technician/patients/page.tsx
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { 
-  User, 
-  Search, 
-  ChevronRight, 
-  Calendar,
-  Layers,
-  Activity
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { RegisterPatientDialog } from "@/features/patients/components/register-patient-dialog";
+import React, { useEffect, useState } from "react";
+import { Loader2, Users } from "lucide-react";
 
-// Normalized matching format from the master schemas
-interface Patient {
-  id: string;
-  name: string;
-  age: number;
-  gender: "male" | "female" | "other";
-  phone: string;
-  address: string;
-  lastVisit: string;
-  pendingTests: number;
-}
+import { patientService } from "@/services/patient.service";
+import { Patient } from "@/types/patient.types";
 
-const INITIAL_MOCK_PATIENTS: Patient[] = [
-  { id: "1", name: "John Doe", age: 45, gender: "male", phone: "9800000000", address: "Kathmandu, Nepal", lastVisit: "2026-07-08", pendingTests: 2 },
-  { id: "2", name: "Jane Smith", age: 32, gender: "female", phone: "9811111111", address: "Lalitpur, Nepal", lastVisit: "2026-07-11", pendingTests: 0 },
-  { id: "3", name: "Ram Bahadur", age: 60, gender: "male", phone: "9841234567", address: "Bhaktapur, Nepal", lastVisit: "2026-07-13", pendingTests: 1 }
-];
+import PatientForm from "./_components/PatientForm";
+import EditPatient from "./_components/EditPatient";
 
-export default function PatientsListPage() {
-  const [patients, setPatients] = useState<Patient[]>(INITIAL_MOCK_PATIENTS);
-  const [searchQuery, setSearchQuery] = useState("");
+export default function PatientsPage() {
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredPatients = patients.filter(patient =>
-    patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    patient.id.includes(searchQuery) ||
-    patient.phone.includes(searchQuery)
-  );
-
-  // Success handler to dynamically pull updated data matrices 
-  const handleRefresh = () => {
-    // In actual production, re-fetch state from the server database:
-    // e.g., api.get("/patients").then(res => setPatients(res.data))
-    console.log("Patient directory synchronized successfully.");
+  const fetchPatients = async () => {
+    setIsLoading(true);
+    try {
+      const response = await patientService.getPatients();
+      if (response.success) {
+        setPatients(response.data);
+      }
+    } catch (error) {
+      console.error("Critical extraction failure handling analytical indexing:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6 font-sans">
-      
-      {/* Editorial Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-neutral-100">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-serif tracking-tight text-neutral-900">Registered Patients</h1>
-          <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider mt-1">
-            Access diagnostic records and ongoing laboratory check-in profiles
+          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <Users className="h-5 w-5 text-blue-600" />
+            Demographics Indexing
+          </h1>
+          <p className="text-xs text-slate-500">
+            System indexing validation pipelines for active laboratory patients.
           </p>
         </div>
-        
-        {/* Swapped standard button for the fully operational interactive Dialog */}
-        <RegisterPatientDialog onSuccess={handleRefresh} />
+        <PatientForm onSuccess={fetchPatients} />
       </div>
 
-      {/* Control Utility Search Bar */}
-      <div className="flex gap-3 items-center bg-neutral-50 p-3 rounded-2xl border border-neutral-200/50">
-        <div className="relative w-full max-w-md group">
-          <Search className="absolute left-4 top-3.5 h-4 w-4 text-neutral-400 group-focus-within:text-blue-500 transition-colors" />
-          <Input 
-            placeholder="Search by name, patient ID, or phone number..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-11 h-11 bg-white border-neutral-200 focus:border-blue-500 focus-visible:ring-0 rounded-xl text-sm"
-          />
-        </div>
-      </div>
-
-      {/* Patients Feed Output Stack */}
-      <div className="space-y-3">
-        {filteredPatients.length > 0 ? (
-          filteredPatients.map((patient) => {
-            const formattedGender = patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1);
-            
-            return (
-              <Link 
-                key={patient.id}
-                href={`/technician/patients/${patient.id}`}
-                className="flex items-center justify-between p-5 bg-white border border-neutral-200/70 rounded-2xl shadow-xs hover:border-blue-500/30 hover:shadow-md hover:shadow-blue-950/2 transition-all group"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-11 w-11 rounded-xl bg-neutral-50 border border-neutral-200 flex items-center justify-center text-neutral-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0">
-                    <User className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2.5">
-                      <h3 className="font-bold text-neutral-900 group-hover:text-blue-800 transition-colors">
-                        {patient.name}
-                      </h3>
-                      {patient.pendingTests > 0 && (
-                        <Badge className="bg-amber-500/10 hover:bg-amber-500/10 text-amber-700 border border-amber-500/20 text-[10px] font-bold px-1.5 py-0 rounded-md flex items-center gap-1">
-                          <Activity className="h-2.5 w-2.5 animate-pulse" />
-                          {patient.pendingTests} Active
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-400 font-medium mt-1">
-                      <span>ID: {patient.id}</span>
-                      <span>•</span>
-                      <span>{patient.age} Yrs / {formattedGender}</span>
-                      <span>•</span>
-                      <span>{patient.address}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-6 shrink-0">
-                  <div className="text-right hidden sm:block space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">Last Interaction</span>
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-neutral-600 justify-end">
-                      <Calendar className="h-3.5 w-3.5 text-neutral-400" />
-                      <span>{patient.lastVisit}</span>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-neutral-400 group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              </Link>
-            );
-          })
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center p-20 gap-3">
+            <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
+            <p className="text-xs text-slate-400 font-medium">Extracting metadata indices...</p>
+          </div>
+        ) : patients.length === 0 ? (
+          <div className="text-center p-16 text-slate-400 text-xs font-medium">
+            No active medical profiles located inside verification registries.
+          </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-dashed border-neutral-200 text-center py-16 text-neutral-400 font-medium space-y-2">
-            <Layers className="h-8 w-8 mx-auto text-neutral-300" />
-            <p className="text-sm">No matched diagnostic processing profiles found.</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100 text-slate-600 text-[11px] font-bold uppercase tracking-wider">
+                  <th className="p-4">MRN</th>
+                  <th className="p-4">Patient Name</th>
+                  <th className="p-4">Gender / DOB</th>
+                  <th className="p-4">Contact Info</th>
+                  <th className="p-4">Residence Location</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+                {patients.map((patient) => (
+                  <tr key={patient.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="p-4 font-mono font-bold text-slate-900">{patient.mrn}</td>
+                    <td className="p-4 font-medium text-slate-900">
+                      {patient.first_name} {patient.last_name}
+                    </td>
+                    <td className="p-4">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-700 mr-2">
+                        {patient.gender}
+                      </span>
+                      <span className="text-slate-500 font-mono">{patient.dob}</span>
+                    </td>
+                    <td className="p-4 space-y-0.5">
+                      <div>{patient.email}</div>
+                      <div className="text-slate-400 text-[11px] font-mono">{patient.phone}</div>
+                    </td>
+                    <td className="p-4 text-slate-500 max-w-xs truncate">{patient.address}</td>
+                    <td className="p-4 text-right">
+                      <EditPatient patient={patient} onSuccess={fetchPatients} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
