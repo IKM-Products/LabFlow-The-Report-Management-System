@@ -1,30 +1,24 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import Providers from "./providers";
 import "./globals.css";
 
-const inter = Inter({ 
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
+import SessionAuthProvider from "@/providers/session-provider";
 
 export const metadata: Metadata = {
   title: "LabFlow",
-  description: "Streamlined medical laboratory workflow management system",
+  description: "Laboratory Management System",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="en" className={`${inter.variable}`}>
-      <body className="antialiased">
-        {/* Wrapping the child tree activates useSession hooks across all nested layouts */}
-        <Providers>
+    <html lang="en">
+      <body>
+        <SessionAuthProvider>
           {children}
-        </Providers>
+        </SessionAuthProvider>
       </body>
     </html>
   );

@@ -1,13 +1,15 @@
+// next.config.ts
+
 import type { NextConfig } from "next";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        // 🎯 Catch-all proxy for all backend routes (patient, user, billing, etc.)
-        // This avoids overlapping or breaking your local NextAuth /api/auth routes
-        source: "/backend-api/:path*", 
-        destination: "http://192.168.1.90:8080/api/:path*",
+        source: "/backend-api/:path*",
+        destination: `${API_BASE_URL}/:path*`,
       },
     ];
   },
