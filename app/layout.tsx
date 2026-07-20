@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-import SessionAuthProvider from "@/providers/session-provider";
+import AuthProvider from "@/providers/AuthProvider";
 
 export const metadata: Metadata = {
   title: "LabFlow",
@@ -16,9 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <SessionAuthProvider>
+        <AuthProvider>
           {children}
-        </SessionAuthProvider>
+        </AuthProvider>
       </body>
     </html>
   );
