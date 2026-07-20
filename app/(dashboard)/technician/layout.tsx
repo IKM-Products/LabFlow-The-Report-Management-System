@@ -1,61 +1,66 @@
-// app/(dashboard)/admin/layout.tsx
+// app/(dashboard)/technician/layout.tsx
 "use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { 
-  LayoutDashboard, 
-  Building2, 
-  Stethoscope, 
   FlaskConical, 
-  Contact, 
-  Users, 
-  ShieldCheck, 
+  LayoutDashboard, 
+  ClipboardList, 
+  CheckCircle2, 
+  Activity, 
   Settings, 
-  Bell, 
+  LogOut, 
   Menu, 
-  X,
-  LogOut
+  X, 
+  Bell,
+  Package,
+  Users,
+  FileText,
+  FileSpreadsheet,
+  MapPin
 } from "lucide-react";
 
-interface AdminLayoutProps {
+interface TechnicianLayoutProps {
   children: React.ReactNode;
 }
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Grouped Navigation Schema supporting structural, user management, and configuration nodes
+  // Grouped Navigation Schema supporting core operations and clinical views
   const navigationGroups = [
     {
       groupName: "Core Dashboard",
       items: [
-        { name: "Overview", href: "/admin", icon: LayoutDashboard }
+        { name: "Overview Matrix", href: "/technician", icon: LayoutDashboard }
       ]
     },
     {
-      groupName: "Organization",
+      groupName: "Operations",
       items: [
-        { name: "Departments", href: "/admin/departments", icon: Building2 },
-        { name: "Doctors", href: "/admin/doctors", icon: Stethoscope },
-        { name: "Labs", href: "/admin/labs", icon: FlaskConical },
+        { name: "Pending Analysis", href: "/technician/pending", icon: ClipboardList, badge: "12" },
+        { name: "Orders", href: "/technician/orders", icon: Package },
+        { name: "Patients", href: "/technician/patients", icon: Users },
+        { name: "Visits", href: "/technician/visits", icon: MapPin },
       ]
     },
     {
-      groupName: "User Management",
+      groupName: "Diagnostics & Output",
       items: [
-        { name: "Profiles", href: "/admin/profiles", icon: Contact },
-        { name: "Users", href: "/admin/users", icon: Users },
-        { name: "Roles", href: "/admin/roles", icon: ShieldCheck },
+        { name: "Results", href: "/technician/results", icon: FileSpreadsheet },
+        { name: "Reports", href: "/technician/reports", icon: FileText },
+        { name: "Completed Reports", href: "/technician/completed-reports", icon: CheckCircle2 },
       ]
     },
     {
       groupName: "System",
       items: [
-        { name: "System Settings", href: "/admin/settings", icon: Settings },
+        { name: "Equipment Status", href: "/technician/equipment", icon: Activity },
+        { name: "System Settings", href: "/technician/settings", icon: Settings },
       ]
     }
   ];
@@ -70,7 +75,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   };
 
-  // Helper renderer to keep sidebar mapping DRY across layout configurations
+  // Helper renderer to keep sidebar mapping DRY across platforms
   const renderNavLinks = (closeMobile = false) => {
     return navigationGroups.map((group) => (
       <div key={group.groupName} className="space-y-1 pt-4 first:pt-0">
@@ -97,6 +102,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   <Icon className={`h-4 w-4 transition-colors ${isActive ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600"}`} />
                   <span>{item.name}</span>
                 </div>
+                {item.badge && (
+                  <span className={`text-[10px] px-2 py-0.5 font-bold rounded-full transition-colors ${
+                    isActive ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
+                  }`}>
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -128,7 +140,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           {renderNavLinks(false)}
         </nav>
 
-        {/* Action Controls & Platform Status Indicator Footer */}
+        {/* Action Controls Footer */}
         <div className="p-4 border-t border-slate-100 bg-slate-50/40 flex flex-col gap-2 shrink-0">
           <button
             type="button"
@@ -198,7 +210,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
           <div className="hidden sm:block text-xs font-semibold text-slate-400 tracking-wide uppercase">
             <span className="text-slate-700 normal-case font-bold">
-              {pathname === "/admin" ? "Admin Workspace" : pathname.split("/").pop()?.replace("-", " ")}
+              {pathname === "/technician" ? "Technician Workspace" : pathname.split("/").pop()?.replace("-", " ")}
             </span>
           </div>
           
@@ -208,14 +220,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-emerald-500 ring-2 ring-white" />
             </button>
 
-            {/* Account Identity Segment */}
+            {/* Operator Account Identity Segment */}
             <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200">
               <div className="h-8 w-8 rounded-full bg-linear-to-br from-emerald-600 to-teal-600 text-white flex items-center justify-center text-xs font-bold shadow-sm shadow-emerald-600/10 select-none">
                 IKM
               </div>
               <div className="hidden sm:block text-left">
                 <p className="text-xs font-bold text-slate-800 leading-none">Ismael Karki Manaay</p>
-                <p className="text-[10px] font-semibold text-emerald-600 mt-0.5">Admin</p>
+                <p className="text-[10px] font-semibold text-emerald-600 mt-0.5">Technician</p>
               </div>
             </div>
           </div>

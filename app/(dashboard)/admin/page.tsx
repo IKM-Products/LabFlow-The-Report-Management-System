@@ -10,7 +10,12 @@ import {
   Cpu, 
   Terminal, 
   ArrowUpRight, 
-  Radio 
+  Radio,
+  Stethoscope,
+  Building2,
+  TestTubes,
+  UserSquare2,
+  ShieldCheck
 } from "lucide-react";
 import Link from "next/link";
 
@@ -41,17 +46,52 @@ export default function AdminDashboardPage() {
 
   const adminControls = [
     {
-      title: "User Provisioning & Access Control",
-      description: "Manage system operators, technicians, and attending physician cryptographic access identifiers.",
+      title: "User Management",
+      description: "Manage system operators, accounts, and standard user configurations.",
       icon: Users,
-      href: "/dashboard/admin/users",
-      badge: "Manage Security",
+      href: "/admin/users",
+      badge: "Security",
+    },
+    {
+      title: "Doctor Directory",
+      description: "Oversee practitioner credentials, active duty statuses, and medical assignments.",
+      icon: Stethoscope,
+      href: "/admin/doctors",
+      badge: "Staff",
+    },
+    {
+      title: "Department Hub",
+      description: "Configure organization structures, clinic wings, and specialized divisions.",
+      icon: Building2,
+      href: "/admin/departments",
+      badge: "Infrastructure",
+    },
+    {
+      title: "Laboratory Configurations",
+      description: "Manage physical labs, analysis equipment profiles, and processing configurations.",
+      icon: TestTubes,
+      href: "/admin/labs",
+      badge: "Operations",
+    },
+    {
+      title: "Operator Profiles",
+      description: "Audit detailed administrative profiles and cryptographic identities.",
+      icon: UserSquare2,
+      href: "/admin/profiles",
+      badge: "Identity",
+    },
+    {
+      title: "Access Control Roles",
+      description: "Define granular permission levels, token authorizations, and security clearance groups.",
+      icon: ShieldCheck,
+      href: "/admin/roles",
+      badge: "Policy",
     },
     {
       title: "Gateway Telemetry Config",
       description: "Configure environment routing, modify proxy channels, and target base infrastructure API pipelines.",
       icon: Settings,
-      href: "/dashboard/admin/settings",
+      href: "/admin/settings",
       badge: "System Core",
     },
   ];
@@ -118,7 +158,7 @@ export default function AdminDashboardPage() {
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
                           {control.title}
                         </h3>
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200/50">
@@ -132,7 +172,7 @@ export default function AdminDashboardPage() {
                   </div>
                   <Link 
                     href={control.href}
-                    className="self-end sm:self-auto h-8 w-8 rounded-lg border border-slate-200 hover:border-blue-200 hover:bg-blue-50/50 text-slate-400 hover:text-blue-600 flex items-center justify-center shrink-0 transition-all"
+                    className="self-end sm:self-auto h-8 w-8 rounded-lg border border-slate-200 hover:border-emerald-200 hover:bg-emerald-50/50 text-slate-400 hover:text-emerald-600 flex items-center justify-center shrink-0 transition-all"
                   >
                     <ArrowUpRight className="h-4 w-4" />
                   </Link>
