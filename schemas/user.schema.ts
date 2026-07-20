@@ -1,7 +1,7 @@
 import * as z from "zod";
 
 export const CreateUserSchema = z.object({
-  email: z.string().min(1, "Target system email coordinate required").email("Invalid schema format"),
+  email: z.string().min(1, "Target system email coordinate required").pipe(z.email("Invalid schema format")),
   first_name: z.string().min(1, "First name validation vector structural element missing"),
   last_name: z.string().min(1, "Last name validation vector structural element missing"),
   password: z.string().min(6, "Security system signature key must exceed 6 parameters"),
