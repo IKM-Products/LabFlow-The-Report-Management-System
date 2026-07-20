@@ -50,12 +50,12 @@ export default function EditDepartment({ department, onSuccess }: EditDepartment
         id: department.dept_id,
         ...values,
       });
-      toast.success("Department profile configuration modified.");
+      toast.success("Department updated successfully.");
       onSuccess();
       setIsOpen(false);
     } catch (error: any) {
       const serverMessages = error.response?.data?.messages;
-      const errorMsg = serverMessages ? serverMessages.join(", ") : "Operation failed.";
+      const errorMsg = serverMessages ? serverMessages.join(", ") : "The operation could not be completed. Please try again.";
       toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
@@ -64,24 +64,18 @@ export default function EditDepartment({ department, onSuccess }: EditDepartment
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 h-8 px-2 border border-transparent hover:border-blue-100"
-        >
-          <Edit2 className="h-3.5 w-3.5" />
-        </Button>
+      {/* FIXED: Removed inner <Button> and moved all styles directly onto the trigger to avoid nested button components */}
+      <DialogTrigger className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50 cursor-pointer rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 h-8 px-2 border border-transparent hover:border-blue-100">
+        <Edit2 className="h-3.5 w-3.5" />
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight">
-            Modify Department
+            Update Department
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Update administrative parameters for this layout partition.
+            Update the department details.
           </DialogDescription>
         </DialogHeader>
 

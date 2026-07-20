@@ -27,8 +27,15 @@ export default function DepartmentPage() {
     try {
       const data = await departmentService.getDepartments();
       setDepartments(data);
-    } catch (error) {
-      console.error("Critical error reading department entities:", error);
+    } catch (error: any) {
+      console.error("--- API Error Breakdown ---");
+      console.error("Text Message:", String(error));
+      console.error("Inspectable Object:", error);
+      
+      if (error?.response) {
+        console.error("Backend Status Code:", error.response.status);
+        console.error("Backend Error Payload:", error.response.data);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -46,7 +53,7 @@ export default function DepartmentPage() {
             Laboratory Departments
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Administrative scope control layout. Manage system attributes for operational divisions.
+            Manage department settings and operational configurations.
           </p>
         </div>
 
@@ -67,21 +74,21 @@ export default function DepartmentPage() {
 
       {isLoading ? (
         <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 animate-pulse bg-white border rounded-2xl">
-          Synchronizing department records queue...
+          Loading department data...
         </div>
       ) : (
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
-              List of all active operational departments.
+              List of all registered departments.
             </TableCaption>
             <TableHeader>
-              <tr className="bg-slate-50 border-b border-slate-200">
+              <TableRow className="bg-slate-50 border-b border-slate-200">
                 <TableHead className="w-20 font-bold text-slate-600">SN</TableHead>
                 <TableHead className="font-bold text-slate-600">Department Name</TableHead>
                 <TableHead className="font-bold text-slate-600">Description</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
-              </tr>
+              </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-slate-150">
               {departments.length === 0 ? (
@@ -89,7 +96,7 @@ export default function DepartmentPage() {
                   <TableCell colSpan={4} className="py-12 text-center text-sm text-slate-400">
                     <div className="flex flex-col items-center justify-center space-y-1">
                       <ShieldAlert className="h-6 w-6 text-slate-300" />
-                      <p className="font-medium text-slate-500">No departments cataloged yet.</p>
+                      <p className="font-medium text-slate-500">No departments have been added yet.</p>
                     </div>
                   </TableCell>
                 </TableRow>

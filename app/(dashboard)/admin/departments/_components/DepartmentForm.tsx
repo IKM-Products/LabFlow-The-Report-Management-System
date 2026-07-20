@@ -56,7 +56,7 @@ export default function DepartmentForm({ onSuccess }: DepartmentFormProps) {
       handleClose();
     } catch (error: any) {
       const serverMessages = error.response?.data?.messages;
-      const errorMsg = serverMessages ? serverMessages.join(", ") : "Operation failed.";
+      const errorMsg = serverMessages ? serverMessages.join(", ") : "The operation could not be completed. Please try again.";
       toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
@@ -65,11 +65,10 @@ export default function DepartmentForm({ onSuccess }: DepartmentFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (!open ? handleClose() : setIsOpen(true))}>
-      <DialogTrigger>
-        <Button type="button" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-xs">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Department
-        </Button>
+      {/* FIXED: Removed inner <Button> and moved all classes directly to the trigger to avoid nesting */}
+      <DialogTrigger className="inline-flex items-center justify-center whitespace-nowrap text-sm h-10 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-xs transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50 cursor-pointer">
+        <Plus className="h-4 w-4 mr-2" />
+        Add Department
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 p-6">
@@ -78,7 +77,7 @@ export default function DepartmentForm({ onSuccess }: DepartmentFormProps) {
             Create Department
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Add a new department configuration to the system ecosystem.
+            Add a new department to the system.
           </DialogDescription>
         </DialogHeader>
 
