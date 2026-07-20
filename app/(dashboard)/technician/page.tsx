@@ -115,17 +115,6 @@ export default function TechnicianDashboardPage() {
           })}
         </div>
       </div>
-
-      {/* System Notice Warning Block */}
-      <div className="bg-amber-50/50 border border-amber-200/60 rounded-2xl p-4 flex items-start gap-3">
-        <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-        <div className="space-y-0.5">
-          <h4 className="text-xs font-bold text-amber-900">Environmental Pipeline Binding Notification</h4>
-          <p className="text-[11px] text-amber-700 leading-relaxed">
-            All transactional operations executed through this node endpoint flow directly into target runtime host configuration <span className="font-mono font-bold">192.168.1.90:8080</span>. Ensure tracking sequences and reference target identifiers match institutional parameters before committing updates to the live matrix.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

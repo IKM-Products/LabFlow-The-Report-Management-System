@@ -1,7 +1,7 @@
 // app/(dashboard)/admin/layout.tsx
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { 
@@ -17,7 +17,8 @@ import {
   Grid,
   Layers,
   BookOpen,
-  Scale
+  Scale,
+  AlertTriangle
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -27,6 +28,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
   const navigationGroups = [
     {
@@ -64,6 +66,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const handleLogout = async () => {
     try {
+      setIsLogoutDialogOpen(false);
       router.push("/login");
     } catch (error) {
       console.error("Critical error during session termination lifecycle:", error);
@@ -138,11 +141,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <div className="p-4 border-t border-slate-100 bg-slate-50/40 flex flex-col gap-2 shrink-0">
           <button
             type="button"
-            onClick={handleLogout}
+            onClick={() => setIsLogoutDialogOpen(true)}
             className="w-full flex items-center gap-3 px-4 h-11 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-all duration-200 cursor-pointer text-left"
           >
             <LogOut className="h-4 w-4 text-rose-500" />
-            <span>Log Out</span>
+            <span>Sign Out</span>
           </button>
         </div>
       </aside>
@@ -183,6 +186,40 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           {children}
         </main>
       </div>
+
+      {/* ================= CONFIRMATION MODAL DIALOG ================= */}
+      {isLogoutDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all border border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Confirm Sign Out</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Are you sure you want to sign out?</p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsLogoutDialogOpen(false)}
+                className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 border border-slate-200 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700 shadow-sm shadow-rose-600/20 transition-all cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
