@@ -49,7 +49,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       groupName: "Laboratory Configuration",
       items: [
         { name: "Panels", href: "/admin/panels", icon: Grid },
-        { name: "Panel Components", href: "/admin/panel-components", icon: Layers },
         { name: "Test Catalog", href: "/admin/test-catalogs", icon: BookOpen },
         { name: "Reference Ranges", href: "/admin/reference-ranges", icon: Scale },
       ]
