@@ -43,22 +43,22 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
     {
       groupName: "Dashboard",
       items: [
-        { name: "Overview", href: "/technician", icon: LayoutDashboard }
+        { name: "Overview", href: "/dashboard/technician", icon: LayoutDashboard }
       ]
     },
     {
       groupName: "Operations",
       items: [
-        { name: "Orders", href: "/technician/orders", icon: Package },
-        { name: "Patients", href: "/technician/patients", icon: Users },
-        { name: "Visits", href: "/technician/visits", icon: MapPin },
+        { name: "Orders", href: "/dashboard/technician/orders", icon: Package },
+        { name: "Patients", href: "/dashboard/technician/patients", icon: Users },
+        { name: "Visits", href: "/dashboard/technician/visits", icon: MapPin },
       ]
     },
     {
       groupName: "Diagnostics & Output",
       items: [
-        { name: "Results", href: "/technician/results", icon: FileSpreadsheet },
-        { name: "Reports", href: "/technician/reports", icon: FileText },
+        { name: "Results", href: "/dashboard/technician/results", icon: FileSpreadsheet },
+        { name: "Reports", href: "/dashboard/technician/reports", icon: FileText },
       ]
     }
   ];

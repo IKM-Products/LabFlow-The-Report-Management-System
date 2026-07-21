@@ -48,10 +48,20 @@ export default function LoginPage() {
       } else {
         const res = await fetch("/api/auth/session");
         const session = await res.json();
+        
         if (session?.userId) {
-          setAuthSession(session.userId, session.userType || "USER", session.sessionId || "");
+          // Normalize role check across common backend keys (ROLE_ADMIN, ADMIN, admin, etc.)
+          const rawRole = (
+            session.userType ||
+            session.role ||
+            session.userRole ||
+            session.user?.role ||
+            ""
+          ).toString().toUpperCase();
+
+          setAuthSession(session.userId, rawRole, session.sessionId || "");
           
-          if (session.userType === "ADMIN") {
+          if (rawRole.includes("ADMIN")) {
             router.push("/dashboard/admin");
           } else {
             router.push("/dashboard/technician");

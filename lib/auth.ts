@@ -32,7 +32,7 @@ export const authOptions: NextAuthOptions = {
           }
           return null;
         } catch (error: any) {
-          const errorMsg = error?.messages?.join(", ") || "Handshake verification execution breakdown";
+          const errorMsg = error?.messages?.join(", ") || "Sign-in failed. Please try again.";
           throw new Error(errorMsg);
         }
       },

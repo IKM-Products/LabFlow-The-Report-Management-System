@@ -34,31 +34,31 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     {
       groupName: "Dashboard",
       items: [
-        { name: "Overview", href: "/admin", icon: LayoutDashboard }
+        { name: "Overview", href: "/dashboard/admin", icon: LayoutDashboard }
       ]
     },
     {
       groupName: "Organization",
       items: [
-        { name: "Departments", href: "/admin/departments", icon: Building2 },
-        { name: "Doctors", href: "/admin/doctors", icon: Stethoscope },
-        { name: "Labs", href: "/admin/labs", icon: FlaskConical },
+        { name: "Departments", href: "/dashboard/admin/departments", icon: Building2 },
+        { name: "Doctors", href: "/dashboard/admin/doctors", icon: Stethoscope },
+        { name: "Labs", href: "/dashboard/admin/labs", icon: FlaskConical },
       ]
     },
     {
       groupName: "Laboratory Configuration",
       items: [
-        { name: "Panels", href: "/admin/panels", icon: Grid },
-        { name: "Test Catalog", href: "/admin/test-catalogs", icon: BookOpen },
-        { name: "Reference Ranges", href: "/admin/reference-ranges", icon: Scale },
+        { name: "Panels", href: "/dashboard/admin/panels", icon: Grid },
+        { name: "Test Catalog", href: "/dashboard/admin/test-catalogs", icon: BookOpen },
+        { name: "Reference Ranges", href: "/dashboard/admin/reference-ranges", icon: Scale },
       ]
     },
     {
       groupName: "User Management",
       items: [
-        { name: "Profiles", href: "/admin/profiles", icon: Contact },
-        { name: "Users", href: "/admin/users", icon: Users },
-        { name: "Roles", href: "/admin/roles", icon: ShieldCheck },
+        { name: "Profiles", href: "/dashboard/admin/profiles", icon: Contact },
+        { name: "Users", href: "/dashboard/admin/users", icon: Users },
+        { name: "Roles", href: "/dashboard/admin/roles", icon: ShieldCheck },
       ]
     }
   ];

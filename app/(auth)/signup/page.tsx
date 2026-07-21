@@ -9,14 +9,15 @@ import { Loader2, AlertTriangle, Eye, EyeOff, CheckCircle2, FlaskConical, Chevro
 import * as z from "zod";
 import Link from "next/link";
 
-// Define schema matching the requested fields
 const SignupSchema = z.object({
   email: z.string().trim().min(1, "Email address is required.").pipe(z.email("Invalid email address format.")),
   first_name: z.string().min(1, "First name is required."),
   last_name: z.string().min(1, "Last name is required."),
-  password: z.string().min(6, "Password must be at least 6 characters long."),
-  phone: z.string().min(7, "Please enter a valid phone number."),
-  role_name: z.string().min(1, "Please select your role."),
+  password: z.string().min(8, "Password must be at least 6 characters long."),
+  phone: z.string().min(10, "Please enter a valid phone number."),
+  role_name: z.enum(["ROLE_USER", "ROLE_TECHNICIAN", "ROLE_ADMIN"], {
+    message: "Please select a valid role.",
+  }),
   terms: z.literal(true, { error: "Please accept the Terms and Conditions to continue." }),
 });
 
@@ -36,7 +37,7 @@ export default function SignupPage() {
   } = useForm<FormData>({
     resolver: zodResolver(SignupSchema),
     defaultValues: {
-      role_name: "USER",
+      role_name: "ROLE_USER",
     }
   });
 
@@ -44,7 +45,7 @@ export default function SignupPage() {
     setIsLoading(true);
     setGlobalErrors([]);
     try {
-      const response = await fetch("/api/auth/signup", {
+      const response = await fetch("/api/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -52,8 +53,8 @@ export default function SignupPage() {
 
       const result = await response.json();
 
-      if (!response.ok) {
-        setGlobalErrors([result.message || "Failed to provision security account node."]);
+      if (!response.ok || result.success === false) {
+        setGlobalErrors([result.message || "Failed to create the account."]);
         setIsLoading(false);
       } else {
         setIsSuccess(true);
@@ -63,7 +64,7 @@ export default function SignupPage() {
         }, 2000);
       }
     } catch (err) {
-      setGlobalErrors(["Fatal synchronization breakdown crossing gateway route boundaries."]);
+      setGlobalErrors(["Failed to process signup request. Please try again."]);
       setIsLoading(false);
     }
   };
@@ -73,26 +74,21 @@ export default function SignupPage() {
       
       {/* Left Column: Dark Green Brand Display Panel */}
       <div className="bg-[#051610] p-8 sm:p-12 md:p-16 flex flex-col justify-between relative overflow-hidden text-white min-h-125 lg:min-h-screen">
-        {/* Subtle Decorative Background Lines */}
         <div className="absolute inset-0 opacity-5 pointer-events-none flex items-center justify-center">
           <div className="w-125 h-125 border border-emerald-500 rounded-full absolute" />
           <div className="w-175 h-175 border border-emerald-500 rounded-full absolute" />
         </div>
 
-        {/* Top Tagline */}
         <p className="text-xs font-normal italic text-emerald-500/80 tracking-wide relative z-10 max-w-xs">
           Empowering healthcare through fast, precise lab reporting.
         </p>
 
-        {/* Center Content: Headline & Phone Component Mockup */}
         <div className="my-auto space-y-12 relative z-10 flex flex-col items-center lg:items-start w-full">
           <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-white leading-[1.1] text-center lg:text-left">
             Manage <br /> your reports
           </h1>
           
-          {/* Simulated Smartphone Graphic Device */}
           <div className="w-64 h-340px bg-[#030d0a] rounded-[36px] border-[6px] border-[#0e271f] shadow-2xl overflow-hidden p-4 flex flex-col justify-between relative transform rotate-[-4deg] hover:rotate-0 transition-transform duration-500 origin-bottom">
-            {/* Dynamic Island Ear-piece element */}
             <div className="absolute top-2 left-1/2 -translate-x-1/2 w-20 h-4 bg-black rounded-full z-20 flex items-center justify-center" />
             
             <div className="space-y-4 mt-4">
@@ -101,11 +97,9 @@ export default function SignupPage() {
                 <div className="w-2.5 h-2.5 bg-emerald-950 rounded-full flex items-center justify-center text-[7px] text-emerald-400">i</div>
               </div>
 
-              {/* Lab Efficiency Widget */}
               <div>
                 <p className="text-xl font-semibold text-white tracking-tight">98.4 <span className="text-xs font-normal text-emerald-400">%</span></p>
                 <p className="text-[8px] text-emerald-500/60 mt-0.5">Throughput Efficiency Rate</p>
-                {/* Micro Bar Chart Cluster */}
                 <div className="flex items-end justify-between h-14 mt-3 px-1 gap-1">
                   <div className="w-2.5 h-6 bg-emerald-500/60 rounded-sm" />
                   <div className="w-2.5 h-10 bg-emerald-500/70 rounded-sm" />
@@ -117,7 +111,6 @@ export default function SignupPage() {
                 </div>
               </div>
 
-              {/* Dynamic Categories Deck */}
               <div className="space-y-2 pt-2">
                 <p className="text-[9px] text-emerald-500/75 uppercase tracking-wider font-bold">Diagnostics</p>
                 <div className="bg-[#081a14] rounded-xl p-2 flex justify-between items-center border border-emerald-900/40">
@@ -147,7 +140,6 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Simulated Phone Navigation Tabbar */}
             <div className="flex justify-between items-center border-t border-emerald-950 pt-2 text-emerald-800 px-2 text-[10px]">
               <span>⌂</span>
               <div className="w-4 h-4 rounded-full border border-emerald-500" />
@@ -156,7 +148,6 @@ export default function SignupPage() {
           </div>
         </div>
 
-        {/* Bottom Decorative Identity Icon */}
         <div className="relative z-10 flex items-center justify-between mt-6 lg:mt-0">
           <div className="w-5 h-5 rounded-full border border-emerald-500 flex items-center justify-center text-[9px] font-bold text-emerald-500 opacity-80">
             LF
@@ -164,18 +155,13 @@ export default function SignupPage() {
         </div>
       </div>
 
-      {/* Right Column: Clean White Interface Form Layer */}
+      {/* Right Column: Form Area */}
       <div className="p-8 sm:p-12 md:p-16 flex flex-col justify-between bg-white w-full lg:min-h-screen">
         
-        {/* Branding Navigation Header Row */}
         <div className="flex items-center justify-between w-full mb-8 lg:mb-12">
-          {/* Animated Glow Logo Component */}
           <div className="flex items-center gap-3 cursor-pointer select-none group">
             <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30">
-              {/* Glow Effect */}
               <div className="absolute inset-0 rounded-xl bg-emerald-400/40 blur-md animate-pulse" />
-
-              {/* Animated Flask */}
               <FlaskConical className="relative w-5 h-5 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 animate-bounce" />
             </div>
 
@@ -185,7 +171,6 @@ export default function SignupPage() {
           </div>
         </div>
 
-        {/* Central Core Input Block Area */}
         <div className="max-w-md w-full mx-auto my-auto space-y-6">
           <div className="space-y-1.5">
             <h2 className="text-4xl font-semibold text-slate-900 tracking-tight">Create Account!</h2>
@@ -216,7 +201,6 @@ export default function SignupPage() {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* First & Last Name row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <input
@@ -241,7 +225,6 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Email Field */}
             <div className="space-y-1">
               <input
                 type="email"
@@ -253,7 +236,6 @@ export default function SignupPage() {
               {errors.email && <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">{errors.email.message}</p>}
             </div>
 
-            {/* Phone & System Role select row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <input
@@ -272,9 +254,9 @@ export default function SignupPage() {
                   disabled={isLoading || isSuccess}
                   className="w-full h-13 pl-6 pr-12 text-sm font-medium rounded-full border border-slate-200 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all disabled:opacity-60 bg-white cursor-pointer appearance-none"
                 >
-                  <option value="USER">Select Your Role</option>
-                  <option value="TECHNICIAN">Technician</option>
-                  <option value="ADMIN">Admin</option>
+                  <option value="ROLE_USER">Select Your Role</option>
+                  <option value="ROLE_TECHNICIAN">Technician</option>
+                  <option value="ROLE_ADMIN">Admin</option>
                 </select>
                 <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                   <ChevronDown className="w-4 h-4" />
@@ -283,7 +265,6 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Password Access Control Wrapper */}
             <div className="space-y-1">
               <div className="relative">
                 <input
@@ -305,7 +286,6 @@ export default function SignupPage() {
               {errors.password && <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">{errors.password.message}</p>}
             </div>
 
-            {/* Terms and Privacy Policy Checkbox Container */}
             <div className="space-y-1 pt-1">
               <div className="flex items-start gap-3 px-4">
                 <input
@@ -330,7 +310,6 @@ export default function SignupPage() {
               {errors.terms && <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">{errors.terms.message}</p>}
             </div>
 
-            {/* Custom Dynamic Linear Signature Gradient Pill Button Node */}
             <button
               type="submit"
               disabled={isLoading || isSuccess}
@@ -348,7 +327,6 @@ export default function SignupPage() {
               )}
             </button>
 
-            {/* Toggle Action Container for Login Context */}
             <div className="text-center text-xs font-medium text-slate-500 mt-4">
               Already have an account?{" "}
               <Link 
@@ -361,7 +339,6 @@ export default function SignupPage() {
           </form>
         </div>
 
-        {/* Structural Design Form Footer */}
         <div className="flex flex-col sm:flex-row items-center justify-between text-[11px] font-medium text-slate-400 pt-8 border-t border-slate-100 gap-4 w-full mt-6">
           <span>© 2026 LabFlow Inc.</span>
         </div>
