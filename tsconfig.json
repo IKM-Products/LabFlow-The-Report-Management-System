@@ -33,6 +33,6 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     "components/dashboard/.technician-dashboard.tsx"
-, "app/(protected)/dashboard/admin/users/_components"  ],
+, "app/(dashboard)/admin/users/_components"  ],
   "exclude": ["node_modules"]
 }
