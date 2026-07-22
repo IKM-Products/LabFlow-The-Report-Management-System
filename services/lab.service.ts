@@ -13,15 +13,9 @@ export const labService = {
     return response.data.data;
   },
 
-  // GET {{base_url}}/admin/lab/all
+  // GET {{base_url}}/admin/lab
   getAllLabs: async (): Promise<LabListItem[]> => {
-    const response = await axiosInstance.get<BaseApiResponse<LabListItem[]>>("/admin/lab/all");
-    return response.data.data;
-  },
-
-  // GET {{base_url}}/admin/lab/:id
-  getAdminLabById: async (id: string): Promise<LabDetailedData> => {
-    const response = await axiosInstance.get<BaseApiResponse<LabDetailedData>>(`/admin/lab/${id}`);
+    const response = await axiosInstance.get<BaseApiResponse<LabListItem[]>>("/admin/lab");
     return response.data.data;
   },
 
@@ -31,11 +25,9 @@ export const labService = {
     return response.data.data;
   },
 
-  // PATCH {{base_url}}/admin/lab-test/update-department?id=:id
-  updateLab: async (id: string, payload: LabRequestPayload): Promise<string> => {
-    const response = await axiosInstance.patch<BaseApiResponse<string>>(`/admin/lab-test/update-department`, payload, {
-      params: { id }
-    });
+  // PATCH {{base_url}}/admin/lab/{id}
+  updateLab: async (id: string | number, payload: Partial<LabRequestPayload>): Promise<LabDetailedData> => {
+    const response = await axiosInstance.patch<BaseApiResponse<LabDetailedData>>(`/admin/lab/${id}`, payload);
     return response.data.data;
   },
 };

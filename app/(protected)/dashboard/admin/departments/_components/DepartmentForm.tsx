@@ -66,7 +66,7 @@ export default function DepartmentForm({ onSuccess }: DepartmentFormProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (!open ? handleClose() : setIsOpen(true))}>
       {/* FIXED: Removed inner <Button> and moved all classes directly to the trigger to avoid nesting */}
-      <DialogTrigger className="inline-flex items-center justify-center whitespace-nowrap text-sm h-10 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-xs transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50 cursor-pointer">
+      <DialogTrigger className="inline-flex items-center justify-center whitespace-nowrap text-sm h-10 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium shadow-xs transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50 cursor-pointer">
         <Plus className="h-4 w-4 mr-2" />
         Add Department
       </DialogTrigger>
@@ -74,10 +74,10 @@ export default function DepartmentForm({ onSuccess }: DepartmentFormProps) {
       <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight">
-            Create Department
+            Add New Department
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Add a new department to the system.
+            Create a new department in the system.
           </DialogDescription>
         </DialogHeader>
 
@@ -89,7 +89,7 @@ export default function DepartmentForm({ onSuccess }: DepartmentFormProps) {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs font-semibold text-slate-700">Description</Label>
+            <Label className="text-xs font-semibold text-slate-700">Department Description</Label>
             <Input {...register("dept_description")} disabled={isSubmitting} className="rounded-xl border-slate-200" />
             {errors.dept_description && <p className="text-[10px] text-red-500 font-medium">{errors.dept_description.message}</p>}
           </div>
@@ -98,8 +98,8 @@ export default function DepartmentForm({ onSuccess }: DepartmentFormProps) {
             <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="rounded-xl text-xs h-10">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">
-              {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save Profile"}
+            <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">
+              {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
             </Button>
           </div>
         </form>

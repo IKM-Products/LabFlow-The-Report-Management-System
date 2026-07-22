@@ -1,29 +1,65 @@
 "use client";
 
-import React, { useState } from "react";
-import { useForm, Resolver } from "react-hook-form";
+import React, { useState, useEffect } from "react";
+import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Edit2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
 import { TestCatalogSchema, TestCatalogFormData } from "@/schemas/test-catalog.schema";
 import { testCatalogService } from "@/services/test-catalog.service";
+import { departmentService } from "@/services/department.service";
+import { Department } from "@/types/department.types";
 import { TestCatalogItem } from "@/types/test-catalog.types";
-import { Loader2, Edit3, AlertCircle, X } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface EditTestCatalogProps {
   item: TestCatalogItem;
   onSuccess: () => void;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export default function EditTestCatalog({ item, onSuccess, onClose }: EditTestCatalogProps) {
-  const [loading, setLoading] = useState(false);
-  const [errorsList, setErrorsList] = useState<string[]>([]);
+export default function EditTestCatalog({
+  item,
+  onSuccess,
+  isOpen: externalIsOpen,
+  onClose: externalOnClose,
+}: EditTestCatalogProps) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loadingDepts, setLoadingDepts] = useState(false);
+
+  const isControlled = externalIsOpen !== undefined;
+  const isOpen = isControlled ? externalIsOpen : internalIsOpen;
 
   const {
     register,
     handleSubmit,
+    reset,
+    control,
     formState: { errors },
   } = useForm<TestCatalogFormData>({
-    resolver: zodResolver(TestCatalogSchema) as Resolver<TestCatalogFormData>,
+    resolver: zodResolver(TestCatalogSchema) as Resolver<TestCatalogFormData, any>,
     defaultValues: {
       id: item.test_catalog_id,
       dept_id: item.dept_id,
@@ -35,139 +71,243 @@ export default function EditTestCatalog({ item, onSuccess, onClose }: EditTestCa
     },
   });
 
-  const onSubmit = async (data: TestCatalogFormData) => {
-    setLoading(true);
-    setErrorsList([]);
-    try {
-      const res = await testCatalogService.updateCatalog(data);
-      if (res.success) {
-        onSuccess();
-        onClose();
+  // Keep form values in sync when item prop or modal state changes
+  useEffect(() => {
+    if (isOpen && item) {
+      reset({
+        id: item.test_catalog_id,
+        dept_id: item.dept_id,
+        sample_type: item.sample_type,
+        test_code: item.test_code,
+        test_name: item.test_name,
+        test_price: item.test_price,
+        turnaround_time: item.turnaround_time,
+      });
+    }
+  }, [isOpen, item, reset]);
+
+  // Fetch departments list for the dropdown selector
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      setLoadingDepts(true);
+      try {
+        const response = await departmentService.getDepartments();
+        if (Array.isArray(response)) {
+          setDepartments(response);
+        }
+      } catch (err: any) {
+        console.error("Failed to load departments:", err);
+      } finally {
+        setLoadingDepts(false);
       }
-    } catch (err: any) {
-      setErrorsList(Array.isArray(err) ? err : [err.toString()]);
+    };
+
+    fetchDepartments();
+  }, []);
+
+  const handleClose = () => {
+    if (isControlled && externalOnClose) {
+      externalOnClose();
+    } else {
+      setInternalIsOpen(false);
+    }
+    reset();
+  };
+
+  const onSubmit = async (values: TestCatalogFormData) => {
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        ...values,
+        id: values.id || item.test_catalog_id,
+      };
+
+      await testCatalogService.updateCatalog(payload);
+      toast.success("Test catalog updated successfully.");
+      onSuccess();
+      handleClose();
+    } catch (error: any) {
+      const serverMessages = error.response?.data?.messages;
+      const errorMsg = Array.isArray(serverMessages)
+        ? serverMessages.join(", ")
+        : typeof serverMessages === "string"
+        ? serverMessages
+        : "Operation failed.";
+      toast.error(errorMsg);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 space-y-5">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-              <Edit3 className="w-5 h-5" />
-            </div>
-            <h2 className="text-base font-bold text-slate-800">Edit Test Catalog</h2>
-          </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 cursor-pointer">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <>
+      {!isControlled && (
+        <button
+          type="button"
+          onClick={() => setInternalIsOpen(true)}
+          className="inline-flex items-center justify-center rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 h-8 px-2 border border-transparent hover:border-emerald-100 transition-colors cursor-pointer"
+        >
+          <Edit2 className="h-3.5 w-3.5" />
+        </button>
+      )}
 
-        {errorsList.length > 0 && (
-          <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl space-y-1">
-            {errorsList.map((msg, i) => (
-              <p key={i} className="text-xs text-rose-600 font-medium flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                {msg}
-              </p>
-            ))}
-          </div>
-        )}
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => (!open ? handleClose() : setInternalIsOpen(true))}
+      >
+        <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight">
+              Edit Test Catalog
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Update the test catalog information in the system.
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1 block">Catalog ID</label>
-              <input
-                {...register("id")}
-                readOnly
-                className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-500 outline-none cursor-not-allowed"
-              />
-            </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-700">Test Code</Label>
+                <Input
+                  {...register("test_code")}
+                  disabled={isSubmitting}
+                  className="rounded-xl border-slate-200"
+                />
+                {errors.test_code && (
+                  <p className="text-[10px] text-red-500 font-medium">
+                    {errors.test_code.message}
+                  </p>
+                )}
+              </div>
 
-            <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1 block">Department ID</label>
-              <input
-                {...register("dept_id")}
-                className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
-              />
-              {errors.dept_id && <p className="text-[10px] text-rose-500 mt-1">{errors.dept_id.message}</p>}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1 block">Test Code</label>
-              <input
-                {...register("test_code")}
-                className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
-              />
-              {errors.test_code && <p className="text-[10px] text-rose-500 mt-1">{errors.test_code.message}</p>}
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1 block">Sample Type</label>
-              <input
-                {...register("sample_type")}
-                className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
-              />
-              {errors.sample_type && <p className="text-[10px] text-rose-500 mt-1">{errors.sample_type.message}</p>}
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-slate-600 mb-1 block">Test Name</label>
-            <input
-              {...register("test_name")}
-              className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
-            />
-            {errors.test_name && <p className="text-[10px] text-rose-500 mt-1">{errors.test_name.message}</p>}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1 block">Test Price ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                {...register("test_price", { valueAsNumber: true })}
-                className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
-              />
-              {errors.test_price && <p className="text-[10px] text-rose-500 mt-1">{errors.test_price.message}</p>}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-700">Department</Label>
+                <Controller
+                  name="dept_id"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value ? String(field.value) : ""}
+                      disabled={isSubmitting || loadingDepts}
+                    >
+                      <SelectTrigger className="w-full h-9 rounded-xl border-slate-200 text-xs bg-white">
+                        <SelectValue
+                          placeholder={
+                            loadingDepts ? "Loading..." : "Select Department"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments.map((dept) => (
+                          <SelectItem
+                            key={dept.dept_id}
+                            value={String(dept.dept_id)}
+                          >
+                            {dept.dept_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.dept_id && (
+                  <p className="text-[10px] text-red-500 font-medium">
+                    {errors.dept_id.message}
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1 block">Turnaround Time (hrs)</label>
-              <input
-                type="number"
-                {...register("turnaround_time", { valueAsNumber: true })}
-                className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
-              />
-              {errors.turnaround_time && <p className="text-[10px] text-rose-500 mt-1">{errors.turnaround_time.message}</p>}
-            </div>
-          </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-700">Test Name</Label>
+                <Input
+                  {...register("test_name")}
+                  disabled={isSubmitting}
+                  className="rounded-xl border-slate-200"
+                />
+                {errors.test_name && (
+                  <p className="text-[10px] text-red-500 font-medium">
+                    {errors.test_name.message}
+                  </p>
+                )}
+              </div>
 
-          <div className="flex gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 h-10 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 h-10 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Update Catalog"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-700">Sample Type</Label>
+                <Input
+                  {...register("sample_type")}
+                  disabled={isSubmitting}
+                  className="rounded-xl border-slate-200"
+                />
+                {errors.sample_type && (
+                  <p className="text-[10px] text-red-500 font-medium">
+                    {errors.sample_type.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-700">Price ($)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  {...register("test_price", { valueAsNumber: true })}
+                  disabled={isSubmitting}
+                  className="rounded-xl border-slate-200"
+                />
+                {errors.test_price && (
+                  <p className="text-[10px] text-red-500 font-medium">
+                    {errors.test_price.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-700">TAT (Hours)</Label>
+                <Input
+                  type="number"
+                  {...register("turnaround_time", { valueAsNumber: true })}
+                  disabled={isSubmitting}
+                  className="rounded-xl border-slate-200"
+                />
+                {errors.turnaround_time && (
+                  <p className="text-[10px] text-red-500 font-medium">
+                    {errors.turnaround_time.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={isSubmitting}
+                className="rounded-xl text-xs h-10"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  "Update Catalog"
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

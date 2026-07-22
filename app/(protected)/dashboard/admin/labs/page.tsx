@@ -46,7 +46,7 @@ export default function LabsPage() {
             Laboratory Facilities
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Global configuration and contact setups for registered clinical laboratories.
+            Manage laboratory details and contact information.
           </p>
         </div>
 
@@ -58,7 +58,8 @@ export default function LabsPage() {
             disabled={isLoading}
             className="rounded-xl h-10 border-slate-200 text-slate-600"
           >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
           </Button>
 
           <LabForm onSuccess={fetchLabRecords} />
@@ -67,21 +68,21 @@ export default function LabsPage() {
 
       {isLoading ? (
         <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 animate-pulse bg-white border rounded-2xl">
-          Loading clinical facilities registry...
+          Loading lab data...
         </div>
       ) : (
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
-              Authorized clinical lab institutions and details.
+              List of all labs.
             </TableCaption>
             <TableHeader>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <TableHead className="w-20 font-bold text-slate-600">SN</TableHead>
-                <TableHead className="font-bold text-slate-600">Lab Unit</TableHead>
+                <TableHead className="w-20 font-bold text-slate-600">S.N.</TableHead>
+                <TableHead className="font-bold text-slate-600">Lab Name</TableHead>
                 <TableHead className="font-bold text-slate-600">Contact & Address</TableHead>
-                <TableHead className="font-bold text-slate-600">Registration Info</TableHead>
-                <TableHead className="font-bold text-slate-600">Footer Setting</TableHead>
+                <TableHead className="font-bold text-slate-600">Official Registration No.</TableHead>
+                <TableHead className="font-bold text-slate-600">Footer Settings</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </tr>
             </TableHeader>

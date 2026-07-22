@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { PanelComponentSchema, PanelComponentFormData } from "@/schemas/panel.schema";
 import { panelService } from "@/services/panel.service";
 import { PanelCatalogItem } from "@/types/panel.types";
-import { Loader2, Layers, Plus, AlertCircle, X, ListOrdered } from "lucide-react";
+import { Loader2, Layers, AlertCircle, X } from "lucide-react";
 
 interface PanelComponentFormProps {
   panelId: string;
@@ -38,11 +38,14 @@ export default function PanelComponentForm({ panelId, panelName, onClose }: Pane
     setFetchingCatalog(true);
     try {
       const res = await panelService.getPanelCatalog(panelId);
-      if (res.success) {
-        setCatalog(res.data || []);
+      if (Array.isArray(res)) {
+        setCatalog(res);
+      } else {
+        setCatalog([]);
       }
     } catch (err: any) {
       console.error("Failed loading catalog", err);
+      setCatalog([]);
     } finally {
       setFetchingCatalog(false);
     }
@@ -56,11 +59,9 @@ export default function PanelComponentForm({ panelId, panelName, onClose }: Pane
     setSubmitting(true);
     setErrorsList([]);
     try {
-      const res = await panelService.createPanelComponent(data);
-      if (res.success) {
-        reset({ panel_id: panelId, test_id: "", sequence_no: catalog.length + 2 });
-        loadCatalog();
-      }
+      await panelService.createPanelComponent(data);
+      reset({ panel_id: panelId, test_id: "", sequence_no: catalog.length + 2 });
+      loadCatalog();
     } catch (err: any) {
       setErrorsList(Array.isArray(err) ? err : [err.toString()]);
     } finally {
@@ -77,8 +78,8 @@ export default function PanelComponentForm({ panelId, panelName, onClose }: Pane
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-800">Panel Catalog Components</h2>
-              <p className="text-[11px] text-slate-400 font-medium">{panelName} ({panelId})</p>
+              <h2 className="text-base font-bold text-slate-800">Panel Catalog Component</h2>
+              <p className="text-slate-600 text-xs">{panelName}</p>
             </div>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 cursor-pointer">
@@ -99,13 +100,13 @@ export default function PanelComponentForm({ panelId, panelName, onClose }: Pane
 
         {/* Add Component Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="bg-slate-50 p-4 rounded-xl space-y-3 border border-slate-100">
-          <span className="text-xs font-bold text-slate-700 block">Attach New Test Component</span>
+          <span className="text-xs font-bold text-slate-700 block">Add New Panel Catalog Component</span>
           
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-2">
               <input
                 {...register("test_id")}
-                placeholder="Test ID (e.g. TST-HB)"
+                placeholder="Test Catalog ID"
                 className="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 bg-white focus:border-emerald-500 outline-none"
               />
               {errors.test_id && <p className="text-[10px] text-rose-500 mt-0.5">{errors.test_id.message}</p>}
@@ -127,14 +128,14 @@ export default function PanelComponentForm({ panelId, panelName, onClose }: Pane
             disabled={submitting}
             className="w-full h-9 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
-            {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Plus className="w-3.5 h-3.5" /> Attach Component</>}
+            {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <>Save</>}
           </button>
         </form>
 
         {/* Catalog List display */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs font-bold text-slate-600">
-            <span>Attached Tests Catalog</span>
+            <span>Added Tests Catalog</span>
             <span className="text-slate-400 font-medium">{catalog.length} Components</span>
           </div>
 
@@ -146,7 +147,7 @@ export default function PanelComponentForm({ panelId, panelName, onClose }: Pane
               </div>
             ) : catalog.length === 0 ? (
               <p className="text-center py-6 text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                No components attached to this panel yet.
+                No components added to this panel yet.
               </p>
             ) : (
               catalog.map((item, idx) => (

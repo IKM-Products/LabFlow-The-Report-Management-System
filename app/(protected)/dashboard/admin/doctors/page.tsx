@@ -43,10 +43,10 @@ export default function DoctorsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Medical Practitioner Accounts
+            Doctor Accounts
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Administrative scope control layout. Manage system attributes for internal and referring doctors.
+            Manage internal and referring doctor accounts and information.
           </p>
         </div>
 
@@ -58,7 +58,8 @@ export default function DoctorsPage() {
             disabled={isLoading}
             className="rounded-xl h-10 border-slate-200 text-slate-600"
           >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
           </Button>
 
           <DoctorForm onSuccess={fetchDoctorRecords} />
@@ -67,21 +68,21 @@ export default function DoctorsPage() {
 
       {isLoading ? (
         <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 animate-pulse bg-white border rounded-2xl">
-          Synchronizing practitioners records queue...
+          Loading doctor's data...
         </div>
       ) : (
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
-              Active operational laboratory reference practitioners ledger.
+              List of all doctors.
             </TableCaption>
             <TableHeader>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <TableHead className="w-15 font-bold text-slate-600">SN</TableHead>
-                <TableHead className="font-bold text-slate-600">Practitioner</TableHead>
+                <TableHead className="w-15 font-bold text-slate-600">S.N.</TableHead>
+                <TableHead className="font-bold text-slate-600">Doctor Name</TableHead>
                 <TableHead className="font-bold text-slate-600">Contact</TableHead>
-                <TableHead className="font-bold text-slate-600">License Number</TableHead>
-                <TableHead className="font-bold text-slate-600">Credentials</TableHead>
+                <TableHead className="font-bold text-slate-600">Registration No.</TableHead>
+                <TableHead className="font-bold text-slate-600">Qualifications</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </tr>
             </TableHeader>

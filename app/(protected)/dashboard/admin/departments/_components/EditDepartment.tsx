@@ -65,17 +65,17 @@ export default function EditDepartment({ department, onSuccess }: EditDepartment
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       {/* FIXED: Removed inner <Button> and moved all styles directly onto the trigger to avoid nested button components */}
-      <DialogTrigger className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50 cursor-pointer rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 h-8 px-2 border border-transparent hover:border-blue-100">
+      <DialogTrigger className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50 cursor-pointer rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 h-8 px-2 border border-transparent hover:border-blue-100">
         <Edit2 className="h-3.5 w-3.5" />
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight">
-            Update Department
+            Edit Department
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Update the department details.
+            Edit the department information in the system.
           </DialogDescription>
         </DialogHeader>
 
@@ -87,7 +87,7 @@ export default function EditDepartment({ department, onSuccess }: EditDepartment
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs font-semibold text-slate-700">Description</Label>
+            <Label className="text-xs font-semibold text-slate-700">Department Description</Label>
             <Input {...register("dept_description")} disabled={isSubmitting} className="rounded-xl border-slate-200" />
             {errors.dept_description && <p className="text-[10px] text-red-500 font-medium">{errors.dept_description.message}</p>}
           </div>
@@ -96,8 +96,8 @@ export default function EditDepartment({ department, onSuccess }: EditDepartment
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting} className="rounded-xl text-xs h-10">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">
-              {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save Profile"}
+            <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">
+              {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
             </Button>
           </div>
         </form>

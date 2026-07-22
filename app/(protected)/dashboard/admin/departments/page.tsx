@@ -53,7 +53,7 @@ export default function DepartmentPage() {
             Laboratory Departments
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage department settings and operational configurations.
+            Manage departments and their information.
           </p>
         </div>
 
@@ -65,7 +65,8 @@ export default function DepartmentPage() {
             disabled={isLoading}
             className="rounded-xl h-10 border-slate-200 text-slate-600"
           >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isLoading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
           </Button>
 
           <DepartmentForm onSuccess={fetchDepartmentRecords} />
@@ -80,13 +81,13 @@ export default function DepartmentPage() {
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
-              List of all registered departments.
+              List of all departments.
             </TableCaption>
             <TableHeader>
               <TableRow className="bg-slate-50 border-b border-slate-200">
-                <TableHead className="w-20 font-bold text-slate-600">SN</TableHead>
+                <TableHead className="w-20 font-bold text-slate-600">S.N.</TableHead>
                 <TableHead className="font-bold text-slate-600">Department Name</TableHead>
-                <TableHead className="font-bold text-slate-600">Description</TableHead>
+                <TableHead className="font-bold text-slate-600">Department Description</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </TableRow>
             </TableHeader>

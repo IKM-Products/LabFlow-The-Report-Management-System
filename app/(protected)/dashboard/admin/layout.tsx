@@ -1,4 +1,3 @@
-// app/(dashboard)/admin/layout.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -15,9 +14,9 @@ import {
   Bell, 
   LogOut,
   Grid,
-  Layers,
   BookOpen,
   Scale,
+  Sliders,
   AlertTriangle
 } from "lucide-react";
 
@@ -49,7 +48,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       groupName: "Laboratory Configuration",
       items: [
         { name: "Panels", href: "/dashboard/admin/panels", icon: Grid },
-        { name: "Test Catalog", href: "/dashboard/admin/test-catalogs", icon: BookOpen },
+        { name: "Test Catalogs", href: "/dashboard/admin/test-catalogs", icon: BookOpen },
+        { name: "Test Parameters", href: "/dashboard/admin/test-parameters", icon: Sliders },
         { name: "Reference Ranges", href: "/dashboard/admin/reference-ranges", icon: Scale },
       ]
     },
@@ -80,9 +80,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </h4>
         <div className="space-y-0.5 mt-1">
           {group.items.map((item) => {
-            const isActive = item.href === "/admin" 
-              ? pathname === "/admin" 
-              : pathname.startsWith(item.href);
+            // Strict exact match for the main Overview dashboard path, prefix match for sub-routes
+            const isActive = item.href === "/dashboard/admin" 
+              ? pathname === "/dashboard/admin" 
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
               
             const Icon = item.icon;
             
@@ -157,7 +158,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           
           <div className="text-xs font-semibold text-slate-400 tracking-wide uppercase">
             <span className="text-slate-700 font-bold text-lg italic capitalize">
-              {pathname === "/admin" ? "Admin Workspace" : pathname.split("/").pop()?.replace("-", " ")}
+              {pathname === "/dashboard/admin" ? "Admin Workspace" : pathname.split("/").pop()?.replace("-", " ")}
             </span>
           </div>
           

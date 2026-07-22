@@ -1,167 +1,236 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { 
+  FlaskConical, 
+  AlertCircle,
+  ShieldAlert,
+  RefreshCw,
+  Building2,
+  Clock
+} from "lucide-react";
+
 import { testCatalogService } from "@/services/test-catalog.service";
+import { departmentService } from "@/services/department.service";
 import { TestCatalogItem } from "@/types/test-catalog.types";
+import { Department } from "@/types/department.types";
+
 import TestCatalogForm from "./_components/TestCatalogForm";
 import EditTestCatalog from "./_components/EditTestCatalog";
-import { Search, Plus, Edit2, Loader2, FlaskConical, Clock, DollarSign } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function TestCatalogPage() {
-  const [deptId, setDeptId] = useState("");
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loadingDepts, setLoadingDepts] = useState(false);
+  
+  const [selectedDeptId, setSelectedDeptId] = useState("");
+  const [activeDeptId, setActiveDeptId] = useState("");
   const [catalogs, setCatalogs] = useState<TestCatalogItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [loadingCatalogs, setLoadingCatalogs] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingItem, setEditingItem] = useState<TestCatalogItem | null>(null);
+  // Active department name helper
+  const activeDeptName = departments.find((d) => d.dept_id === activeDeptId)?.dept_name;
 
-  const fetchCatalogs = async (idToFetch?: string) => {
-    const queryId = idToFetch || deptId;
-    if (!queryId.trim()) return;
-
-    setLoading(true);
-    setSearched(true);
-    try {
-      const res = await testCatalogService.getCatalogByDeptId(queryId);
-      if (res.success) {
-        setCatalogs(res.data || []);
+  // Fetch departments list on component mount
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      setLoadingDepts(true);
+      try {
+        const departmentsResponse = await departmentService.getDepartments();
+        if (Array.isArray(departmentsResponse)) {
+          setDepartments(departmentsResponse);
+        }
+      } catch (err: any) {
+        console.error("Failed to load departments:", err);
+      } finally{
+        setLoadingDepts(false);
       }
-    } catch (err) {
-      console.error("Failed to fetch test catalog:", err);
+    };
+
+    fetchDepartments();
+  }, []);
+
+  const fetchCatalogs = async (idToFetch: string) => {
+    if (!idToFetch.trim()) return;
+    setLoadingCatalogs(true);
+    setErrorMsg(null);
+    try {
+      const response = await testCatalogService.getCatalogByDeptId(idToFetch.trim());
+      if (Array.isArray(response)) {
+        setCatalogs(response);
+        setActiveDeptId(idToFetch.trim());
+      } else {
+        setCatalogs([]);
+        setErrorMsg("Unexpected catalog response format.");
+      }
+    } catch (err: any) {
       setCatalogs([]);
+      const message = err?.response?.data?.messages || err?.message || err?.toString();
+      setErrorMsg(Array.isArray(message) ? message.join(", ") : message);
     } finally {
-      setLoading(false);
+      setLoadingCatalogs(false);
     }
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchCatalogs();
+  const handleDepartmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const deptId = e.target.value;
+    setSelectedDeptId(deptId);
+    if (deptId) {
+      fetchCatalogs(deptId);
+    } else {
+      setCatalogs([]);
+      setActiveDeptId("");
+    }
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="space-y-8 p-6">
+      {/* Top Header Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Test Catalog Management</h1>
-          <p className="text-xs text-slate-500 mt-0.5">View and manage diagnostic laboratory test catalogs</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+            <FlaskConical className="h-7 w-7 text-emerald-600" />
+            Laboratory Test Catalogs
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Manage diagnostic laboratory test catalogs organized by department.
+          </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
-        >
-          <Plus className="w-4 h-4" /> Add Test Catalog
-        </button>
-      </div>
 
-      {/* Filter / Search Bar */}
-      <form onSubmit={handleSearchSubmit} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-          <input
-            type="text"
-            value={deptId}
-            onChange={(e) => setDeptId(e.target.value)}
-            placeholder="Enter Department ID (e.g. DEPT-BIO)..."
-            className="w-full h-10 pl-10 pr-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => activeDeptId && fetchCatalogs(activeDeptId)}
+            disabled={loadingCatalogs || !activeDeptId}
+            className="rounded-xl h-10 border-slate-200 text-slate-600"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${loadingCatalogs ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </Button>
+
+          <TestCatalogForm
+            defaultDeptId={activeDeptId}
+            onSuccess={() => activeDeptId && fetchCatalogs(activeDeptId)}
           />
         </div>
-        <button
-          type="submit"
-          disabled={loading || !deptId.trim()}
-          className="h-10 px-5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer"
-        >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Fetch Catalog"}
-        </button>
-      </form>
+      </div>
 
-      {/* Table Data */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold uppercase tracking-wider">
-              <tr>
-                <th className="px-5 py-3.5">Catalog ID</th>
-                <th className="px-5 py-3.5">Test Code</th>
-                <th className="px-5 py-3.5">Test Name</th>
-                <th className="px-5 py-3.5">Sample Type</th>
-                <th className="px-5 py-3.5">Price</th>
-                <th className="px-5 py-3.5">Turnaround Time</th>
-                <th className="px-5 py-3.5 text-right">Actions</th>
+      {/* Department Dropdown Selection */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center gap-3">
+        <div className="relative flex-1">
+          <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
+          <select
+            value={selectedDeptId}
+            onChange={handleDepartmentChange}
+            disabled={loadingDepts}
+            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 cursor-pointer disabled:bg-slate-50"
+          >
+            <option value="">
+              {loadingDepts ? "Loading departments..." : "Select a Department"}
+            </option>
+            {departments.map((dept) => (
+              <option key={dept.dept_id} value={dept.dept_id}>
+                {dept.dept_name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Error View */}
+      {errorMsg && (
+        <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-700 text-xs font-medium">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {/* Loading or Test Catalogs Data Table View */}
+      {loadingCatalogs ? (
+        <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 animate-pulse bg-white border rounded-2xl">
+          Loading test catalog data...
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <Table>
+            <TableCaption className="text-xs text-slate-400 pb-4">
+              {activeDeptName 
+                ? `Showing test catalog records for ${activeDeptName}.` 
+                : "Select a department from the dropdown above to view records."}
+            </TableCaption>
+            <TableHeader>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="w-20 font-bold text-slate-600">S.N.</TableHead>
+                <TableHead className="font-bold text-slate-600">Code</TableHead>
+                <TableHead className="font-bold text-slate-600">Test Name</TableHead>
+                <TableHead className="font-bold text-slate-600">Sample Type</TableHead>
+                <TableHead className="font-bold text-slate-600">Price</TableHead>
+                <TableHead className="font-bold text-slate-600">Turnaround Time</TableHead>
+                <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
-                    <Loader2 className="w-6 h-6 animate-spin text-emerald-600 mx-auto mb-2" />
-                    Loading catalog items...
-                  </td>
-                </tr>
-              ) : catalogs.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
-                    <FlaskConical className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    {searched ? "No test catalog items found for this department." : "Enter a Department ID above to view catalog tests."}
-                  </td>
-                </tr>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-150">
+              {catalogs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-400">
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <ShieldAlert className="h-6 w-6 text-slate-300" />
+                      <p className="font-medium text-slate-500">
+                        {activeDeptName 
+                          ? `No test catalog items found for department "${activeDeptName}"` 
+                          : "Select a department above to view test catalog records."}
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
               ) : (
-                catalogs.map((item) => (
-                  <tr key={item.test_catalog_id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-5 py-3.5 font-mono text-slate-500">{item.test_catalog_id}</td>
-                    <td className="px-5 py-3.5 font-bold text-slate-800">{item.test_code}</td>
-                    <td className="px-5 py-3.5">{item.test_name}</td>
-                    <td className="px-5 py-3.5">
-                      <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-[11px] font-semibold">
+                catalogs.map((item, idx) => (
+                  <TableRow key={item.test_catalog_id} className="hover:bg-slate-50/60 transition-colors group">
+                    <TableCell className="font-mono text-xs text-slate-400">{idx + 1}</TableCell>
+                    <TableCell>
+                      <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md font-mono text-[10px] font-semibold">
+                        {item.test_code}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-semibold text-slate-900">{item.test_name}</TableCell>
+                    <TableCell>
+                      <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-[11px] font-medium">
                         {item.sample_type}
                       </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-emerald-600 font-bold">
-                      <span className="flex items-center gap-0.5">
-                        <DollarSign className="w-3.5 h-3.5" />
-                        {item.test_price.toFixed(2)}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-500">
-                      <span className="flex items-center gap-1">
+                    </TableCell>
+                    <TableCell className="font-semibold text-emerald-600">${item.test_price.toFixed(2)}</TableCell>
+                    <TableCell className="text-slate-500">
+                      <span className="flex items-center gap-1 text-xs">
                         <Clock className="w-3.5 h-3.5 text-slate-400" />
                         {item.turnaround_time} hrs
                       </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <button
-                        onClick={() => setEditingItem(item)}
-                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
-                        title="Edit Item"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2">
+                        <EditTestCatalog
+                          item={item}
+                          onSuccess={() => activeDeptId && fetchCatalogs(activeDeptId)}
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
-      </div>
-
-      {/* Modals */}
-      {showCreateModal && (
-        <TestCatalogForm
-          defaultDeptId={deptId}
-          onSuccess={() => fetchCatalogs()}
-          onClose={() => setShowCreateModal(false)}
-        />
-      )}
-
-      {editingItem && (
-        <EditTestCatalog
-          item={editingItem}
-          onSuccess={() => fetchCatalogs()}
-          onClose={() => setEditingItem(null)}
-        />
       )}
     </div>
   );

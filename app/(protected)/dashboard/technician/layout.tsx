@@ -178,10 +178,10 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
             {/* Operator Account Identity Segment */}
             <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200">
               <div className="h-8 w-8 rounded-full bg-linear-to-br from-emerald-600 to-teal-600 text-white flex items-center justify-center text-xs font-bold shadow-sm shadow-emerald-600/10 select-none">
-                IKM
+                RS
               </div>
               <div className="block text-left">
-                <p className="text-xs font-bold text-slate-800 leading-none">Ismael Karki Manaay</p>
+                <p className="text-xs font-bold text-slate-800 leading-none">Rishan Shrestha</p>
                 <p className="text-[10px] font-semibold text-emerald-600 mt-0.5">Technician</p>
               </div>
             </div>
