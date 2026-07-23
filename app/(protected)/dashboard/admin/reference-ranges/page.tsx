@@ -1,133 +1,465 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Edit2,
+  Loader2,
+  AlertCircle,
+  ShieldAlert,
+  RefreshCw,
+  UserCheck,
+  FileText,
+  Building2,
+  TestTube,
+  ListFilter,
+} from "lucide-react";
+
 import { referenceRangeService } from "@/services/reference-range.service";
+import { departmentService } from "@/services/department.service";
+import { testCatalogService } from "@/services/test-catalog.service";
+import { testParameterService } from "@/services/test-parameter.service";
+
 import { ReferenceRangeItem } from "@/types/reference-range.types";
 import ReferenceRangeForm from "./_components/ReferenceRangeForm";
 import EditReferenceRange from "./_components/EditReferenceRange";
-import { Search, Plus, Edit2, Loader2, Gauge, UserCheck, FileText } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+// --- Option Types ---
+interface DepartmentOption {
+  id: string;
+  name: string;
+}
+
+interface TestCatalogOption {
+  id: string;
+  departmentId?: string;
+  name: string;
+}
+
+interface ParameterOption {
+  id: string;
+  catalogId?: string;
+  name: string;
+}
+
+// Helper to safely extract arrays from flat OR deeply nested API responses
+const extractArrayData = (res: any): any[] => {
+  if (!res) return [];
+  if (Array.isArray(res)) return res;
+
+  if (typeof res === "object") {
+    if (Array.isArray(res.data)) return res.data;
+    if (Array.isArray(res.catalogs)) return res.catalogs;
+    if (Array.isArray(res.testCatalogs)) return res.testCatalogs;
+    if (Array.isArray(res.departments)) return res.departments;
+    if (Array.isArray(res.parameters)) return res.parameters;
+    if (Array.isArray(res.testParameters)) return res.testParameters;
+    if (Array.isArray(res.items)) return res.items;
+    if (Array.isArray(res.result)) return res.result;
+
+    if (res.data && typeof res.data === "object") {
+      if (Array.isArray(res.data.catalogs)) return res.data.catalogs;
+      if (Array.isArray(res.data.testCatalogs)) return res.data.testCatalogs;
+      if (Array.isArray(res.data.departments)) return res.data.departments;
+      if (Array.isArray(res.data.parameters)) return res.data.parameters;
+      if (Array.isArray(res.data.testParameters)) return res.data.testParameters;
+      if (Array.isArray(res.data.items)) return res.data.items;
+      if (Array.isArray(res.data.result)) return res.data.result;
+    }
+  }
+
+  return [];
+};
 
 export default function ReferenceRangePage() {
-  const [parameterId, setParameterId] = useState("");
-  const [references, setReferences] = useState<ReferenceRangeItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  // Cascading Dropdown Selection States
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
+  const [selectedCatalog, setSelectedCatalog] = useState<string>("");
+  const [parameterId, setParameterId] = useState<string>("");
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  // Options List States
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+  const [availableCatalogs, setAvailableCatalogs] = useState<TestCatalogOption[]>([]);
+  const [availableParameters, setAvailableParameters] = useState<ParameterOption[]>([]);
+
+  // Dropdown Loading States
+  const [loadingDepartments, setLoadingDepartments] = useState<boolean>(false);
+  const [loadingCatalogs, setLoadingCatalogs] = useState<boolean>(false);
+  const [loadingParameters, setLoadingParameters] = useState<boolean>(false);
+
+  // Main Table & Editing States
+  const [references, setReferences] = useState<ReferenceRangeItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [searched, setSearched] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const [editingItem, setEditingItem] = useState<ReferenceRangeItem | null>(null);
 
-  const fetchReferences = async (idToFetch?: string) => {
+  // --- 1. Fetch Departments on Mount ---
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      setLoadingDepartments(true);
+      try {
+        const res = await departmentService.getDepartments();
+        const list = extractArrayData(res);
+        setDepartments(
+          list.map((dept: any, index: number) => ({
+            id: String(
+              dept.id ??
+              dept.dept_id ??
+              dept.department_id ??
+              dept.deptId ??
+              dept.departmentId ??
+              dept._id ??
+              index
+            ),
+            name:
+              dept.name ||
+              dept.dept_name ||
+              dept.department_name ||
+              dept.deptName ||
+              dept.departmentName ||
+              "Unnamed Department",
+          }))
+        );
+      } catch (err: any) {
+        console.error("Failed to fetch departments:", err);
+      } finally {
+        setLoadingDepartments(false);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
+
+  // --- 2. Fetch Catalogs when Department changes ---
+  useEffect(() => {
+    if (!selectedDepartment) {
+      setAvailableCatalogs([]);
+      setSelectedCatalog("");
+      setParameterId("");
+      return;
+    }
+
+    const fetchCatalogs = async () => {
+      setLoadingCatalogs(true);
+      try {
+        const res = await testCatalogService.getCatalogByDeptId(selectedDepartment);
+        const list = extractArrayData(res);
+
+        setAvailableCatalogs(
+          list.map((cat: any, index: number) => ({
+            id: String(
+              cat.id ??
+              cat.catalog_id ??
+              cat.catalogId ??
+              cat.test_catalog_id ??
+              cat.testCatalogId ??
+              cat.test_id ??
+              cat.testId ??
+              cat.code ??
+              cat._id ??
+              index
+            ),
+            name:
+              cat.name ||
+              cat.catalog_name ||
+              cat.catalogName ||
+              cat.test_name ||
+              cat.testName ||
+              cat.title ||
+              "Unnamed Test",
+          }))
+        );
+      } catch (err: any) {
+        console.error("Failed to fetch test catalogs:", err);
+        setAvailableCatalogs([]);
+      } finally {
+        setLoadingCatalogs(false);
+      }
+    };
+
+    fetchCatalogs();
+    setSelectedCatalog("");
+    setParameterId("");
+  }, [selectedDepartment]);
+
+  // --- 3. Fetch Parameters when Catalog changes ---
+  useEffect(() => {
+    if (!selectedCatalog) {
+      setAvailableParameters([]);
+      setParameterId("");
+      return;
+    }
+
+    const fetchParameters = async () => {
+      setLoadingParameters(true);
+      try {
+        const res = await testParameterService.getParametersByTestId(selectedCatalog);
+        const list = extractArrayData(res);
+
+        setAvailableParameters(
+          list.map((param: any, index: number) => ({
+            id: String(
+              param.id ??
+              param.parameter_id ??
+              param.parameterId ??
+              param.param_id ??
+              param.paramId ??
+              param.test_parameter_id ??
+              param.testParameterId ??
+              param.code ??
+              param._id ??
+              index
+            ),
+            name:
+              param.name ||
+              param.parameter_name ||
+              param.parameterName ||
+              param.param_name ||
+              param.paramName ||
+              param.title ||
+              "Unnamed Parameter",
+          }))
+        );
+      } catch (err: any) {
+        console.error("Failed to fetch parameters:", err);
+        setAvailableParameters([]);
+      } finally {
+        setLoadingParameters(false);
+      }
+    };
+
+    fetchParameters();
+    setParameterId("");
+  }, [selectedCatalog]);
+
+  // --- 4. Fetch Reference Ranges when Parameter changes ---
+  const fetchReferences = useCallback(async (idToFetch?: string) => {
     const queryId = idToFetch || parameterId;
-    if (!queryId.trim()) return;
+    if (!queryId.trim()) {
+      setReferences([]);
+      return;
+    }
 
     setLoading(true);
     setSearched(true);
+    setErrorMsg(null);
     try {
-      const res = await referenceRangeService.getReferenceByParameterId(queryId);
-      if (res.success) {
-        setReferences(res.data || []);
+      const res = await referenceRangeService.getReferenceByParameterId(queryId.trim());
+      if (res && (res.success || Array.isArray(res) || res.data)) {
+        const data = Array.isArray(res) ? res : res.data || [];
+        setReferences(data);
+      } else {
+        setReferences([]);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to fetch reference ranges:", err);
       setReferences([]);
+      setErrorMsg(Array.isArray(err) ? err.join(", ") : err.toString());
     } finally {
       setLoading(false);
     }
-  };
+  }, [parameterId]);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchReferences();
-  };
+  useEffect(() => {
+    if (parameterId.trim()) {
+      fetchReferences(parameterId);
+    } else {
+      setReferences([]);
+      setSearched(false);
+    }
+  }, [parameterId, fetchReferences]);
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="space-y-8 p-6">
+      {/* Top Header Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Reference Range Management</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Configure normal reference values and ranges based on age and gender
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+            Laboratory Reference Range
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Configure normal reference values and ranges based on age and gender.
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
-        >
-          <Plus className="w-4 h-4" /> Add Reference Range
-        </button>
-      </div>
 
-      {/* Search Bar */}
-      <form
-        onSubmit={handleSearchSubmit}
-        className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-3"
-      >
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-          <input
-            type="text"
-            value={parameterId}
-            onChange={(e) => setParameterId(e.target.value)}
-            placeholder="Enter Test Parameter ID (e.g. PRM-HB)..."
-            className="w-full h-10 pl-10 pr-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fetchReferences()}
+            disabled={loading || !parameterId.trim()}
+            className="rounded-xl h-10 border-slate-200 text-slate-600 cursor-pointer"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </Button>
+
+          <ReferenceRangeForm
+            defaultParameterId={parameterId}
+            onSuccess={() => fetchReferences()}
           />
         </div>
-        <button
-          type="submit"
-          disabled={loading || !parameterId.trim()}
-          className="h-10 px-5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer"
-        >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Fetch Ranges"}
-        </button>
-      </form>
+      </div>
 
-      {/* Table Data */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold uppercase tracking-wider">
-              <tr>
-                <th className="px-5 py-3.5">Reference ID</th>
-                <th className="px-5 py-3.5">Gender</th>
-                <th className="px-5 py-3.5">Age Range</th>
-                <th className="px-5 py-3.5">Normal Value Range</th>
-                <th className="px-5 py-3.5">Text Range</th>
-                <th className="px-5 py-3.5">Note</th>
-                <th className="px-5 py-3.5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
-                    <Loader2 className="w-6 h-6 animate-spin text-emerald-600 mx-auto mb-2" />
-                    Loading reference ranges...
-                  </td>
-                </tr>
-              ) : references.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
-                    <Gauge className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    {searched
-                      ? "No reference ranges found for this parameter ID."
-                      : "Enter a Test Parameter ID above to view reference ranges."}
-                  </td>
-                </tr>
+      {/* Cascading Search Dropdowns Row */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Department Dropdown */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-slate-400" />
+              Department
+            </label>
+            <select
+              value={selectedDepartment}
+              onChange={(e) => setSelectedDepartment(e.target.value)}
+              disabled={loadingDepartments}
+              className="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
+            >
+              <option value="">
+                {loadingDepartments ? "Loading departments..." : "Select Department..."}
+              </option>
+              {departments.map((dept, index) => (
+                <option key={dept.id || `dept-${index}`} value={dept.id}>
+                  {dept.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Test Catalog Dropdown */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <TestTube className="w-3.5 h-3.5 text-slate-400" />
+              Test Catalog
+            </label>
+            <select
+              value={selectedCatalog}
+              onChange={(e) => setSelectedCatalog(e.target.value)}
+              disabled={!selectedDepartment || loadingCatalogs}
+              className="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
+            >
+              <option value="">
+                {loadingCatalogs
+                  ? "Loading test catalogs..."
+                  : !selectedDepartment
+                  ? "Select Department first..."
+                  : "Select Test Catalog..."}
+              </option>
+              {availableCatalogs.map((cat, index) => (
+                <option key={cat.id || `cat-${index}`} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Parameter Dropdown */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <ListFilter className="w-3.5 h-3.5 text-slate-400" />
+              Parameter
+            </label>
+            <select
+              value={parameterId}
+              onChange={(e) => setParameterId(e.target.value)}
+              disabled={!selectedCatalog || loadingParameters}
+              className="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
+            >
+              <option value="">
+                {loadingParameters
+                  ? "Loading parameters..."
+                  : !selectedCatalog
+                  ? "Select Test Catalog first..."
+                  : "Select Parameter..."}
+              </option>
+              {availableParameters.map((param, index) => (
+                <option key={param.id || `param-${index}`} value={param.id}>
+                  {param.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Error View */}
+      {errorMsg && (
+        <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-700 text-xs font-medium">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {/* Loading or Data Table View */}
+      {loading ? (
+        <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 bg-white border border-slate-200 rounded-2xl gap-2">
+          <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
+          <span>Loading reference range data...</span>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <Table>
+            <TableCaption className="text-xs text-slate-400 pb-4">
+              {searched && parameterId
+                ? "Showing reference range records for selected parameter."
+                : "Select Department, Test Catalog, and Parameter above to view reference range records."}
+            </TableCaption>
+            <TableHeader>
+              <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="font-bold text-slate-600">Gender</TableHead>
+                <TableHead className="font-bold text-slate-600">Age Range</TableHead>
+                <TableHead className="font-bold text-slate-600">Normal Value Range</TableHead>
+                <TableHead className="font-bold text-slate-600">Text Range</TableHead>
+                <TableHead className="font-bold text-slate-600">Note</TableHead>
+                <TableHead className="w-20 text-right font-bold text-slate-600">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-150">
+              {references.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-12 text-center text-sm text-slate-400">
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <ShieldAlert className="h-6 w-6 text-slate-300" />
+                      <p className="font-medium text-slate-500">
+                        {searched
+                          ? "No reference ranges found for selected parameter"
+                          : "Select Department, Test Catalog, and Parameter above to view reference range records."}
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
               ) : (
-                references.map((item) => (
-                  <tr key={item.ref_id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-5 py-3.5 font-mono text-slate-500">{item.ref_id}</td>
-                    <td className="px-5 py-3.5">
-                      <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-[11px] font-semibold flex items-center gap-1 w-fit">
+                references.map((item, index) => (
+                  <TableRow key={item.ref_id || `ref-${index}`} className="hover:bg-slate-50/60 transition-colors group">
+                    <TableCell>
+                      <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-[10px] font-semibold flex items-center gap-1 w-fit border border-slate-200">
                         <UserCheck className="w-3 h-3 text-slate-500" />
                         {item.gender}
                       </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-600 font-mono">{item.age || "All ages"}</td>
-                    <td className="px-5 py-3.5 font-bold text-emerald-600 font-mono">{item.value || "—"}</td>
-                    <td className="px-5 py-3.5 text-slate-600">{item.text_range || "—"}</td>
-                    <td className="px-5 py-3.5 text-slate-500 max-w-xs truncate" title={item.note}>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-slate-600">
+                      {item.age || "All ages"}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs font-bold text-emerald-600">
+                      {item.value || "—"}
+                    </TableCell>
+                    <TableCell className="text-xs text-slate-600">
+                      {item.text_range || "—"}
+                    </TableCell>
+                    <TableCell className="text-xs text-slate-500 max-w-xs truncate" title={item.note}>
                       {item.note ? (
                         <span className="flex items-center gap-1">
                           <FileText className="w-3 h-3 shrink-0 text-slate-400" />
@@ -136,38 +468,36 @@ export default function ReferenceRangePage() {
                       ) : (
                         "—"
                       )}
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <button
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setEditingItem(item)}
-                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                        className="h-8 w-8 p-0 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
                         title="Edit Reference Range"
                       >
                         <Edit2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
-      </div>
-
-      {/* Modals */}
-      {showCreateModal && (
-        <ReferenceRangeForm
-          defaultParameterId={parameterId}
-          onSuccess={() => fetchReferences()}
-          onClose={() => setShowCreateModal(false)}
-        />
       )}
 
+      {/* Controlled Edit Reference Modal */}
       {editingItem && (
         <EditReferenceRange
           item={editingItem}
-          onSuccess={() => fetchReferences()}
+          isOpen={!!editingItem}
           onClose={() => setEditingItem(null)}
+          onSuccess={() => {
+            fetchReferences();
+            setEditingItem(null);
+          }}
         />
       )}
     </div>

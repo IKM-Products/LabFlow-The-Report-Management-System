@@ -8,9 +8,9 @@ export const profileService = {
     return response.data.data;
   },
 
-  // GET {{base_url}}/profile
+  // GET {{base_url}}/admin/profile/profile-details
   getProfiles: async (): Promise<Profile[]> => {
-    const response = await axiosInstance.get<BaseApiResponse<Profile[]>>("/profile");
+    const response = await axiosInstance.get<BaseApiResponse<Profile[]>>("/admin/profile/profile-details");
     return response.data.data;
   },
 

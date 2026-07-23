@@ -129,7 +129,7 @@ export default function TestParameterForm({
           type="button"
           disabled={disabled}
           onClick={() => setInternalIsOpen(true)}
-          className="font-medium h-10 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm flex items-center gap-2 transition-colors cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
+          className="font-medium h-10 px-4 py-2 bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-sm flex items-center gap-2 transition-colors cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="h-4 w-4 mr-1" /> Add Test Parameter
         </button>

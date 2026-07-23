@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useForm, type Resolver } from "react-hook-form";
+import { useForm, type Resolver, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Edit2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -48,12 +48,12 @@ export default function EditTestParameter({
   } = useForm<TestParameterFormData>({
     resolver: zodResolver(TestParameterSchema) as Resolver<TestParameterFormData, any>,
     defaultValues: {
-      id: item.parameter_id,
-      test_id: item.test_id,
-      parameter_name: item.parameter_name,
-      result_type: item.result_type,
-      unit: item.unit,
-      sequence_no: item.sequence_no,
+      id: item?.parameter_id,
+      test_id: item?.test_id,
+      parameter_name: item?.parameter_name,
+      result_type: item?.result_type,
+      unit: item?.unit || "",
+      sequence_no: item?.sequence_no,
     },
   });
 
@@ -65,7 +65,7 @@ export default function EditTestParameter({
         test_id: item.test_id,
         parameter_name: item.parameter_name,
         result_type: item.result_type,
-        unit: item.unit,
+        unit: item.unit || "",
         sequence_no: item.sequence_no,
       });
     }
@@ -83,7 +83,12 @@ export default function EditTestParameter({
   const onSubmit = async (data: TestParameterFormData) => {
     setIsSubmitting(true);
     try {
-      const res = await testParameterService.updateParameter(data);
+      const res = await testParameterService.updateParameter({
+        ...data,
+        id: data.id || item?.parameter_id || "",
+        unit: data.unit || "",
+      });
+
       if (res?.success || res) {
         toast.success("Test parameter updated successfully.");
         onSuccess();
@@ -95,11 +100,16 @@ export default function EditTestParameter({
         ? serverMessages.join(", ")
         : typeof serverMessages === "string"
         ? serverMessages
-        : error.message || "Operation failed.";
+        : error?.message || "Operation failed.";
       toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const onInvalid = (formErrors: FieldErrors<TestParameterFormData>) => {
+    console.error("Test Parameter Validation Errors:", formErrors);
+    toast.error("Please correct highlighted form errors before saving.");
   };
 
   return (
@@ -128,7 +138,7 @@ export default function EditTestParameter({
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
+          <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4 mt-2">
             {/* Hidden fields for ID and Test ID so Zod & API get the values */}
             <input type="hidden" {...register("id")} />
             <input type="hidden" {...register("test_id")} />
@@ -209,7 +219,7 @@ export default function EditTestParameter({
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25"
+                className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25 cursor-pointer"
               >
                 {isSubmitting ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
