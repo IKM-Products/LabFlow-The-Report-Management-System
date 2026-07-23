@@ -49,7 +49,7 @@ export default function EditProfile({ profile, onSuccess }: EditProfileProps) {
   const onSubmit = async (values: ProfileFormValues) => {
     setIsSubmitting(true);
     try {
-      await profileService.updateProfile(profile.id, values);
+      await profileService.updateProfile(profile.user_id, values);
       toast.success("Identity configuration modified successfully.");
       onSuccess();
       setIsOpen(false);
@@ -65,14 +65,13 @@ export default function EditProfile({ profile, onSuccess }: EditProfileProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 h-8 px-2 border border-transparent hover:border-blue-100"
+        <span
+          role="button"
+          tabIndex={0}
+          className="inline-flex items-center justify-center rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 h-8 px-2 border border-transparent hover:border-blue-100 cursor-pointer"
         >
           <Edit2 className="h-3.5 w-3.5" />
-        </Button>
+        </span>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 p-6">

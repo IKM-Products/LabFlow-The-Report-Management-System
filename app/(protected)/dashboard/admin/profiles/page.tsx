@@ -73,12 +73,11 @@ export default function ProfilesPage() {
               Comprehensive list of all registered profile modules.
             </TableCaption>
             <TableHeader>
-              <tr className="bg-slate-50 border-b border-slate-200">
+              <tr className="bg-slate-50 border-b border-slate-200 col-span-4">
                 <TableHead className="w-20 font-bold text-slate-600">SN</TableHead>
                 <TableHead className="font-bold text-slate-600">User Identity</TableHead>
                 <TableHead className="font-bold text-slate-600">Contact Specifics</TableHead>
                 <TableHead className="font-bold text-slate-600">Permission Role</TableHead>
-                <TableHead className="font-bold text-slate-600">Sys Account UID</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </tr>
             </TableHeader>
