@@ -182,31 +182,38 @@ export default function EditPanel({
                 <Controller
                   name="dept_id"
                   control={control}
-                  render={({ field }) => (
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value ? String(field.value) : ""}
-                      disabled={isSubmitting || loadingDepts}
-                    >
-                      <SelectTrigger className="w-full h-9 rounded-xl border-slate-200 text-xs bg-white">
-                        <SelectValue
-                          placeholder={
-                            loadingDepts ? "Loading..." : "Select Department"
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {departments.map((dept) => (
-                          <SelectItem
-                            key={dept.dept_id}
-                            value={String(dept.dept_id)}
-                          >
-                            {dept.dept_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                  render={({ field }) => {
+                    const selectedDept = departments.find(
+                      (dept) => String(dept.dept_id) === String(field.value)
+                    );
+
+                    return (
+                      <Select
+                        onValueChange={(val) => {
+                          const num = Number(val);
+                          field.onChange(isNaN(num) ? val : num);
+                        }}
+                        value={field.value !== undefined && field.value !== null ? String(field.value) : ""}
+                        disabled={isSubmitting || loadingDepts}
+                      >
+                        <SelectTrigger className="w-full h-9 rounded-xl border-slate-200 text-xs bg-white">
+                          <SelectValue placeholder={loadingDepts ? "Loading..." : "Select Department"}>
+                            {selectedDept ? selectedDept.dept_name : undefined}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {departments.map((dept) => (
+                            <SelectItem
+                              key={dept.dept_id}
+                              value={String(dept.dept_id)}
+                            >
+                              {dept.dept_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    );
+                  }}
                 />
                 {errors.dept_id && (
                   <p className="text-[10px] text-red-500 font-medium">

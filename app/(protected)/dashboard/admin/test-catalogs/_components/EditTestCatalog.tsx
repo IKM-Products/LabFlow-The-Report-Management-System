@@ -127,7 +127,7 @@ export default function EditTestCatalog({
       onSuccess();
       handleClose();
     } catch (error: any) {
-      const serverMessages = error.response?.data?.messages;
+      const serverMessages = error.response?.data?.messages || error.message;
       const errorMsg = Array.isArray(serverMessages)
         ? serverMessages.join(", ")
         : typeof serverMessages === "string"
@@ -161,32 +161,22 @@ export default function EditTestCatalog({
               Edit Test Catalog
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Update the test catalog information in the system.
+              Edit the test catalog information in the system.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">Test Code</Label>
-                <Input
-                  {...register("test_code")}
-                  disabled={isSubmitting}
-                  className="rounded-xl border-slate-200"
-                />
-                {errors.test_code && (
-                  <p className="text-[10px] text-red-500 font-medium">
-                    {errors.test_code.message}
-                  </p>
-                )}
-              </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-slate-700">Department</Label>
+              <Controller
+                name="dept_id"
+                control={control}
+                render={({ field }) => {
+                  const selectedDept = departments.find(
+                    (d) => String(d.dept_id) === String(field.value)
+                  );
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">Department</Label>
-                <Controller
-                  name="dept_id"
-                  control={control}
-                  render={({ field }) => (
+                  return (
                     <Select
                       onValueChange={field.onChange}
                       value={field.value ? String(field.value) : ""}
@@ -197,7 +187,9 @@ export default function EditTestCatalog({
                           placeholder={
                             loadingDepts ? "Loading..." : "Select Department"
                           }
-                        />
+                        >
+                          {selectedDept ? selectedDept.dept_name : undefined}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {departments.map((dept) => (
@@ -210,27 +202,28 @@ export default function EditTestCatalog({
                         ))}
                       </SelectContent>
                     </Select>
-                  )}
-                />
-                {errors.dept_id && (
-                  <p className="text-[10px] text-red-500 font-medium">
-                    {errors.dept_id.message}
-                  </p>
-                )}
-              </div>
+                  );
+                }}
+              />
+              {errors.dept_id && (
+                <p className="text-[10px] text-red-500 font-medium">
+                  {errors.dept_id.message}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">Test Name</Label>
+                <Label className="text-xs font-semibold text-slate-700">Test Code</Label>
                 <Input
-                  {...register("test_name")}
+                  {...register("test_code")}
+                  placeholder="e.g. GLU-01"
                   disabled={isSubmitting}
                   className="rounded-xl border-slate-200"
                 />
-                {errors.test_name && (
+                {errors.test_code && (
                   <p className="text-[10px] text-red-500 font-medium">
-                    {errors.test_name.message}
+                    {errors.test_code.message}
                   </p>
                 )}
               </div>
@@ -239,6 +232,7 @@ export default function EditTestCatalog({
                 <Label className="text-xs font-semibold text-slate-700">Sample Type</Label>
                 <Input
                   {...register("sample_type")}
+                  placeholder="e.g. Serum / Plasma"
                   disabled={isSubmitting}
                   className="rounded-xl border-slate-200"
                 />
@@ -250,6 +244,21 @@ export default function EditTestCatalog({
               </div>
             </div>
 
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-slate-700">Test Name</Label>
+              <Input
+                {...register("test_name")}
+                placeholder="e.g. Fasting Blood Glucose"
+                disabled={isSubmitting}
+                className="rounded-xl border-slate-200"
+              />
+              {errors.test_name && (
+                <p className="text-[10px] text-red-500 font-medium">
+                  {errors.test_name.message}
+                </p>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs font-semibold text-slate-700">Price ($)</Label>
@@ -257,6 +266,7 @@ export default function EditTestCatalog({
                   type="number"
                   step="0.01"
                   {...register("test_price", { valueAsNumber: true })}
+                  placeholder="0.00"
                   disabled={isSubmitting}
                   className="rounded-xl border-slate-200"
                 />
@@ -268,10 +278,13 @@ export default function EditTestCatalog({
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">TAT (Hours)</Label>
+                <Label className="text-xs font-semibold text-slate-700">
+                  Turnaround Time (hrs)
+                </Label>
                 <Input
                   type="number"
                   {...register("turnaround_time", { valueAsNumber: true })}
+                  placeholder="24"
                   disabled={isSubmitting}
                   className="rounded-xl border-slate-200"
                 />
@@ -301,7 +314,7 @@ export default function EditTestCatalog({
                 {isSubmitting ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
-                  "Update Catalog"
+                  "Save"
                 )}
               </Button>
             </div>

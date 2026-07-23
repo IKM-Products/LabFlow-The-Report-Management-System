@@ -1,36 +1,56 @@
 "use client";
 
-import React, { useState } from "react";
-import { useForm, Resolver } from "react-hook-form";
+import React, { useState, useEffect } from "react";
+import { useForm, type Resolver, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
 import { TestParameterSchema, TestParameterFormData } from "@/schemas/test-parameter.schema";
 import { testParameterService } from "@/services/test-parameter.service";
-import { Loader2, PlusCircle, AlertCircle, X } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface TestParameterFormProps {
   defaultTestId?: string;
   nextSequenceNo?: number;
   onSuccess: () => void;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  disabled?: boolean;
 }
 
 export default function TestParameterForm({
   defaultTestId = "",
   nextSequenceNo = 1,
   onSuccess,
-  onClose,
+  isOpen: externalIsOpen,
+  onClose: externalOnClose,
+  disabled = false,
 }: TestParameterFormProps) {
-  const [loading, setLoading] = useState(false);
-  const [errorsList, setErrorsList] = useState<string[]>([]);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isControlled = externalIsOpen !== undefined;
+  const isOpen = isControlled ? externalIsOpen : internalIsOpen;
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<TestParameterFormData>({
-    resolver: zodResolver(TestParameterSchema) as Resolver<TestParameterFormData>,
+    resolver: zodResolver(TestParameterSchema) as Resolver<TestParameterFormData, any>,
     defaultValues: {
-      id: "",
       test_id: defaultTestId,
       parameter_name: "",
       result_type: "Numeric",
@@ -39,132 +59,189 @@ export default function TestParameterForm({
     },
   });
 
-  const onSubmit = async (data: TestParameterFormData) => {
-    setLoading(true);
-    setErrorsList([]);
+  // Re-initialize form values cleanly whenever the modal opens or parent props change
+  useEffect(() => {
+    if (isOpen) {
+      reset({
+        test_id: defaultTestId,
+        parameter_name: "",
+        result_type: "Numeric",
+        unit: "",
+        sequence_no: nextSequenceNo,
+      });
+    }
+  }, [isOpen, defaultTestId, nextSequenceNo, reset]);
+
+  const handleClose = () => {
+    if (isControlled && externalOnClose) {
+      externalOnClose();
+    } else {
+      setInternalIsOpen(false);
+    }
+    reset({
+      test_id: defaultTestId,
+      parameter_name: "",
+      result_type: "Numeric",
+      unit: "",
+      sequence_no: nextSequenceNo,
+    });
+  };
+
+  const onSubmit = async (values: TestParameterFormData) => {
+    setIsSubmitting(true);
     try {
-      const res = await testParameterService.createParameter(data);
-      if (res.success) {
+      // Exclude optional 'id' and default 'unit' to a string for API payload compatibility
+      const { id, unit, ...rest } = values;
+      const payload = {
+        ...rest,
+        unit: unit ?? "",
+      };
+
+      const res = await testParameterService.createParameter(payload as any);
+      if (res?.success || res) {
+        toast.success("New test parameter created successfully.");
         onSuccess();
-        onClose();
+        handleClose();
       }
-    } catch (err: any) {
-      setErrorsList(Array.isArray(err) ? err : [err.toString()]);
+    } catch (error: any) {
+      const serverMessages = error.response?.data?.messages;
+      const errorMsg = Array.isArray(serverMessages)
+        ? serverMessages.join(", ")
+        : typeof serverMessages === "string"
+        ? serverMessages
+        : error?.message || "Operation failed.";
+      toast.error(errorMsg);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
+  // Triggered if Zod schema validation fails when clicking submit
+  const onInvalid = (formErrors: FieldErrors<TestParameterFormData>) => {
+    console.error("Test Parameter Form Validation Errors:", formErrors);
+    toast.error("Please correct the highlighted form errors before saving.");
+  };
+
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 space-y-5">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-              <PlusCircle className="w-5 h-5" />
-            </div>
-            <h2 className="text-base font-bold text-slate-800">Create Test Parameter</h2>
-          </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 cursor-pointer">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <>
+      {!isControlled && (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setInternalIsOpen(true)}
+          className="font-medium h-10 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm flex items-center gap-2 transition-colors cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Plus className="h-4 w-4 mr-1" /> Add Test Parameter
+        </button>
+      )}
 
-        {errorsList.length > 0 && (
-          <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl space-y-1">
-            {errorsList.map((msg, i) => (
-              <p key={i} className="text-xs text-rose-600 font-medium flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                {msg}
-              </p>
-            ))}
-          </div>
-        )}
+      <Dialog open={isOpen} onOpenChange={(open) => (!open ? handleClose() : setInternalIsOpen(true))}>
+        <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight">
+              Add New Test Parameter
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Enter the required information to create a new parameter for this test catalog in the system.
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1 block">Parameter ID</label>
-              <input
-                {...register("id")}
-                placeholder="e.g. PRM-HB"
-                className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+          <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4 mt-2">
+            {/* Hidden registered field for test_id */}
+            <input type="hidden" {...register("test_id")} />
+
+            {/* Parameter Name */}
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-slate-700">Parameter Name</Label>
+              <Input
+                {...register("parameter_name")}
+                placeholder="e.g. Hemoglobin"
+                disabled={isSubmitting}
+                className="rounded-xl border-slate-200"
               />
-              {errors.id && <p className="text-[10px] text-rose-500 mt-1">{errors.id.message}</p>}
+              {errors.parameter_name && (
+                <p className="text-[10px] text-red-500 font-medium">
+                  {errors.parameter_name.message}
+                </p>
+              )}
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1 block">Test Catalog ID</label>
-              <input
-                {...register("test_id")}
-                placeholder="e.g. TST-CBC"
-                className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+            {/* Result Type & Unit */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-700">Result Type</Label>
+                <Input
+                  {...register("result_type")}
+                  placeholder="e.g. Numeric"
+                  disabled={isSubmitting}
+                  className="rounded-xl border-slate-200"
+                />
+                {errors.result_type && (
+                  <p className="text-[10px] text-red-500 font-medium">
+                    {errors.result_type.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-700">Unit</Label>
+                <Input
+                  {...register("unit")}
+                  placeholder="e.g. g/dL"
+                  disabled={isSubmitting}
+                  className="rounded-xl border-slate-200"
+                />
+                {errors.unit && (
+                  <p className="text-[10px] text-red-500 font-medium">
+                    {errors.unit.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Sequence Number */}
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-slate-700">Sequence Number</Label>
+              <Input
+                type="number"
+                {...register("sequence_no", { valueAsNumber: true })}
+                placeholder="1"
+                disabled={isSubmitting}
+                className="rounded-xl border-slate-200"
               />
-              {errors.test_id && <p className="text-[10px] text-rose-500 mt-1">{errors.test_id.message}</p>}
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-slate-600 mb-1 block">Parameter Name</label>
-            <input
-              {...register("parameter_name")}
-              placeholder="e.g. Hemoglobin"
-              className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
-            />
-            {errors.parameter_name && <p className="text-[10px] text-rose-500 mt-1">{errors.parameter_name.message}</p>}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1 block">Result Type</label>
-              <input
-                {...register("result_type")}
-                placeholder="e.g. Numeric / Qualitative"
-                className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
-              />
-              {errors.result_type && <p className="text-[10px] text-rose-500 mt-1">{errors.result_type.message}</p>}
+              {errors.sequence_no && (
+                <p className="text-[10px] text-red-500 font-medium">
+                  {errors.sequence_no.message}
+                </p>
+              )}
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1 block">Unit</label>
-              <input
-                {...register("unit")}
-                placeholder="e.g. g/dL"
-                className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
-              />
-              {errors.unit && <p className="text-[10px] text-rose-500 mt-1">{errors.unit.message}</p>}
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={isSubmitting}
+                className="rounded-xl text-xs h-10"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  "Save"
+                )}
+              </Button>
             </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-slate-600 mb-1 block">Sequence Number</label>
-            <input
-              type="number"
-              {...register("sequence_no", { valueAsNumber: true })}
-              placeholder="1"
-              className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
-            />
-            {errors.sequence_no && <p className="text-[10px] text-rose-500 mt-1">{errors.sequence_no.message}</p>}
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 h-10 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 h-10 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Parameter"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

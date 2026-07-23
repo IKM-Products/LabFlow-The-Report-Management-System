@@ -4,7 +4,6 @@ import {
   TestParameterItem,
   ApiResponse,
 } from "@/types/test-parameter.types";
-import axios from "axios";
 
 export const testParameterService = {
   // GET: Fetch test parameters by Test Catalog ID

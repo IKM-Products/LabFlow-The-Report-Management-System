@@ -4,6 +4,7 @@ import {
   TestCatalogItem,
   CreatedTestCatalogResponseData,
   ApiResponse,
+  PanelCatalogDetails,
 } from "@/types/test-catalog.types";
 
 export const testCatalogService = {
@@ -13,6 +14,18 @@ export const testCatalogService = {
       `/lab-test/list-catalog/${encodeURIComponent(deptId)}`
     );
     return response.data.data ?? [];
+  },
+
+  // GET {{base_url}}/lab-test/list-catalog-by-panel/{id}
+  getCatalogByPanelId: async (panelId: string): Promise<PanelCatalogDetails> => {
+    const response = await axiosInstance.get<ApiResponse<PanelCatalogDetails>>(
+      `/lab-test/list-catalog-by-panel/${encodeURIComponent(panelId)}`
+    );
+    const data = response.data.data;
+    if (!data) {
+      throw new Error("Panel catalog details missing response data");
+    }
+    return data;
   },
 
   // POST {{base_url}}/admin/lab-test/create-catalog

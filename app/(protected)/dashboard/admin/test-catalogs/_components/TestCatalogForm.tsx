@@ -61,7 +61,6 @@ export default function TestCatalogForm({
   } = useForm<TestCatalogFormData>({
     resolver: zodResolver(TestCatalogSchema) as Resolver<TestCatalogFormData, any>,
     defaultValues: {
-      id: "",
       dept_id: defaultDeptId,
       test_code: "",
       sample_type: "",
@@ -108,13 +107,11 @@ export default function TestCatalogForm({
   const onSubmit = async (values: TestCatalogFormData) => {
     setIsSubmitting(true);
     try {
-      const { id, ...restPayload } = values;
-      const payload = (
-        id && id.trim() !== "" ? values : restPayload
-      ) as TestCatalogFormData;
+      const { id, ...payload } = values;
 
-      // testCatalogService.createCatalog unwraps and returns data directly or throws on error
-      await testCatalogService.createCatalog(payload);
+      await testCatalogService.createCatalog(
+        payload as Parameters<typeof testCatalogService.createCatalog>[0]
+      );
       toast.success("New test catalog record created successfully.");
       onSuccess();
       handleClose();
@@ -154,33 +151,22 @@ export default function TestCatalogForm({
               Add New Test Catalog
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Enter the required information to create a new test catalog entry.
+              Enter the required information to create a new test catalog in the system.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">Catalog ID</Label>
-                <Input
-                  {...register("id")}
-                  placeholder="e.g. TST-101"
-                  disabled={isSubmitting}
-                  className="rounded-xl border-slate-200"
-                />
-                {errors.id && (
-                  <p className="text-[10px] text-red-500 font-medium">
-                    {errors.id.message}
-                  </p>
-                )}
-              </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-slate-700">Department</Label>
+              <Controller
+                name="dept_id"
+                control={control}
+                render={({ field }) => {
+                  const selectedDept = departments.find(
+                    (d) => String(d.dept_id) === String(field.value)
+                  );
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">Department</Label>
-                <Controller
-                  name="dept_id"
-                  control={control}
-                  render={({ field }) => (
+                  return (
                     <Select
                       onValueChange={field.onChange}
                       value={field.value ? String(field.value) : ""}
@@ -191,7 +177,9 @@ export default function TestCatalogForm({
                           placeholder={
                             loadingDepts ? "Loading..." : "Select Department"
                           }
-                        />
+                        >
+                          {selectedDept ? selectedDept.dept_name : undefined}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {departments.map((dept) => (
@@ -204,14 +192,14 @@ export default function TestCatalogForm({
                         ))}
                       </SelectContent>
                     </Select>
-                  )}
-                />
-                {errors.dept_id && (
-                  <p className="text-[10px] text-red-500 font-medium">
-                    {errors.dept_id.message}
-                  </p>
-                )}
-              </div>
+                  );
+                }}
+              />
+              {errors.dept_id && (
+                <p className="text-[10px] text-red-500 font-medium">
+                  {errors.dept_id.message}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">

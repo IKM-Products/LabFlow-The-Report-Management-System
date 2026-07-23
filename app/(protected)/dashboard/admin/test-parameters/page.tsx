@@ -1,168 +1,284 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { 
+  AlertCircle,
+  ShieldAlert,
+  RefreshCw,
+  Building2,
+  FlaskConical,
+  Tag
+} from "lucide-react";
+
 import { testParameterService } from "@/services/test-parameter.service";
+import { departmentService } from "@/services/department.service";
+import { testCatalogService } from "@/services/test-catalog.service";
 import { TestParameterItem } from "@/types/test-parameter.types";
+import { Department } from "@/types/department.types";
+import { TestCatalogItem } from "@/types/test-catalog.types";
+
 import TestParameterForm from "./_components/TestParameterForm";
 import EditTestParameter from "./_components/EditTestParameter";
-import { Search, Plus, Edit2, Loader2, Sliders, Hash, Tag } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function TestParametersPage() {
-  const [testId, setTestId] = useState("");
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loadingDepts, setLoadingDepts] = useState(false);
+  const [selectedDeptId, setSelectedDeptId] = useState("");
+
+  const [testCatalogs, setTestCatalogs] = useState<TestCatalogItem[]>([]);
+  const [loadingCatalogs, setLoadingCatalogs] = useState(false);
+  const [selectedTestId, setSelectedTestId] = useState("");
+  const [activeTestId, setActiveTestId] = useState("");
+
   const [parameters, setParameters] = useState<TestParameterItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [loadingParams, setLoadingParams] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingItem, setEditingItem] = useState<TestParameterItem | null>(null);
+  // Active names helpers
+  const activeDeptName = departments.find((d) => d.dept_id === selectedDeptId)?.dept_name;
+  const activeTestName = testCatalogs.find(
+    (t) => t.test_catalog_id === activeTestId
+  )?.test_name;
 
-  const fetchParameters = async (idToFetch?: string) => {
-    const queryId = idToFetch || testId;
-    if (!queryId.trim()) return;
-
-    setLoading(true);
-    setSearched(true);
-    try {
-      const res = await testParameterService.getParametersByTestId(queryId);
-      if (res.success) {
-        setParameters(res.data || []);
+  // Fetch departments list on component mount
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      setLoadingDepts(true);
+      try {
+        const departmentsResponse = await departmentService.getDepartments();
+        if (Array.isArray(departmentsResponse)) {
+          setDepartments(departmentsResponse);
+        }
+      } catch (err: any) {
+        console.error("Failed to load departments:", err);
+      } finally {
+        setLoadingDepts(false);
       }
-    } catch (err) {
-      console.error("Failed to fetch test parameters:", err);
-      setParameters([]);
-    } finally {
-      setLoading(false);
+    };
+
+    fetchDepartments();
+  }, []);
+
+  // Fetch test catalogs when department changes
+  const handleDepartmentChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const deptId = e.target.value;
+    setSelectedDeptId(deptId);
+    setSelectedTestId("");
+    setActiveTestId("");
+    setParameters([]);
+    setTestCatalogs([]);
+
+    if (deptId) {
+      setLoadingCatalogs(true);
+      try {
+        const res = await testCatalogService.getCatalogByDeptId(deptId);
+        if (Array.isArray(res)) {
+          setTestCatalogs(res);
+        } else {
+          setTestCatalogs([]);
+        }
+      } catch (err) {
+        console.error("Failed to load test catalogs:", err);
+        setTestCatalogs([]);
+      } finally {
+        setLoadingCatalogs(false);
+      }
     }
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchParameters();
+  // Fetch parameters for selected test catalog
+  const fetchParameters = async (idToFetch: string) => {
+    if (!idToFetch.trim()) return;
+    setLoadingParams(true);
+    setErrorMsg(null);
+    try {
+      const res = await testParameterService.getParametersByTestId(idToFetch.trim());
+      const data = res?.data || (Array.isArray(res) ? res : []);
+      setParameters(data);
+      setActiveTestId(idToFetch.trim());
+    } catch (err: any) {
+      setParameters([]);
+      setErrorMsg(Array.isArray(err) ? err.join(", ") : err.toString());
+    } finally {
+      setLoadingParams(false);
+    }
+  };
+
+  const handleTestChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const tId = e.target.value;
+    setSelectedTestId(tId);
+    if (tId) {
+      fetchParameters(tId);
+    } else {
+      setParameters([]);
+      setActiveTestId("");
+    }
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="space-y-8 p-6">
+      {/* Top Header Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Test Parameter Management</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Configure result fields, units, and parameters for diagnostic tests
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+            Laboratory Test Parameters
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Manage test components, result fields, and units by department and test catalog.
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
-        >
-          <Plus className="w-4 h-4" /> Add Parameter
-        </button>
-      </div>
 
-      {/* Search Bar */}
-      <form
-        onSubmit={handleSearchSubmit}
-        className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-3"
-      >
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-          <input
-            type="text"
-            value={testId}
-            onChange={(e) => setTestId(e.target.value)}
-            placeholder="Enter Test Catalog ID (e.g. TST-CBC)..."
-            className="w-full h-10 pl-10 pr-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => activeTestId && fetchParameters(activeTestId)}
+            disabled={loadingParams || !activeTestId}
+            className="rounded-xl h-10 border-slate-200 text-slate-600"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${loadingParams ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </Button>
+
+          <TestParameterForm
+            defaultTestId={activeTestId}
+            nextSequenceNo={parameters.length + 1}
+            onSuccess={() => activeTestId && fetchParameters(activeTestId)}
+            disabled={!activeTestId}
           />
         </div>
-        <button
-          type="submit"
-          disabled={loading || !testId.trim()}
-          className="h-10 px-5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer"
-        >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Fetch Parameters"}
-        </button>
-      </form>
+      </div>
 
-      {/* Table Data */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold uppercase tracking-wider">
-              <tr>
-                <th className="px-5 py-3.5 w-16">Seq #</th>
-                <th className="px-5 py-3.5">Parameter ID</th>
-                <th className="px-5 py-3.5">Parameter Name</th>
-                <th className="px-5 py-3.5">Result Type</th>
-                <th className="px-5 py-3.5">Unit</th>
-                <th className="px-5 py-3.5 text-right">Actions</th>
+      {/* Department & Test Catalog Selection Row */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Department Dropdown */}
+        <div className="relative">
+          <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
+          <select
+            value={selectedDeptId}
+            onChange={handleDepartmentChange}
+            disabled={loadingDepts}
+            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 cursor-pointer disabled:bg-slate-50"
+          >
+            <option value="">
+              {loadingDepts ? "Loading departments..." : "1. Select a Department"}
+            </option>
+            {departments.map((dept) => (
+              <option key={dept.dept_id} value={dept.dept_id}>
+                {dept.dept_name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Test Catalog Dropdown */}
+        <div className="relative">
+          <FlaskConical className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
+          <select
+            value={selectedTestId}
+            onChange={handleTestChange}
+            disabled={loadingCatalogs || !selectedDeptId}
+            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 cursor-pointer disabled:bg-slate-50"
+          >
+            <option value="">
+              {loadingCatalogs
+                ? "Loading test catalogs..."
+                : !selectedDeptId
+                ? "Select a Department first"
+                : testCatalogs.length === 0
+                ? "No test catalogs in this department"
+                : "2. Select a Test Catalog"}
+            </option>
+            {testCatalogs.map((test) => (
+              <option key={test.test_catalog_id} value={test.test_catalog_id}>
+                {test.test_name} {test.test_code ? `(${test.test_code})` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Error View */}
+      {errorMsg && (
+        <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-700 text-xs font-medium">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {/* Loading or Parameters Data Table View */}
+      {loadingParams ? (
+        <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 animate-pulse bg-white border rounded-2xl">
+          Loading test parameter data...
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <Table>
+            <TableCaption className="text-xs text-slate-400 pb-4">
+              {activeTestName 
+                ? `Showing test parameter records for ${activeTestName}.` 
+                : "Select a department and test catalog from the dropdowns above to view records."}
+            </TableCaption>
+            <TableHeader>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="w-20 font-bold text-slate-600">S.N.</TableHead>
+                <TableHead className="font-bold text-slate-600">Parameter Name</TableHead>
+                <TableHead className="font-bold text-slate-600">Result Type</TableHead>
+                <TableHead className="font-bold text-slate-600">Unit</TableHead>
+                <TableHead className="w-20 text-right font-bold text-slate-600">Actions</TableHead>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
-                    <Loader2 className="w-6 h-6 animate-spin text-emerald-600 mx-auto mb-2" />
-                    Loading parameters...
-                  </td>
-                </tr>
-              ) : parameters.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
-                    <Sliders className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    {searched
-                      ? "No test parameters found for this Test Catalog ID."
-                      : "Enter a Test Catalog ID above to view parameters."}
-                  </td>
-                </tr>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-150">
+              {parameters.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-12 text-center text-sm text-slate-400">
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <ShieldAlert className="h-6 w-6 text-slate-300" />
+                      <p className="font-medium text-slate-500">
+                        {activeTestName 
+                          ? `No test parameters found for catalog "${activeTestName}"` 
+                          : "Select a department and test catalog above to view parameter records."}
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
               ) : (
-                parameters.map((item) => (
-                  <tr key={item.parameter_id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-5 py-3.5">
-                      <span className="w-6 h-6 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px] flex items-center justify-center">
-                        #{item.sequence_no}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 font-mono text-slate-500">{item.parameter_id}</td>
-                    <td className="px-5 py-3.5 font-bold text-slate-800">{item.parameter_name}</td>
-                    <td className="px-5 py-3.5">
-                      <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[11px] font-semibold flex items-center gap-1 w-fit border border-emerald-100">
+                parameters.map((item, idx) => (
+                  <TableRow key={item.parameter_id} className="hover:bg-slate-50/60 transition-colors group">
+                    <TableCell className="font-mono text-xs text-slate-400">
+                      #{item.sequence_no ?? idx + 1}
+                    </TableCell>
+                    <TableCell className="font-semibold text-slate-900">{item.parameter_name}</TableCell>
+                    <TableCell>
+                      <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[10px] font-semibold flex items-center gap-1 w-fit border border-emerald-100">
                         <Tag className="w-3 h-3" />
                         {item.result_type}
                       </span>
-                    </td>
-                    <td className="px-5 py-3.5 font-mono text-slate-600">{item.unit || "—"}</td>
-                    <td className="px-5 py-3.5 text-right">
-                      <button
-                        onClick={() => setEditingItem(item)}
-                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
-                        title="Edit Parameter"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-slate-600">{item.unit || "—"}</TableCell>
+                    <TableCell className="text-right">
+                      <EditTestParameter
+                        item={item}
+                        onSuccess={() => activeTestId && fetchParameters(activeTestId)}
+                      />
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
-      </div>
-
-      {/* Modals */}
-      {showCreateModal && (
-        <TestParameterForm
-          defaultTestId={testId}
-          nextSequenceNo={parameters.length + 1}
-          onSuccess={() => fetchParameters()}
-          onClose={() => setShowCreateModal(false)}
-        />
-      )}
-
-      {editingItem && (
-        <EditTestParameter
-          item={editingItem}
-          onSuccess={() => fetchParameters()}
-          onClose={() => setEditingItem(null)}
-        />
       )}
     </div>
   );

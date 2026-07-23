@@ -30,9 +30,26 @@ export interface CreatedTestCatalogResponseData {
   updatedAt: string;
 }
 
+export interface PanelTestCatalogItem {
+  test_catalog_code: string;
+  test_catalog_id: string;
+  test_catalog_name: string;
+  test_catalog_price: number;
+}
+
+export interface PanelCatalogDetails {
+  panel_code: string;
+  panel_id: string;
+  panel_name: string;
+  panel_price: number;
+  test_catalog_items: PanelTestCatalogItem[];
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   message?: string;
   messages?: string[];
   data?: T;
 }
+
+export type CatalogByPanelResponse = ApiResponse<PanelCatalogDetails>;

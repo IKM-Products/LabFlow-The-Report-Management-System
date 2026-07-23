@@ -109,7 +109,7 @@ export default function DoctorsPage() {
                     </TableCell>
                     <TableCell className="font-mono text-xs font-medium text-slate-700">{doc.registration_no}</TableCell>
                     <TableCell>
-                      <span className="text-xs font-medium text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-2 py-0.5 inline-block">
+                      <span className="text-xs font-medium bg-slate-100 text-slate-600 border rounded-md px-2 py-0.5 inline-block">
                         {doc.qualification}
                       </span>
                     </TableCell>

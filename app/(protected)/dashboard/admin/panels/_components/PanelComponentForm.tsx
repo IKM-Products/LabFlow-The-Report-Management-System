@@ -5,8 +5,11 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PanelComponentSchema, PanelComponentFormData } from "@/schemas/panel.schema";
 import { panelService } from "@/services/panel.service";
+import { testCatalogService } from "@/services/test-catalog.service";
+import { departmentService } from "@/services/department.service";
 import { PanelCatalogItem } from "@/types/panel.types";
-import { Loader2, Layers, AlertCircle, X } from "lucide-react";
+import { TestCatalogItem } from "@/types/test-catalog.types";
+import { Loader2, Layers, AlertCircle, X, RotateCcw } from "lucide-react";
 
 interface PanelComponentFormProps {
   panelId: string;
@@ -14,9 +17,16 @@ interface PanelComponentFormProps {
   onClose: () => void;
 }
 
-export default function PanelComponentForm({ panelId, panelName, onClose }: PanelComponentFormProps) {
+export default function PanelComponentForm({
+  panelId,
+  panelName,
+  onClose,
+}: PanelComponentFormProps) {
   const [catalog, setCatalog] = useState<PanelCatalogItem[]>([]);
+  const [availableTests, setAvailableTests] = useState<TestCatalogItem[]>([]);
   const [fetchingCatalog, setFetchingCatalog] = useState(false);
+  const [fetchingTests, setFetchingTests] = useState(false);
+  const [testCatalogError, setTestCatalogError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [errorsList, setErrorsList] = useState<string[]>([]);
 
@@ -34,12 +44,15 @@ export default function PanelComponentForm({ panelId, panelName, onClose }: Pane
     },
   });
 
+  // Load existing panel components
   const loadCatalog = useCallback(async () => {
     setFetchingCatalog(true);
     try {
       const res = await panelService.getPanelCatalog(panelId);
       if (Array.isArray(res)) {
         setCatalog(res);
+      } else if (res && Array.isArray((res as any).data)) {
+        setCatalog((res as any).data);
       } else {
         setCatalog([]);
       }
@@ -51,9 +64,37 @@ export default function PanelComponentForm({ panelId, panelName, onClose }: Pane
     }
   }, [panelId]);
 
+  // Load available test options for the dropdown safely using department + catalog services
+  const loadAvailableTests = useCallback(async () => {
+    setFetchingTests(true);
+    setTestCatalogError(null);
+    try {
+      const depts = await departmentService.getDepartments();
+      if (Array.isArray(depts) && depts.length > 0) {
+        const catalogPromises = depts.map((d) =>
+          testCatalogService.getCatalogByDeptId(d.dept_id).catch(() => [])
+        );
+        const results = await Promise.all(catalogPromises);
+        const allItems = results.flat();
+        setAvailableTests(allItems);
+      } else {
+        setAvailableTests([]);
+      }
+    } catch (err: any) {
+      console.error("Failed loading available test catalogs:", err);
+      const errorMessage =
+        err?.response?.data?.message || err?.message || "Failed to load tests due to a network issue.";
+      setTestCatalogError(errorMessage);
+      setAvailableTests([]);
+    } finally {
+      setFetchingTests(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadCatalog();
-  }, [loadCatalog]);
+    loadAvailableTests();
+  }, [loadCatalog, loadAvailableTests]);
 
   const onSubmit = async (data: PanelComponentFormData) => {
     setSubmitting(true);
@@ -63,10 +104,23 @@ export default function PanelComponentForm({ panelId, panelName, onClose }: Pane
       reset({ panel_id: panelId, test_id: "", sequence_no: catalog.length + 2 });
       loadCatalog();
     } catch (err: any) {
-      setErrorsList(Array.isArray(err) ? err : [err.toString()]);
+      const errMsg = err?.response?.data?.message || err?.message || err.toString();
+      setErrorsList(Array.isArray(err) ? err : [errMsg]);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Helper to resolve and display the Test Name instead of raw ID
+  const getTestName = (item: PanelCatalogItem) => {
+    const directName = (item as any).test_name || (item as any).test_catalog_name;
+    if (directName) return directName;
+
+    const matchedTest = availableTests.find(
+      (t) => t.test_catalog_id === item.test_id
+    );
+
+    return matchedTest?.test_name || item.test_id;
   };
 
   return (
@@ -87,6 +141,7 @@ export default function PanelComponentForm({ panelId, panelName, onClose }: Pane
           </button>
         </div>
 
+        {/* Global Errors */}
         {errorsList.length > 0 && (
           <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl space-y-1">
             {errorsList.map((msg, i) => (
@@ -101,14 +156,43 @@ export default function PanelComponentForm({ panelId, panelName, onClose }: Pane
         {/* Add Component Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="bg-slate-50 p-4 rounded-xl space-y-3 border border-slate-100">
           <span className="text-xs font-bold text-slate-700 block">Add New Panel Catalog Component</span>
-          
+
           <div className="grid grid-cols-3 gap-2">
+            {/* Dropdown Select for Test Catalog */}
             <div className="col-span-2">
-              <input
+              <select
                 {...register("test_id")}
-                placeholder="Test Catalog ID"
-                className="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 bg-white focus:border-emerald-500 outline-none"
-              />
+                disabled={fetchingTests || !!testCatalogError}
+                className="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 bg-white focus:border-emerald-500 outline-none text-slate-800 cursor-pointer disabled:bg-slate-100 disabled:cursor-not-allowed"
+              >
+                <option value="">
+                  {fetchingTests
+                    ? "Loading tests..."
+                    : testCatalogError
+                    ? "Unable to load tests"
+                    : "Select Test Catalog"}
+                </option>
+                {availableTests.map((test) => (
+                  <option key={test.test_catalog_id} value={test.test_catalog_id}>
+                    {test.test_name} {test.test_code ? `(${test.test_code})` : ""}
+                  </option>
+                ))}
+              </select>
+
+              {/* Inline Network Error Alert + Retry Button */}
+              {testCatalogError && (
+                <div className="mt-1 flex items-center justify-between text-[10px] text-rose-500 font-medium bg-rose-50 px-2 py-1 rounded-md border border-rose-100">
+                  <span className="truncate max-w-42.5">{testCatalogError}</span>
+                  <button
+                    type="button"
+                    onClick={loadAvailableTests}
+                    className="flex items-center gap-0.5 text-emerald-700 hover:underline font-bold cursor-pointer shrink-0"
+                  >
+                    <RotateCcw className="w-2.5 h-2.5" /> Retry
+                  </button>
+                </div>
+              )}
+
               {errors.test_id && <p className="text-[10px] text-rose-500 mt-0.5">{errors.test_id.message}</p>}
             </div>
 
@@ -125,7 +209,7 @@ export default function PanelComponentForm({ panelId, panelName, onClose }: Pane
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || fetchingTests}
             className="w-full h-9 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <>Save</>}
@@ -153,12 +237,13 @@ export default function PanelComponentForm({ panelId, panelName, onClose }: Pane
               catalog.map((item, idx) => (
                 <div key={idx} className="flex items-center justify-between p-2.5 bg-white border border-slate-100 rounded-xl text-xs">
                   <div className="flex items-center gap-2.5">
-                    <span className="w-6 h-6 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[10px] flex items-center justify-center border border-emerald-100">
+                    <span className="w-6 h-6 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[10px] flex items-center justify-center border border-emerald-100 shrink-0">
                       #{item.sequence_no}
                     </span>
-                    <span className="font-semibold text-slate-800">{item.test_id}</span>
+                    <span className="font-semibold text-slate-800">
+                      {getTestName(item)}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-mono text-slate-400">ID: {item.panel_id}</span>
                 </div>
               ))
             )}
