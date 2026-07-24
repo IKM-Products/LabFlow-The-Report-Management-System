@@ -2,141 +2,277 @@
 
 "use client";
 
-import React, { useState } from "react";
-import { Loader2, Search, CalendarDays, Contact2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { RefreshCw, User, ShieldAlert } from "lucide-react";
 
 import { visitService } from "@/services/visit.service";
+import { patientService } from "@/services/patient.service";
 import { VisitListItem } from "@/types/visit.types";
 
 import VisitForm from "./_components/VisitForm";
 import EditVisit from "./_components/EditVisit";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+interface PatientOption {
+  id: string;
+  name: string;
+}
 
 export default function VisitsPage() {
   const [visits, setVisits] = useState<VisitListItem[]>([]);
-  const [patientQueryInput, setPatientQueryInput] = useState("");
+  const [patients, setPatients] = useState<PatientOption[]>([]);
   const [activeQueryKey, setActiveQueryKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingPatients, setIsLoadingPatients] = useState(false);
 
-  const executeDataRetrievalPipeline = async (targetPatientId: string) => {
-    if (!targetPatientId.trim()) return;
+  // Fetch list of patients for the dropdown menu on mount
+  useEffect(() => {
+    const loadPatients = async () => {
+      setIsLoadingPatients(true);
+      try {
+        const response: any = await patientService.getPatients();
+
+        // Safely extract patient array whether returned as a direct array or wrapped in { data: [...] }
+        const rawPatients = Array.isArray(response)
+          ? response
+          : response?.data || response?.patients || [];
+
+        // Formatting patient names across common schema conventions
+        const formatted = rawPatients.map((p: any) => {
+          const patientName =
+            p.full_name ||
+            p.patient_name ||
+            (p.first_name
+              ? `${p.first_name} ${p.last_name || ""}`.trim()
+              : null) ||
+            p.name ||
+            p.user?.full_name ||
+            "Unknown Patient";
+
+          return {
+            id: p.patient_id || p.id,
+            name: patientName,
+          };
+        });
+
+        setPatients(formatted);
+      } catch (error) {
+        console.error("Error loading patients list:", error);
+      } finally {
+        setIsLoadingPatients(false);
+      }
+    };
+
+    loadPatients();
+  }, []);
+
+  const fetchVisits = async (targetPatientId: string) => {
+    if (!targetPatientId.trim()) {
+      setVisits([]);
+      return;
+    }
     setIsLoading(true);
     try {
-      const response = await visitService.getVisitsByPatientId(targetPatientId.trim());
-      if (response.success) {
-        setVisits(response.data);
-        setActiveQueryKey(targetPatientId.trim());
-      }
+      const response: any = await visitService.getVisitsByPatientId(targetPatientId.trim());
+
+      // Normalize array extraction
+      const visitsData = Array.isArray(response)
+        ? response
+        : response?.data || [];
+
+      setVisits(visitsData);
     } catch (error) {
-      console.error("Critical tracking collection extraction processing broken:", error);
+      console.error("Error fetching patient visit records:", error);
       setVisits([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleQueryFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    executeDataRetrievalPipeline(patientQueryInput);
+  const handlePatientSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedPatientId = e.target.value;
+    setActiveQueryKey(selectedPatientId);
+    fetchVisits(selectedPatientId);
+  };
+
+  const handleRefresh = () => {
+    if (activeQueryKey) {
+      fetchVisits(activeQueryKey);
+    }
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+    <div className="space-y-8 p-6">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2 tracking-tight">
-            <CalendarDays className="h-5 w-5 text-blue-600" />
-            Encounter Admission Registry Ledger
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Patient Visits
           </h1>
-          <p className="text-xs text-slate-500">
-            Query and catalog active institutional consultations mapping dynamic patient diagnostic streams.
+          <p className="text-sm text-slate-500 mt-1">
+            Select a patient, record, and track patient consultation history.
           </p>
         </div>
-        <VisitForm defaultPatientId={activeQueryKey} onSuccess={() => executeDataRetrievalPipeline(activeQueryKey)} />
-      </div>
 
-      <form onSubmit={handleQueryFormSubmit} className="flex items-center gap-2 max-w-md bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs">
-        <div className="flex items-center gap-2 flex-1 px-2 text-slate-400">
-          <Search className="h-4 w-4 shrink-0" />
-          <input
-            type="text"
-            value={patientQueryInput}
-            onChange={(e) => setPatientQueryInput(e.target.value)}
-            placeholder="Search encounter history by Patient ID sequence..."
-            className="w-full text-xs text-slate-900 bg-transparent border-none outline-hidden placeholder:text-slate-400"
+        <div className="flex items-center gap-2">
+          {activeQueryKey && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="rounded-xl h-10 border-slate-200 text-slate-600"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+              <span>Refresh</span>
+            </Button>
+          )}
+
+          <VisitForm
+            defaultPatientId={activeQueryKey}
+            onSuccess={() => fetchVisits(activeQueryKey)}
           />
         </div>
-        <button type="submit" disabled={isLoading} className="bg-slate-900 hover:bg-slate-800 text-white px-3 h-8 text-[11px] font-bold rounded-lg transition-colors shadow-xs disabled:opacity-50">
-          Search Ledger
-        </button>
-      </form>
-
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center p-20 gap-3">
-            <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
-            <p className="text-xs text-slate-400 font-medium tracking-wide">Syncing encounter datasets...</p>
-          </div>
-        ) : !activeQueryKey ? (
-          <div className="flex flex-col items-center justify-center text-center p-16 text-slate-400 text-xs font-medium gap-2">
-            <Contact2 className="h-8 w-8 text-slate-300 stroke-1" />
-            Supply a valid Patient Reference tracking key to load active encounter registries.
-          </div>
-        ) : visits.length === 0 ? (
-          <div className="text-center p-16 text-slate-400 text-xs font-medium">
-            No matching record structures located for the selected patient entity matrix.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider">
-                  <th className="p-4">Visit Number</th>
-                  <th className="p-4">Subject identity</th>
-                  <th className="p-4">Attending Practitioner</th>
-                  <th className="p-4">Encounter Tracking Status</th>
-                  <th className="p-4">Telemetry Timeline</th>
-                  <th className="p-4 text-right">Actions Matrix</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
-                {visits.map((visit) => (
-                  <tr key={visit.visit_id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-4 font-mono font-bold text-slate-900">{visit.visit_no}</td>
-                    <td className="p-4 font-medium text-slate-800">{visit.patient_name}</td>
-                    <td className="p-4 font-medium text-slate-700">{visit.doctor_name}</td>
-                    <td className="p-4">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
-                        visit.status === "completed"
-                          ? "bg-slate-50 text-slate-600 border-slate-200"
-                          : visit.status === "active"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-100 animate-pulse"
-                          : visit.status === "cancelled"
-                          ? "bg-rose-50 text-rose-700 border-rose-100"
-                          : "bg-amber-50 text-amber-700 border-amber-100"
-                      }`}>
-                        {visit.status || "registered"}
-                      </span>
-                    </td>
-                    <td className="p-4 space-y-0.5">
-                      <div className="text-slate-400 font-mono text-[10px]">{visit.visit_date}</div>
-                      <div className="text-slate-500 font-medium text-[10px]">Logged by: {visit.registered_by}</div>
-                    </td>
-                    <td className="p-4 text-right">
-                      {/* Passing active tracking fields to satisfy dependency architecture metrics parameters cleanly */}
-                      <EditVisit 
-                        visit={visit} 
-                        initialPatientId={activeQueryKey} 
-                        initialDoctorId="SYSTEM_REF" 
-                        onSuccess={() => executeDataRetrievalPipeline(activeQueryKey)} 
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
+
+      {/* Patient Selection Dropdown */}
+      <div className="flex items-center gap-2 max-w-md bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="flex items-center gap-2 flex-1 px-3 text-slate-400">
+          <User className="h-4 w-4 shrink-0 text-slate-400" />
+          <select
+            value={activeQueryKey}
+            onChange={handlePatientSelect}
+            disabled={isLoadingPatients}
+            className="w-full text-xs font-medium text-slate-900 bg-transparent border-none outline-hidden cursor-pointer"
+          >
+            <option value="">
+              {isLoadingPatients ? "Loading patients..." : "-- Select a Patient --"}
+            </option>
+            {patients.map((patient) => (
+              <option key={patient.id} value={patient.id}>
+                {patient.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Table Data View */}
+      {isLoading ? (
+        <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 animate-pulse bg-white border border-slate-200 rounded-2xl">
+          Loading visit data...
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <Table>
+            <TableCaption className="text-xs text-slate-400 pb-4">
+              {activeQueryKey
+                ? `Showing visit records for Patient ID: ${activeQueryKey}`
+                : "Select a patient from the dropdown above to load visit history."}
+            </TableCaption>
+            <TableHeader>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="w-16 font-bold text-slate-600">S.N.</TableHead>
+                <TableHead className="font-bold text-slate-600">Visit No.</TableHead>
+                <TableHead className="font-bold text-slate-600">Patient Name</TableHead>
+                <TableHead className="font-bold text-slate-600">Attending Doctor</TableHead>
+                <TableHead className="font-bold text-slate-600">Status</TableHead>
+                <TableHead className="font-bold text-slate-600">Date & Logged By</TableHead>
+                <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
+              </tr>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-150">
+              {!activeQueryKey ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-400">
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <User className="h-6 w-6 text-slate-300" />
+                      <p className="font-medium text-slate-500">
+                        Please select a patient from the dropdown to view visit records.
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : visits.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-400">
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <ShieldAlert className="h-6 w-6 text-slate-300" />
+                      <p className="font-medium text-slate-500">
+                        No visit records found for the selected patient.
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                visits.map((visit, idx) => (
+                  <TableRow
+                    key={visit.visit_id}
+                    className="hover:bg-slate-50/60 transition-colors group"
+                  >
+                    <TableCell className="font-mono text-xs text-slate-400">
+                      {idx + 1}
+                    </TableCell>
+
+                    <TableCell className="font-mono text-xs font-bold text-slate-900">
+                      {visit.visit_no}
+                    </TableCell>
+
+                    <TableCell className="font-medium text-slate-900">
+                      {visit.patient_name}
+                    </TableCell>
+
+                    <TableCell className="text-xs text-slate-700 font-medium">
+                      {visit.doctor_name}
+                    </TableCell>
+
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
+                          visit.status === "completed"
+                            ? "bg-slate-50 text-slate-600 border-slate-200"
+                            : visit.status === "in_progress" || visit.status === "active"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : visit.status === "cancelled"
+                            ? "bg-rose-50 text-rose-700 border-rose-200"
+                            : "bg-amber-50 text-amber-700 border-amber-200"
+                        }`}
+                      >
+                        {visit.status === "in_progress" ? "In Progress" : visit.status || "registered"}
+                      </span>
+                    </TableCell>
+
+                    <TableCell className="text-xs text-slate-600 space-y-0.5">
+                      <div className="font-mono text-slate-500">{visit.visit_date}</div>
+                      <div className="text-[11px] text-slate-400">
+                        Logged by: {visit.registered_by}
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="text-right whitespace-nowrap">
+                      <EditVisit
+                        visit={visit}
+                        initialPatientId={activeQueryKey}
+                        initialDoctorId="SYSTEM_REF"
+                        onSuccess={() => fetchVisits(activeQueryKey)}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }

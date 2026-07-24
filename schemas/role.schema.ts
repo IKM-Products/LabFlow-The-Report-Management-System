@@ -1,5 +1,6 @@
 import * as z from "zod";
 
+//obselete
 export const RoleSchema = z.object({
   role_name: z
     .string()

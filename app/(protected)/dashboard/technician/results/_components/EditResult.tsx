@@ -64,15 +64,8 @@ export default function EditResult({ result, onSuccess }: EditResultProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 h-8 w-8 p-0 border border-transparent hover:border-blue-100"
-        >
-          <Edit3 className="h-3.5 w-3.5" />
-        </Button>
+      <DialogTrigger className="inline-flex items-center justify-center rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 h-8 w-8 p-0 border border-transparent hover:border-blue-100 transition-colors cursor-pointer">
+        <Edit3 className="h-3.5 w-3.5" />
       </DialogTrigger>
 
       <DialogContent className="max-w-md bg-white rounded-2xl border border-slate-200 p-6 shadow-xl">

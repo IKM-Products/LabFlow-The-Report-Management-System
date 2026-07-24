@@ -1,3 +1,4 @@
+//obselete
 export interface CreateRoleRequest {
   role_name: string;
 }

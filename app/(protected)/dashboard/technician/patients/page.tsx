@@ -2,13 +2,22 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Loader2, Users } from "lucide-react";
-
+import { RefreshCw, ShieldAlert } from "lucide-react";
 import { patientService } from "@/services/patient.service";
 import { Patient } from "@/types/patient.types";
 
 import PatientForm from "./_components/PatientForm";
 import EditPatient from "./_components/EditPatient";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function PatientsPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -22,7 +31,7 @@ export default function PatientsPage() {
         setPatients(response.data);
       }
     } catch (error) {
-      console.error("Critical extraction failure handling analytical indexing:", error);
+      console.error("Critical error reading patient profiles:", error);
     } finally {
       setIsLoading(false);
     }
@@ -33,71 +42,101 @@ export default function PatientsPage() {
   }, []);
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center">
+    <div className="space-y-8 p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <Users className="h-5 w-5 text-blue-600" />
-            Demographics Indexing
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Patient Profiles
           </h1>
-          <p className="text-xs text-slate-500">
-            System indexing validation pipelines for active laboratory patients.
+          <p className="text-sm text-slate-500 mt-1">
+            Manage patient demographics, identification records, and contact info.
           </p>
         </div>
-        <PatientForm onSuccess={fetchPatients} />
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchPatients}
+            disabled={isLoading}
+            className="rounded-xl h-10 border-slate-200 text-slate-600 cursor-pointer"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </Button>
+
+          <PatientForm onSuccess={fetchPatients} />
+        </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center p-20 gap-3">
-            <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
-            <p className="text-xs text-slate-400 font-medium">Extracting metadata indices...</p>
-          </div>
-        ) : patients.length === 0 ? (
-          <div className="text-center p-16 text-slate-400 text-xs font-medium">
-            No active medical profiles located inside verification registries.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100 text-slate-600 text-[11px] font-bold uppercase tracking-wider">
-                  <th className="p-4">MRN</th>
-                  <th className="p-4">Patient Name</th>
-                  <th className="p-4">Gender / DOB</th>
-                  <th className="p-4">Contact Info</th>
-                  <th className="p-4">Residence Location</th>
-                  <th className="p-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
-                {patients.map((patient) => (
-                  <tr key={patient.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="p-4 font-mono font-bold text-slate-900">{patient.mrn}</td>
-                    <td className="p-4 font-medium text-slate-900">
-                      {patient.first_name} {patient.last_name}
-                    </td>
-                    <td className="p-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-700 mr-2">
-                        {patient.gender}
-                      </span>
-                      <span className="text-slate-500 font-mono">{patient.dob}</span>
-                    </td>
-                    <td className="p-4 space-y-0.5">
-                      <div>{patient.email}</div>
-                      <div className="text-slate-400 text-[11px] font-mono">{patient.phone}</div>
-                    </td>
-                    <td className="p-4 text-slate-500 max-w-xs truncate">{patient.address}</td>
-                    <td className="p-4 text-right">
+      {isLoading ? (
+        <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 animate-pulse bg-white border rounded-2xl">
+          Loading patients data...
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <Table>
+            <TableCaption className="text-xs text-slate-400 pb-4">
+              List of all active patient profiles.
+            </TableCaption>
+            <TableHeader>
+              <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="w-15 font-bold text-slate-600">S.N.</TableHead>
+                <TableHead className="font-bold text-slate-600">MRN</TableHead>
+                <TableHead className="font-bold text-slate-600">Patient Name</TableHead>
+                <TableHead className="font-bold text-slate-600">Gender / DOB</TableHead>
+                <TableHead className="font-bold text-slate-600">Contact</TableHead>
+                <TableHead className="font-bold text-slate-600">Address</TableHead>
+                <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-150">
+              {patients.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-400">
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <ShieldAlert className="h-6 w-6 text-slate-300" />
+                      <p className="font-medium text-slate-500">
+                        No active medical profiles located inside registries.
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                patients.map((patient, idx) => (
+                  <TableRow key={patient.id} className="hover:bg-slate-50/60 transition-colors group">
+                    <TableCell className="font-mono text-xs text-slate-400">{idx + 1}</TableCell>
+                    <TableCell className="font-mono text-xs font-bold text-slate-900">
+                      {patient.mrn}
+                    </TableCell>
+                    <TableCell className="font-semibold text-slate-900">
+                      {`${patient.first_name} ${patient.last_name}`}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-medium bg-slate-100 text-slate-600 border rounded-md px-1.5 py-0.5 capitalize">
+                          {patient.gender}
+                        </span>
+                        <span className="text-xs text-slate-500 font-mono">{patient.dob}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs text-slate-600 space-y-0.5">
+                      <div className="font-medium">{patient.email}</div>
+                      <div className="text-slate-400 font-mono">{patient.phone}</div>
+                    </TableCell>
+                    <TableCell className="text-xs text-slate-500 max-w-xs truncate">
+                      {patient.address}
+                    </TableCell>
+                    <TableCell className="text-right whitespace-nowrap">
                       <EditPatient patient={patient} onSuccess={fetchPatients} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }

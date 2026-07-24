@@ -67,11 +67,9 @@ export default function ReportForm({ defaultVisitId = "", onSuccess }: ReportFor
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (!open ? handleClose() : setIsOpen(true))}>
-      <DialogTrigger>
-        <Button type="button" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-xs text-xs h-10">
-          <FilePlus className="h-4 w-4 mr-2" />
-          Generate Report
-        </Button>
+      <DialogTrigger className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-xs text-xs h-10 px-4 transition-colors cursor-pointer">
+        <FilePlus className="h-4 w-4 mr-2" />
+        Generate Report
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 p-6">
