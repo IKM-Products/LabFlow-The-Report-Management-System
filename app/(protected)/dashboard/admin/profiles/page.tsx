@@ -55,15 +55,16 @@ export default function ProfilesPage() {
             size="sm"
             onClick={fetchProfileRecords}
             disabled={isLoading}
-            className="rounded-xl h-10 border-slate-200 text-slate-600"
+            className="rounded-xl h-10 border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center gap-2 px-3"
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            <span className="text-xs font-semibold">Refresh</span>
           </Button>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 animate-pulse bg-white border rounded-2xl">
+        <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 animate-pulse bg-white border border-slate-200 rounded-2xl">
           Synchronizing credentials schema records queue...
         </div>
       ) : (
@@ -73,19 +74,19 @@ export default function ProfilesPage() {
               Comprehensive list of all registered profile modules.
             </TableCaption>
             <TableHeader>
-              <tr className="bg-slate-50 border-b border-slate-200 col-span-4">
-                <TableHead className="w-20 font-bold text-slate-600">SN</TableHead>
+              <TableRow className="bg-slate-50/80 border-b border-slate-200">
+                <TableHead className="w-16 font-bold text-slate-600">SN</TableHead>
                 <TableHead className="font-bold text-slate-600">User Identity</TableHead>
                 <TableHead className="font-bold text-slate-600">Contact Specifics</TableHead>
                 <TableHead className="font-bold text-slate-600">Permission Role</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
-              </tr>
+              </TableRow>
             </TableHeader>
-            <TableBody className="divide-y divide-slate-150">
+            <TableBody className="divide-y divide-slate-100">
               {profiles.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-12 text-center text-sm text-slate-400">
-                    <div className="flex flex-col items-center justify-center space-y-1">
+                  <TableCell colSpan={5} className="py-12 text-center text-sm text-slate-400">
+                    <div className="flex flex-col items-center justify-center space-y-2">
                       <ShieldAlert className="h-6 w-6 text-slate-300" />
                       <p className="font-medium text-slate-500">No profile allocations configured.</p>
                     </div>
@@ -118,10 +119,6 @@ export default function ProfilesPage() {
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                         {profile.role_name}
                       </span>
-                    </TableCell>
-
-                    <TableCell className="font-mono text-xs text-slate-400">
-                      {profile.user_id}
                     </TableCell>
 
                     <TableCell className="text-right whitespace-nowrap">

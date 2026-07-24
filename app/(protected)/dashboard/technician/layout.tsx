@@ -1,4 +1,3 @@
-// app/(dashboard)/technician/layout.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -17,18 +16,6 @@ import {
   AlertTriangle
 } from "lucide-react";
 
-interface NavigationItem {
-  name: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: string | number;
-}
-
-interface NavigationGroup {
-  groupName: string;
-  items: NavigationItem[];
-}
-
 interface TechnicianLayoutProps {
   children: React.ReactNode;
 }
@@ -38,8 +25,7 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
   const router = useRouter();
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
-  // Grouped Navigation Schema supporting core operations and clinical views
-  const navigationGroups: NavigationGroup[] = [
+  const navigationGroups = [
     {
       groupName: "Dashboard",
       items: [
@@ -63,7 +49,6 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
     }
   ];
 
-  // Active session termination logic routing back to authorization checkpoint
   const handleLogout = async () => {
     try {
       setIsLogoutDialogOpen(false);
@@ -73,7 +58,6 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
     }
   };
 
-  // Helper renderer to keep sidebar mapping DRY across platforms
   const renderNavLinks = () => {
     return navigationGroups.map((group) => (
       <div key={group.groupName} className="space-y-1 pt-4 first:pt-0">
@@ -82,9 +66,10 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
         </h4>
         <div className="space-y-0.5 mt-1">
           {group.items.map((item) => {
-            const isActive = item.href === "/technician" 
-              ? pathname === "/technician" 
-              : pathname.startsWith(item.href);
+            // Strict exact match for the main Overview dashboard path, prefix match for sub-routes
+            const isActive = item.href === "/dashboard/technician" 
+              ? pathname === "/dashboard/technician" 
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
               
             const Icon = item.icon;
             
@@ -106,13 +91,6 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
                   />
                   <span className="transition-colors duration-150">{item.name}</span>
                 </div>
-                {item.badge && (
-                  <span className={`text-[10px] px-2 py-0.5 font-bold rounded-full transition-colors ${
-                    isActive ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
               </Link>
             );
           })}
@@ -133,13 +111,14 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
               <div className="absolute inset-0 rounded-xl bg-emerald-400/40 blur-md animate-pulse" />
               <FlaskConical className="relative w-5 h-5 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 animate-bounce" />
             </div>
+
             <span className="text-xl font-bold tracking-tight bg-linear-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
               LabFlow
             </span>
           </div>
         </div>
         
-        {/* Dynamic Routing Core */}
+        {/* Dynamic Desktop Routing Core */}
         <nav className="flex-1 space-y-4 px-4 py-6 overflow-y-auto">
           {renderNavLinks()}
         </nav>
@@ -165,7 +144,7 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
           
           <div className="text-xs font-semibold text-slate-400 tracking-wide uppercase">
             <span className="text-slate-700 font-bold text-lg italic capitalize">
-              {pathname === "/technician" ? "Technician Workspace" : pathname.split("/").pop()?.replace("-", " ")}
+              {pathname === "/dashboard/technician" ? "Technician Workspace" : pathname.split("/").pop()?.replace("-", " ")}
             </span>
           </div>
           
@@ -175,13 +154,13 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
               <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-emerald-500 ring-2 ring-white" />
             </button>
 
-            {/* Operator Account Identity Segment */}
+            {/* Account Identity Segment */}
             <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200">
               <div className="h-8 w-8 rounded-full bg-linear-to-br from-emerald-600 to-teal-600 text-white flex items-center justify-center text-xs font-bold shadow-sm shadow-emerald-600/10 select-none">
-                RS
+                IKM
               </div>
               <div className="block text-left">
-                <p className="text-xs font-bold text-slate-800 leading-none">Rishan Shrestha</p>
+                <p className="text-xs font-bold text-slate-800 leading-none">Ismael Karki Manaay</p>
                 <p className="text-[10px] font-semibold text-emerald-600 mt-0.5">Technician</p>
               </div>
             </div>

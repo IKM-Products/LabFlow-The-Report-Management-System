@@ -58,7 +58,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       items: [
         { name: "Profiles", href: "/dashboard/admin/profiles", icon: Contact },
         { name: "Users", href: "/dashboard/admin/users", icon: Users },
-        { name: "Roles", href: "/dashboard/admin/roles", icon: ShieldCheck },
       ]
     }
   ];

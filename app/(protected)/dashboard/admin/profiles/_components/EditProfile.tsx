@@ -68,7 +68,7 @@ export default function EditProfile({ profile, onSuccess }: EditProfileProps) {
         <span
           role="button"
           tabIndex={0}
-          className="inline-flex items-center justify-center rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 h-8 px-2 border border-transparent hover:border-blue-100 cursor-pointer"
+          className="inline-flex items-center justify-center rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-blue-50 h-8 px-2 border border-transparent hover:border-blue-100 cursor-pointer"
         >
           <Edit2 className="h-3.5 w-3.5" />
         </span>
@@ -121,8 +121,8 @@ export default function EditProfile({ profile, onSuccess }: EditProfileProps) {
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting} className="rounded-xl text-xs h-10">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">
-              {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save Changes"}
+            <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">
+              {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
             </Button>
           </div>
         </form>

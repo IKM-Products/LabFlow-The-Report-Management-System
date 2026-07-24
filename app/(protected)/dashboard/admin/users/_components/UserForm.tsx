@@ -8,6 +8,10 @@ import { userService } from "@/services/user.service";
 import { UserPlus, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import * as z from "zod";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 type FormData = z.infer<typeof CreateUserSchema>;
 
 export default function UserForm() {
@@ -49,25 +53,34 @@ export default function UserForm() {
     <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-6">
       <div className="flex flex-col gap-0.5">
         <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
-          <UserPlus className="h-4 w-4 text-blue-600" />
-          Provision New Node Operator Account
+          Add New User
         </h3>
-        <p className="text-[11px] text-slate-500">Inject data attributes validating target structural access vectors</p>
+        <p className="text-xs text-slate-500">
+          Inject data attributes validating target structural access vectors
+        </p>
       </div>
 
       {feedback && (
-        <div className={`p-4 border rounded-xl flex gap-3 items-start ${
-          feedback.status === "success" ? "bg-emerald-50 border-emerald-200 text-emerald-900" : "bg-red-50 border-red-200 text-red-900"
-        }`}>
+        <div
+          className={`p-4 border rounded-xl flex gap-3 items-start ${
+            feedback.status === "success"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+              : "bg-red-50 border-red-200 text-red-900"
+          }`}
+        >
           {feedback.status === "success" ? (
             <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
           ) : (
             <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
           )}
           <div className="space-y-0.5">
-            <p className="text-xs font-bold">{feedback.status === "success" ? "Deployment Matrix OK:" : "Transaction Halted:"}</p>
+            <p className="text-xs font-bold">
+              {feedback.status === "success" ? "Deployment Matrix OK:" : "Transaction Halted:"}
+            </p>
             <ul className="list-none text-[11px] opacity-90 font-medium">
-              {feedback.messages.map((msg, i) => <li key={i}>{msg}</li>)}
+              {feedback.messages.map((msg, i) => (
+                <li key={i}>{msg}</li>
+              ))}
             </ul>
           </div>
         </div>
@@ -76,97 +89,106 @@ export default function UserForm() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">First Name Identifier</label>
-            <input
+            <Label className="text-xs font-semibold text-slate-700">First Name</Label>
+            <Input
               type="text"
               {...register("first_name")}
               disabled={isLoading}
-              placeholder="Ismael"
-              className="w-full h-10 px-4 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
+              placeholder="First name"
+              className="rounded-xl border-slate-200"
             />
-            {errors.first_name && <p className="text-[10px] text-red-600 font-semibold mt-0.5">{errors.first_name.message}</p>}
+            {errors.first_name && (
+              <p className="text-[10px] text-red-500 font-medium">{errors.first_name.message}</p>
+            )}
           </div>
 
           <div className="space-y-1">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Last Name Vector</label>
-            <input
+            <Label className="text-xs font-semibold text-slate-700">Last Name</Label>
+            <Input
               type="text"
               {...register("last_name")}
               disabled={isLoading}
-              placeholder="Manaay"
-              className="w-full h-10 px-4 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
+              placeholder="Last name"
+              className="rounded-xl border-slate-200"
             />
-            {errors.last_name && <p className="text-[10px] text-red-600 font-semibold mt-0.5">{errors.last_name.message}</p>}
+            {errors.last_name && (
+              <p className="text-[10px] text-red-500 font-medium">{errors.last_name.message}</p>
+            )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">System Core Email Link</label>
-            <input
+            <Label className="text-xs font-semibold text-slate-700">Email Address</Label>
+            <Input
               type="email"
               {...register("email")}
               disabled={isLoading}
-              placeholder="operator@clinical.net"
-              className="w-full h-10 px-4 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
+              placeholder="operator@example.com"
+              className="rounded-xl border-slate-200"
             />
-            {errors.email && <p className="text-[10px] text-red-600 font-semibold mt-0.5">{errors.email.message}</p>}
+            {errors.email && (
+              <p className="text-[10px] text-red-500 font-medium">{errors.email.message}</p>
+            )}
           </div>
 
           <div className="space-y-1">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Operational Interface Phone</label>
-            <input
+            <Label className="text-xs font-semibold text-slate-700">Phone Contact</Label>
+            <Input
               type="text"
               {...register("phone")}
               disabled={isLoading}
-              placeholder="+977-XXXXXXXXXX"
-              className="w-full h-10 px-4 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
+              placeholder="+123456789"
+              className="rounded-xl border-slate-200"
             />
-            {errors.phone && <p className="text-[10px] text-red-600 font-semibold mt-0.5">{errors.phone.message}</p>}
+            {errors.phone && (
+              <p className="text-[10px] text-red-500 font-medium">{errors.phone.message}</p>
+            )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Cryptographic Cipher Password</label>
-            <input
+            <Label className="text-xs font-semibold text-slate-700">Password</Label>
+            <Input
               type="password"
               {...register("password")}
               disabled={isLoading}
               placeholder="••••••••"
-              className="w-full h-10 px-4 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
+              className="rounded-xl border-slate-200"
             />
-            {errors.password && <p className="text-[10px] text-red-600 font-semibold mt-0.5">{errors.password.message}</p>}
+            {errors.password && (
+              <p className="text-[10px] text-red-500 font-medium">{errors.password.message}</p>
+            )}
           </div>
 
           <div className="space-y-1">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Target Assigned Matrix Role</label>
-            <input
+            <Label className="text-xs font-semibold text-slate-700">Role Designation</Label>
+            <Input
               type="text"
               {...register("role_name")}
               disabled={isLoading}
               placeholder="E.g., TECHNICIAN"
-              className="w-full h-10 px-4 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
+              className="rounded-xl border-slate-200"
             />
-            {errors.role_name && <p className="text-[10px] text-red-600 font-semibold mt-0.5">{errors.role_name.message}</p>}
+            {errors.role_name && (
+              <p className="text-[10px] text-red-500 font-medium">{errors.role_name.message}</p>
+            )}
           </div>
         </div>
 
-        <div className="pt-4 flex justify-end">
-          <button
+        <div className="pt-2 flex justify-end">
+          <Button
             type="submit"
             disabled={isLoading}
-            className="w-full sm:w-auto px-6 h-10 bg-slate-900 hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:bg-slate-200 disabled:cursor-not-allowed"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25"
           >
             {isLoading ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                <span>Injecting Structural Database Record...</span>
-              </>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <span>Commit Operator Profile</span>
+              "Save"
             )}
-          </button>
+          </Button>
         </div>
       </form>
     </div>
