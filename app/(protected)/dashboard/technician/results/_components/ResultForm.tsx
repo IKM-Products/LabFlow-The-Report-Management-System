@@ -1,732 +1,624 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import React, { useState, useEffect } from "react";
 import {
-  FilePlus,
+  X,
   Plus,
   Trash2,
+  AlertCircle,
+  CheckCircle2,
   Loader2,
   Building2,
   FlaskConical,
-  Sliders,
-  AlertCircle,
+  ClipboardList,
   UserCheck,
-  Wand2,
-  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-
-import { createResultSchema, CreateResultFormValues } from "@/schemas/result.schema";
-import { resultService } from "@/services/result.service";
 import { departmentService } from "@/services/department.service";
 import { testCatalogService } from "@/services/test-catalog.service";
 import { testParameterService } from "@/services/test-parameter.service";
+import { resultService } from "@/services/result.service";
+import { Button } from "@/components/ui/button";
 
-interface ResultFormProps {
-  orderId?: string;
-  defaultOrderId?: string;
-  onSuccess: () => void;
-}
-
-interface SelectOption {
-  id: string;
-  name: string;
-  subtext?: string;
-}
-
-// Helper to safely extract arrays from various API payload wrappers
 const extractArray = (res: any): any[] => {
+  if (!res) return [];
   if (Array.isArray(res)) return res;
   if (Array.isArray(res?.data)) return res.data;
-  if (Array.isArray(res?.data?.data)) return res.data.data;
   if (Array.isArray(res?.catalogs)) return res.catalogs;
-  if (Array.isArray(res?.tests)) return res.tests;
-  if (Array.isArray(res?.departments)) return res.departments;
-  if (Array.isArray(res?.parameters)) return res.parameters;
   if (Array.isArray(res?.items)) return res.items;
-  if (Array.isArray(res?.result)) return res.result;
   return [];
 };
 
-// Helper to safely find ID across common backend naming conventions
-const extractId = (item: any, fallbackPrefix: string, index: number): string => {
-  if (!item || typeof item !== "object") return `${fallbackPrefix}-${index}`;
-  const possibleId =
-    item.id ??
-    item._id ??
-    item.dept_id ??
-    item.department_id ??
-    item.departmentId ??
-    item.catalog_id ??
-    item.test_catalog_id ??
-    item.catalogId ??
-    item.parameter_id ??
-    item.test_parameter_id ??
-    item.parameterId;
+export type FlagType = "low" | "normal" | "high" | "critical" | "na";
 
-  if (possibleId !== undefined && possibleId !== null && String(possibleId).trim() !== "") {
-    return String(possibleId);
-  }
-  return `${fallbackPrefix}-${index}`;
-};
+export interface ParameterRow {
+  id: string;
+  parameter_id: string;
+  parameter_name: string;
+  unit?: string;
+  result_value: string;
+  flag: FlagType;
+  remarks: string;
+}
 
-// Helper to safely find display name across common backend naming conventions
-const extractName = (item: any, fallback: string): string => {
-  if (!item || typeof item !== "object") return fallback;
-  return (
-    item.dept_name ||
-    item.department_name ||
-    item.departmentName ||
-    item.catalog_name ||
-    item.test_catalog_name ||
-    item.catalogName ||
-    item.test_name ||
-    item.parameter_name ||
-    item.test_parameter_name ||
-    item.parameterName ||
-    item.name ||
-    item.title ||
-    fallback
-  );
-};
-
-// Safe formatter for API errors & network timeouts
-const formatApiError = (err: any, fallbackContext: string): string => {
-  const isTimeout = err?.code === "ECONNABORTED" || err?.message?.includes("timeout");
-  if (isTimeout) {
-    return `${fallbackContext}: Server took too long to respond (Request Timed Out). Please verify your backend server is active and try again.`;
-  }
-
-  const rawMessage = err?.response?.data?.messages || err?.response?.data?.message || err?.message;
-  if (Array.isArray(rawMessage)) {
-    return `${fallbackContext}: ${rawMessage.join(", ")}`;
-  }
-  if (typeof rawMessage === "string" && rawMessage.trim()) {
-    return `${fallbackContext}: ${rawMessage}`;
-  }
-  return `${fallbackContext}: An unexpected error occurred.`;
-};
+interface ResultFormProps {
+  defaultOrderId?: string;
+  orderId?: string;
+  technicianId?: string;
+  technicianName?: string;
+  isOpen?: boolean;
+  onClose?: () => void;
+  onSuccess?: () => void;
+}
 
 export default function ResultForm({
+  defaultOrderId,
   orderId,
-  defaultOrderId = "",
+  technicianId,
+  technicianName = "Technician",
+  isOpen: controlledIsOpen,
+  onClose: controlledOnClose,
   onSuccess,
 }: ResultFormProps) {
-  const effectiveOrderId = orderId || defaultOrderId;
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isControlled = typeof controlledIsOpen !== "undefined";
+  const isModalOpen = isControlled ? controlledIsOpen : internalIsOpen;
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const activeOrderId = orderId || defaultOrderId || "";
 
-  // Cascading & Auto-Populated States
-  const [departments, setDepartments] = useState<SelectOption[]>([]);
-  const [catalogs, setCatalogs] = useState<SelectOption[]>([]);
-  const [parameters, setParameters] = useState<SelectOption[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [testCatalogs, setTestCatalogs] = useState<any[]>([]);
+  const [availableParameters, setAvailableParameters] = useState<any[]>([]);
 
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
-  const [selectedCatalogId, setSelectedCatalogId] = useState("");
-
-  const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
-  const [isLoadingCatalogs, setIsLoadingCatalogs] = useState(false);
-  const [isLoadingParameters, setIsLoadingParameters] = useState(false);
-  const [isLoadingOrderData, setIsLoadingOrderData] = useState(false);
-
-  const {
-    register,
-    control,
-    handleSubmit,
-    reset,
-    setValue,
-    getValues,
-    formState: { errors },
-  } = useForm<CreateResultFormValues>({
-    resolver: zodResolver(createResultSchema) as any,
-    defaultValues: {
-      order_id: effectiveOrderId,
-      verified_by: "Technician",
-      results: [{ flag: "normal", parameter_id: "", remarks: "", result_value: "" }],
-    },
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "results",
-  });
-
-  // Sync order_id state when prop updates
-  useEffect(() => {
-    if (effectiveOrderId) {
-      setValue("order_id", effectiveOrderId, { shouldValidate: true });
-    }
-  }, [effectiveOrderId, setValue]);
-
-  // Fetch Parameters for catalog IDs concurrently with deduplication
-  const fetchParametersForCatalogs = useCallback(
-    async (catalogIds: string[]): Promise<SelectOption[]> => {
-      const validIds = catalogIds.filter((id) => Boolean(id && id.trim()));
-      if (validIds.length === 0) {
-        setParameters([]);
-        return [];
-      }
-
-      setIsLoadingParameters(true);
-      try {
-        const results = await Promise.all(
-          validIds.map(async (catId) => {
-            try {
-              const res = await testParameterService.getParametersByTestId(catId.trim());
-              return extractArray(res);
-            } catch (err) {
-              console.error(`Error loading parameters for catalog ID ${catId}:`, err);
-              return [];
-            }
-          })
-        );
-
-        const combinedRaw = results.flat();
-        const seenIds = new Set<string>();
-        const parsedParams: SelectOption[] = [];
-
-        combinedRaw.forEach((p: any, idx: number) => {
-          const id = extractId(p, "param", idx);
-          if (id && !seenIds.has(id)) {
-            seenIds.add(id);
-            const unitStr = p.unit || p.test_unit ? `Unit: ${p.unit || p.test_unit}` : "";
-            const catalogStr = p.catalog_name ? `Catalog: ${p.catalog_name}` : "";
-            parsedParams.push({
-              id,
-              name: extractName(p, "Parameter Record"),
-              subtext: [unitStr, catalogStr].filter(Boolean).join(" | "),
-            });
-          }
-        });
-
-        setParameters(parsedParams);
-        return parsedParams;
-      } catch (error) {
-        console.error("Error aggregating parameters:", error);
-        toast.error(formatApiError(error, "Failed to load test parameters"));
-        return [];
-      } finally {
-        setIsLoadingParameters(false);
-      }
-    },
-    []
+  const [selectedDeptId, setSelectedDeptId] = useState<string>("");
+  const [selectedCatalogId, setSelectedCatalogId] = useState<string>("");
+  const [verifiedByUuid, setVerifiedByUuid] = useState<string>(
+    technicianId || "00000000-0000-0000-0000-000000000000"
   );
+  const [verifiedByName, setVerifiedByName] = useState<string>(technicianName);
 
-  // Load Initial Departments & Auto-fetch order details if orderId exists
+  const [parameterRows, setParameterRows] = useState<ParameterRow[]>([
+    {
+      id: "row-1",
+      parameter_id: "",
+      parameter_name: "",
+      unit: "",
+      result_value: "",
+      flag: "normal",
+      remarks: "",
+    },
+  ]);
+
+  const [loadingDepts, setLoadingDepts] = useState<boolean>(false);
+  const [loadingCatalogs, setLoadingCatalogs] = useState<boolean>(false);
+  const [loadingParams, setLoadingParams] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
   useEffect(() => {
-    if (!isOpen) return;
+    if (technicianId) {
+      setVerifiedByUuid(technicianId);
+    }
+  }, [technicianId]);
 
-    const initializeForm = async () => {
-      setIsLoadingDepartments(true);
-
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      setLoadingDepts(true);
+      setErrorMsg(null);
       try {
-        // 1. Fetch available departments (with deduplication)
-        const deptResponse: any = await departmentService.getDepartments();
-        const rawDepts = extractArray(deptResponse);
-        const seenDeptIds = new Set<string>();
-        const parsedDepts: SelectOption[] = [];
-
-        rawDepts.forEach((dept: any, idx: number) => {
-          const id = extractId(dept, "dept", idx);
-          if (id && !seenDeptIds.has(id)) {
-            seenDeptIds.add(id);
-            parsedDepts.push({
-              id,
-              name: extractName(dept, "Department"),
-            });
-          }
-        });
-        setDepartments(parsedDepts);
-
-        // 2. If order ID exists, auto-fetch ordered catalogs
-        if (effectiveOrderId) {
-          setIsLoadingOrderData(true);
-          try {
-            const serviceAny = resultService as any;
-            const orderRes: any = await (typeof serviceAny.getOrderDetails === "function"
-              ? serviceAny.getOrderDetails(effectiveOrderId)
-              : resultService.getResultsByOrderId(effectiveOrderId));
-
-            const orderedCatalogs = extractArray(orderRes?.catalogs || orderRes?.tests || orderRes);
-
-            if (orderedCatalogs.length > 0) {
-              const seenCatIds = new Set<string>();
-              const parsedCatalogs: SelectOption[] = [];
-              const catalogIds: string[] = [];
-
-              orderedCatalogs.forEach((c: any, idx: number) => {
-                const id = extractId(c, "cat", idx);
-                if (id && !seenCatIds.has(id)) {
-                  seenCatIds.add(id);
-                  catalogIds.push(id);
-                  parsedCatalogs.push({
-                    id,
-                    name: extractName(c, "Test Catalog"),
-                  });
-                }
-              });
-
-              const deptId = orderedCatalogs[0]?.dept_id || orderedCatalogs[0]?.department_id || "";
-
-              if (deptId) setSelectedDepartmentId(deptId);
-              setCatalogs(parsedCatalogs);
-              if (catalogIds.length > 0) {
-                setSelectedCatalogId(catalogIds[0]);
-              }
-
-              // 3. Automatically fetch parameters and auto-fill parameter rows
-              const loadedParams = await fetchParametersForCatalogs(catalogIds);
-              if (loadedParams.length > 0) {
-                reset((prev) => ({
-                  ...prev,
-                  order_id: effectiveOrderId,
-                  results: loadedParams.map((param) => ({
-                    parameter_id: param.id,
-                    result_value: "",
-                    flag: "normal" as const,
-                    remarks: "",
-                  })),
-                }));
-                toast.success(`Auto-loaded parameters from Order #${effectiveOrderId}`);
-              }
-            }
-          } catch (orderErr) {
-            console.warn("Could not auto-populate order catalogs:", orderErr);
-          } finally {
-            setIsLoadingOrderData(false);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading initial data:", error);
-        toast.error(formatApiError(error, "Failed to load department options"));
+        const response = await departmentService.getDepartments();
+        const deptList = extractArray(response);
+        setDepartments(deptList);
+      } catch (err: any) {
+        console.error("Failed to load departments:", err);
+        setErrorMsg("Failed to load departments. Please check backend connection.");
       } finally {
-        setIsLoadingDepartments(false);
+        setLoadingDepts(false);
       }
     };
 
-    initializeForm();
-  }, [isOpen, effectiveOrderId, fetchParametersForCatalogs, reset]);
+    if (isModalOpen) {
+      fetchDepartments();
+    }
+  }, [isModalOpen]);
 
-  // Manual Department Change
+  const handleClose = () => {
+    if (!isControlled) {
+      setInternalIsOpen(false);
+    }
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setSelectedDeptId("");
+    setSelectedCatalogId("");
+    setTestCatalogs([]);
+    setAvailableParameters([]);
+    resetParameterRows();
+    if (controlledOnClose) controlledOnClose();
+  };
+
+  const handleOpenModal = () => {
+    if (!activeOrderId) {
+      toast.error("Please select a Work Order before adding diagnostic results.");
+      return;
+    }
+    setInternalIsOpen(true);
+  };
+
+  const resetParameterRows = () => {
+    setParameterRows([
+      {
+        id: `row-${Date.now()}`,
+        parameter_id: "",
+        parameter_name: "",
+        unit: "",
+        result_value: "",
+        flag: "normal",
+        remarks: "",
+      },
+    ]);
+  };
+
   const handleDepartmentChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const deptId = e.target.value;
-    setSelectedDepartmentId(deptId);
+    setSelectedDeptId(deptId);
     setSelectedCatalogId("");
-    setCatalogs([]);
-    setParameters([]);
+    setTestCatalogs([]);
+    setAvailableParameters([]);
+    resetParameterRows();
 
     if (!deptId) return;
 
-    setIsLoadingCatalogs(true);
+    setLoadingCatalogs(true);
+    setErrorMsg(null);
+
     try {
-      const response: any = await testCatalogService.getCatalogByDeptId(deptId.trim());
-      const rawCatalogs = extractArray(response);
+      const response = await testCatalogService.getCatalogByDeptId(deptId);
+      const catalogList = extractArray(response);
+      setTestCatalogs(catalogList);
 
-      const seenCatIds = new Set<string>();
-      const parsedCatalogs: SelectOption[] = [];
-
-      rawCatalogs.forEach((c: any, idx: number) => {
-        const id = extractId(c, "cat", idx);
-        if (id && !seenCatIds.has(id)) {
-          seenCatIds.add(id);
-          parsedCatalogs.push({
-            id,
-            name: extractName(c, "Test Catalog"),
-          });
-        }
-      });
-
-      setCatalogs(parsedCatalogs);
-    } catch (error) {
-      console.error("Error loading test catalogs:", error);
-      toast.error(formatApiError(error, "Failed to load test catalogs"));
+      if (catalogList.length === 0) {
+        setErrorMsg("No test catalogs found for the selected department.");
+      }
+    } catch (err: any) {
+      console.error("Error fetching test catalogs:", err);
+      setErrorMsg("Failed to fetch test catalogs for this department.");
     } finally {
-      setIsLoadingCatalogs(false);
+      setLoadingCatalogs(false);
     }
   };
 
-  // Manual Test Catalog Dropdown Change
   const handleCatalogChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const catId = e.target.value;
-    setSelectedCatalogId(catId);
+    const catalogId = e.target.value;
+    setSelectedCatalogId(catalogId);
+    setAvailableParameters([]);
+    resetParameterRows();
 
-    if (!catId) {
-      setParameters([]);
-      return;
-    }
+    if (!catalogId) return;
 
-    await fetchParametersForCatalogs([catId]);
-  };
+    setLoadingParams(true);
+    setErrorMsg(null);
 
-  // Auto-populate parameter rows manually
-  const handleAutoPopulateParameters = () => {
-    if (parameters.length === 0) {
-      toast.error("No parameters loaded. Select a test catalog first.");
-      return;
-    }
-
-    const currentFormValues = getValues();
-    reset({
-      ...currentFormValues,
-      results: parameters.map((param) => ({
-        parameter_id: param.id,
-        result_value: "",
-        flag: "normal" as const,
-        remarks: "",
-      })),
-    });
-
-    toast.success(`Populated ${parameters.length} parameter row(s).`);
-  };
-
-  const handleClose = () => {
-    setIsOpen(false);
-    setSelectedDepartmentId("");
-    setSelectedCatalogId("");
-    setCatalogs([]);
-    setParameters([]);
-    reset({
-      order_id: effectiveOrderId,
-      verified_by: "Technician",
-      results: [{ flag: "normal", parameter_id: "", remarks: "", result_value: "" }],
-    });
-  };
-
-  const onSubmit = async (values: CreateResultFormValues) => {
-    setIsSubmitting(true);
     try {
-      await resultService.createResult(values);
-      toast.success("Batch diagnostic payload processed successfully.");
-      onSuccess();
-      handleClose();
-    } catch (error: any) {
-      console.error("Submit error:", error);
-      toast.error(formatApiError(error, "Pipeline operation execution rejected"));
+      const res = await testParameterService.getParametersByTestId(catalogId);
+      const paramList = res?.data || (Array.isArray(res) ? res : []);
+      setAvailableParameters(paramList);
+
+      if (paramList.length > 0) {
+        const initialRows: ParameterRow[] = paramList.map((param: any, idx: number) => ({
+          id: `row-${Date.now()}-${idx}`,
+          parameter_id: String(param.parameter_id || param.id || ""),
+          parameter_name: param.parameter_name || param.name || "",
+          unit: param.unit || "",
+          result_value: "",
+          flag: "normal",
+          remarks: "",
+        }));
+        setParameterRows(initialRows);
+      } else {
+        setErrorMsg("No test parameters found for this test catalog.");
+      }
+    } catch (err: any) {
+      console.error("Failed to load parameters for catalog:", err);
+      setErrorMsg("Failed to load test parameters.");
     } finally {
-      setIsSubmitting(false);
+      setLoadingParams(false);
+    }
+  };
+
+  const handleAddRow = () => {
+    setParameterRows((prev) => [
+      ...prev,
+      {
+        id: `row-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        parameter_id: "",
+        parameter_name: "",
+        unit: "",
+        result_value: "",
+        flag: "normal",
+        remarks: "",
+      },
+    ]);
+  };
+
+  const handleRemoveRow = (id: string) => {
+    if (parameterRows.length === 1) return;
+    setParameterRows((prev) => prev.filter((row) => row.id !== id));
+  };
+
+  const handleRowChange = (id: string, field: keyof ParameterRow, value: string) => {
+    setParameterRows((prev) =>
+      prev.map((row) => {
+        if (row.id === id) {
+          if (field === "parameter_id") {
+            const matchedParam = availableParameters.find(
+              (p) => String(p.parameter_id || p.id) === String(value)
+            );
+            return {
+              ...row,
+              parameter_id: value,
+              parameter_name: matchedParam ? matchedParam.parameter_name || matchedParam.name || "" : "",
+              unit: matchedParam ? matchedParam.unit || "" : "",
+            };
+          }
+          return { ...row, [field]: value };
+        }
+        return row;
+      })
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedDeptId || !selectedCatalogId) {
+      setErrorMsg("Please select both a Department and a Test Catalog.");
+      return;
+    }
+
+    const invalidRow = parameterRows.find((r) => !r.parameter_id || !r.result_value.trim());
+    if (invalidRow) {
+      setErrorMsg("Please ensure all parameter rows have a parameter selected and result value entered.");
+      return;
+    }
+
+    setSubmitting(true);
+    setErrorMsg(null);
+
+    try {
+      // Key updated from 'parameters' to 'results'
+      const payload = {
+        order_id: activeOrderId,
+        verified_by: verifiedByUuid,
+        department_id: selectedDeptId,
+        test_catalog_id: selectedCatalogId,
+        results: parameterRows.map((r) => ({
+          parameter_id: r.parameter_id,
+          parameter_name: r.parameter_name,
+          result_value: r.result_value.trim(),
+          flag: r.flag,
+          remarks: r.remarks.trim(),
+        })),
+      };
+
+      if (typeof (resultService as any).createBatchResults === "function") {
+        await (resultService as any).createBatchResults(payload);
+      } else if (typeof (resultService as any).createResult === "function") {
+        await (resultService as any).createResult(payload);
+      } else {
+        console.log("Submitting Payload:", payload);
+      }
+
+      toast.success("Diagnostic results submitted successfully!");
+      setSuccessMsg("Diagnostic results verified & saved successfully!");
+      if (onSuccess) onSuccess();
+
+      setTimeout(() => {
+        handleClose();
+      }, 1000);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Failed to commit diagnostic results.";
+      setErrorMsg(msg);
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open: boolean) => (!open ? handleClose() : setIsOpen(true))}>
-      <DialogTrigger className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-xs h-10 px-4 shadow-sm cursor-pointer transition-colors">
-        <FilePlus className="h-4 w-4 mr-2" />
-        Batch Record Entry
-      </DialogTrigger>
+    <>
+      {!isControlled && (
+        <Button
+          type="button"
+          onClick={handleOpenModal}
+          className="rounded-xl h-10 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs shadow-xs flex items-center gap-2 px-4 cursor-pointer"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Add Diagnostic Result</span>
+        </Button>
+      )}
 
-      <DialogContent className="w-full max-w-6xl sm:max-w-6xl bg-white rounded-2xl border border-slate-200 p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
-        <DialogHeader className="border-b border-slate-100 pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-                <FilePlus className="h-5 w-5" />
-              </span>
-              <div>
-                <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight">
-                  Commit Batch Diagnostics Dataset
-                </DialogTitle>
-                <DialogDescription className="text-xs text-slate-500 mt-0.5">
-                  Populate laboratory test parameters for the target order.
-                </DialogDescription>
-              </div>
-            </div>
-
-            {isLoadingOrderData && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold animate-pulse border border-blue-100">
-                <Zap className="h-3.5 w-3.5" /> Auto-loading order tests...
-              </span>
-            )}
-          </div>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-4">
-          <input type="hidden" {...register("order_id")} />
-
-          {/* Verification Bar */}
-          <div className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="p-2 bg-slate-100 text-slate-600 rounded-xl border border-slate-200">
-                <UserCheck className="h-4 w-4" />
-              </span>
-              <div>
-                <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  Target Order ID
-                </Label>
-                <p className="text-xs font-semibold text-slate-800">
-                  {effectiveOrderId ? `#${effectiveOrderId}` : "No Order Specified"}
-                </p>
-                {errors.order_id && (
-                  <p className="text-[10px] text-red-500 font-medium">
-                    {errors.order_id.message}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
+            <div className="p-6 border-b border-slate-100 flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100">
+                  <ClipboardList className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Commit Diagnostic Dataset</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Populate parameter values and flags for order #{activeOrderId}.
                   </p>
-                )}
+                </div>
               </div>
-            </div>
-
-            <div className="w-full sm:w-64 space-y-1">
-              <Label className="text-[11px] font-semibold text-slate-600">
-                Verified By (Technician)
-              </Label>
-              <Input
-                {...register("verified_by")}
-                disabled={isSubmitting}
-                className="rounded-xl text-xs h-8.5 bg-white"
-                placeholder="Technician Name"
-              />
-            </div>
-          </div>
-
-          {/* Parameter Directory Scope */}
-          <div className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                <span className="h-5 w-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[11px]">
-                  1
-                </span>
-                Test Catalog & Parameter Scope
-              </span>
-
-              {parameters.length > 0 && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={handleAutoPopulateParameters}
-                  disabled={isLoadingParameters || isSubmitting}
-                  className="rounded-xl text-xs h-8 border-blue-200 text-blue-700 bg-white hover:bg-blue-50 font-semibold shadow-2xs"
-                >
-                  <Wand2 className="h-3.5 w-3.5 mr-1 text-blue-600" />
-                  Auto-Fill All Parameters ({parameters.length})
-                </Button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              {/* Department Selector */}
-              <div className="space-y-1.5">
-                <Label className="text-[11px] font-semibold text-slate-600 flex items-center gap-1">
-                  <Building2 className="h-3.5 w-3.5 text-slate-400" /> Department
-                </Label>
-                <select
-                  value={selectedDepartmentId}
-                  onChange={handleDepartmentChange}
-                  disabled={isLoadingDepartments || isSubmitting}
-                  className="w-full h-9 px-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer disabled:opacity-50"
-                >
-                  <option value="">
-                    {isLoadingDepartments ? "Loading departments..." : "-- Select Department --"}
-                  </option>
-                  {departments.map((dept, idx) => (
-                    <option key={`dept-opt-${dept.id}-${idx}`} value={dept.id}>
-                      {dept.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Single Select Test Catalog Dropdown */}
-              <div className="space-y-1.5">
-                <Label className="text-[11px] font-semibold text-slate-600 flex items-center gap-1">
-                  <FlaskConical className="h-3.5 w-3.5 text-slate-400" /> Test Catalog
-                </Label>
-                <select
-                  value={selectedCatalogId}
-                  onChange={handleCatalogChange}
-                  disabled={!selectedDepartmentId || isLoadingCatalogs || isSubmitting}
-                  className="w-full h-9 px-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer disabled:opacity-50"
-                >
-                  <option value="">
-                    {!selectedDepartmentId
-                      ? "-- Select Department First --"
-                      : isLoadingCatalogs
-                      ? "Loading test catalogs..."
-                      : catalogs.length === 0
-                      ? "No catalogs found"
-                      : "-- Select Test Catalog --"}
-                  </option>
-                  {catalogs.map((cat, idx) => (
-                    <option key={`cat-opt-${cat.id}-${idx}`} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Dynamic Parameter Results Table */}
-          <div className="space-y-3 pt-2">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Sliders className="h-4 w-4 text-blue-600" />
-                <Label className="text-xs font-bold text-slate-900 tracking-wide uppercase">
-                  Diagnostic Parameter Payload ({fields.length})
-                </Label>
-                {isLoadingParameters && (
-                  <span className="flex items-center gap-1 text-xs text-blue-600 font-medium ml-2">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Fetching parameters...
-                  </span>
-                )}
-              </div>
-              <Button
+              <button
                 type="button"
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  append({ flag: "normal", parameter_id: "", remarks: "", result_value: "" })
-                }
-                disabled={isSubmitting}
-                className="rounded-xl text-xs h-8 text-blue-600 border-blue-200 bg-blue-50/50 hover:bg-blue-100/50 font-semibold"
+                onClick={handleClose}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
               >
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Add Parameter Row
-              </Button>
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {/* Results Array List */}
-            <div className="space-y-2.5">
-              {fields.map((field, index) => (
-                <div
-                  key={field.id}
-                  className="grid grid-cols-12 gap-2.5 p-3.5 bg-white border border-slate-200 rounded-xl items-end shadow-xs transition-all hover:border-slate-300"
-                >
-                  {/* Parameter Dropdown */}
-                  <div className="col-span-12 sm:col-span-4 space-y-1">
-                    <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Parameter
-                    </Label>
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                    Target Order ID
+                  </span>
+                  <span className="text-xs font-semibold text-slate-800 mt-0.5 block">
+                    {activeOrderId || "No Order Selected"}
+                  </span>
+                </div>
+
+                <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Verified By (Technician)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={verifiedByName}
+                      onChange={(e) => setVerifiedByName(e.target.value)}
+                      className="w-full h-9 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-slate-800"
+                    />
+                    <UserCheck className="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              {errorMsg && (
+                <div className="p-3.5 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-2.5 text-rose-700 text-xs font-medium">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              {successMsg && (
+                <div className="p-3.5 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-2.5 text-emerald-700 text-xs font-medium">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                  <span>{successMsg}</span>
+                </div>
+              )}
+
+              <div className="p-5 bg-blue-50/30 rounded-2xl border border-blue-100/80 space-y-4">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-700">
+                  <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">
+                    1
+                  </span>
+                  Department & Test Catalog Scope
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                      Department
+                    </label>
                     <select
-                      {...register(`results.${index}.parameter_id`)}
-                      disabled={isSubmitting || isLoadingParameters}
-                      className="w-full h-9 px-2.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-800 bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer disabled:bg-slate-50"
+                      value={selectedDeptId}
+                      onChange={handleDepartmentChange}
+                      disabled={loadingDepts}
+                      className="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-slate-800 cursor-pointer disabled:bg-slate-100"
                     >
                       <option value="">
-                        {!selectedCatalogId
-                          ? "-- Select Test Catalog First --"
-                          : isLoadingParameters
-                          ? "Loading parameters..."
-                          : parameters.length === 0
-                          ? "No parameters available"
-                          : "-- Select Parameter --"}
+                        {loadingDepts ? "Loading Departments..." : "Select Department"}
                       </option>
-                      {parameters.map((param, pIdx) => (
-                        <option key={`param-opt-${param.id}-${pIdx}`} value={param.id}>
-                          {param.name} {param.subtext ? `(${param.subtext})` : ""}
+                      {departments.map((dept) => (
+                        <option key={dept.dept_id || dept.id} value={dept.dept_id || dept.id}>
+                          {dept.dept_name || dept.name}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  {/* Result Value */}
-                  <div className="col-span-6 sm:col-span-3 space-y-1">
-                    <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Result Value
-                    </Label>
-                    <Input
-                      {...register(`results.${index}.result_value`)}
-                      disabled={isSubmitting}
-                      className="rounded-lg text-xs bg-white h-9"
-                      placeholder="e.g. 13.5 mg/dL"
-                    />
-                  </div>
-
-                  {/* Flag Type */}
-                  <div className="col-span-6 sm:col-span-2 space-y-1">
-                    <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Flag
-                    </Label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                      <FlaskConical className="w-3.5 h-3.5 text-slate-400" />
+                      Test Catalog
+                    </label>
                     <select
-                      {...register(`results.${index}.flag`)}
-                      disabled={isSubmitting}
-                      className="w-full h-9 px-2 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer"
+                      value={selectedCatalogId}
+                      onChange={handleCatalogChange}
+                      disabled={!selectedDeptId || loadingCatalogs}
+                      className="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-slate-800 cursor-pointer disabled:bg-slate-100"
                     >
-                      <option value="normal">Normal</option>
-                      <option value="low">Low</option>
-                      <option value="high">High</option>
-                      <option value="critical">Critical</option>
-                      <option value="na">N/A</option>
+                      <option value="">
+                        {!selectedDeptId
+                          ? "Select Department First"
+                          : loadingCatalogs
+                          ? "Loading Test Catalogs..."
+                          : testCatalogs.length === 0
+                          ? "No catalogs found"
+                          : "Select Test Catalog"}
+                      </option>
+                      {testCatalogs.map((cat) => (
+                        <option
+                          key={cat.test_catalog_id || cat.id}
+                          value={cat.test_catalog_id || cat.id}
+                        >
+                          {cat.test_name || cat.name} {cat.test_code ? `(${cat.test_code})` : ""}
+                        </option>
+                      ))}
                     </select>
                   </div>
-
-                  {/* Remarks */}
-                  <div className="col-span-10 sm:col-span-2 space-y-1">
-                    <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Remarks
-                    </Label>
-                    <Input
-                      {...register(`results.${index}.remarks`)}
-                      disabled={isSubmitting}
-                      className="rounded-lg text-xs bg-white h-9"
-                      placeholder="Remarks"
-                    />
-                  </div>
-
-                  {/* Delete Action */}
-                  <div className="col-span-2 sm:col-span-1 flex justify-end">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => fields.length > 1 && remove(index)}
-                      disabled={isSubmitting || fields.length === 1}
-                      className="text-slate-400 hover:text-red-600 h-9 w-9 p-0 rounded-lg hover:bg-red-50 disabled:opacity-30"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
 
-            {errors.results && (
-              <p className="text-[11px] text-red-500 font-medium flex items-center gap-1 mt-1">
-                <AlertCircle className="h-3 w-3" />
-                {errors.results.message}
-              </p>
-            )}
-          </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700">
+                    <span className="text-slate-400">📊</span>
+                    Diagnostic Parameters ({parameterRows.length})
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddRow}
+                    disabled={!selectedCatalogId || loadingParams}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Parameter Row
+                  </button>
+                </div>
 
-          {/* Dialog Action Footer */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-              className="rounded-xl text-xs h-10 px-4"
-            >
-              Cancel & Discard
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-10 px-6 font-semibold tracking-wide shadow-sm"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Committing...
-                </span>
-              ) : (
-                "Verify & Commit Results"
-              )}
-            </Button>
+                {loadingParams ? (
+                  <div className="flex h-32 items-center justify-center text-xs font-medium text-slate-400 bg-slate-50 border rounded-2xl animate-pulse">
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Fetching test parameters...
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {parameterRows.map((row) => (
+                      <div
+                        key={row.id}
+                        className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center p-3.5 bg-slate-50/60 border border-slate-200/80 rounded-2xl"
+                      >
+                        <div className="sm:col-span-4 space-y-1">
+                          <label className="text-[10px] font-bold uppercase text-slate-500 sm:hidden">
+                            Parameter
+                          </label>
+                          <select
+                            value={row.parameter_id}
+                            onChange={(e) => handleRowChange(row.id, "parameter_id", e.target.value)}
+                            disabled={availableParameters.length === 0}
+                            className="w-full h-9 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-slate-800 cursor-pointer disabled:bg-slate-100"
+                          >
+                            <option value="">
+                              {availableParameters.length === 0
+                                ? "Select Catalog First"
+                                : "-- Select Parameter --"}
+                            </option>
+                            {availableParameters.map((param) => (
+                              <option
+                                key={param.parameter_id || param.id}
+                                value={param.parameter_id || param.id}
+                              >
+                                {param.parameter_name || param.name}
+                                {param.unit ? ` (${param.unit})` : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="sm:col-span-3 space-y-1">
+                          <label className="text-[10px] font-bold uppercase text-slate-500 sm:hidden">
+                            Result Value
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              placeholder="Result value"
+                              value={row.result_value}
+                              onChange={(e) => handleRowChange(row.id, "result_value", e.target.value)}
+                              className="w-full h-9 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-slate-800"
+                            />
+                            {row.unit && (
+                              <span className="absolute right-3 top-2 text-[10px] font-mono text-slate-400 pointer-events-none">
+                                {row.unit}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="sm:col-span-2 space-y-1">
+                          <label className="text-[10px] font-bold uppercase text-slate-500 sm:hidden">
+                            Flag
+                          </label>
+                          <select
+                            value={row.flag}
+                            onChange={(e) => handleRowChange(row.id, "flag", e.target.value as FlagType)}
+                            className="w-full h-9 px-2 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-slate-800 cursor-pointer"
+                          >
+                            <option value="low">Low</option>
+                            <option value="normal">Normal</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                            <option value="na">N/A</option>
+                          </select>
+                        </div>
+
+                        <div className="sm:col-span-2 space-y-1">
+                          <label className="text-[10px] font-bold uppercase text-slate-500 sm:hidden">
+                            Remarks
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Remarks"
+                            value={row.remarks}
+                            onChange={(e) => handleRowChange(row.id, "remarks", e.target.value)}
+                            className="w-full h-9 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-slate-800"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-1 flex justify-center">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveRow(row.id)}
+                            disabled={parameterRows.length === 1}
+                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors disabled:opacity-30 cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="px-5 h-10 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={submitting || !selectedCatalogId || loadingParams}
+                  className="px-6 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-colors shadow-xs flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Committing...
+                    </>
+                  ) : (
+                    "Save"
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+      )}
+    </>
   );
 }

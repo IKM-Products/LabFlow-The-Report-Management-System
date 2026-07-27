@@ -38,6 +38,40 @@ interface OrderOption {
 const isUUID = (str: string) =>
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(str);
 
+// Helper to safely extract technician name while hiding raw user IDs
+const getVerifierName = (item: any): string => {
+  // 1. If verified_by is populated as an object by the backend
+  if (item.verified_by && typeof item.verified_by === "object") {
+    return (
+      item.verified_by.full_name ||
+      item.verified_by.name ||
+      `${item.verified_by.first_name || ""} ${item.verified_by.last_name || ""}`.trim() ||
+      "Technician"
+    );
+  }
+
+  // 2. Check explicitly returned name fields from the API payload
+  const explicitName =
+    item.verified_by_name ||
+    item.technician_name ||
+    item.verifier_name ||
+    item.verifier?.full_name ||
+    item.verifier?.name;
+
+  if (explicitName) return explicitName;
+
+  // 3. Fallback for string value: hide if it's a raw UUID/ID string
+  if (typeof item.verified_by === "string" && item.verified_by.trim()) {
+    const rawVal = item.verified_by.trim();
+    if (isUUID(rawVal) || rawVal.startsWith("usr_") || rawVal.startsWith("user_")) {
+      return "Technician";
+    }
+    return rawVal;
+  }
+
+  return "-";
+};
+
 export default function ResultsPage() {
   const [results, setResults] = useState<ResultItem[]>([]);
   const [patients, setPatients] = useState<PatientOption[]>([]);
@@ -367,6 +401,7 @@ export default function ResultsPage() {
                   <th className="p-4">Result Metric</th>
                   <th className="p-4">Operational Severity Flag</th>
                   <th className="p-4">Clinical Observations / Remarks</th>
+                  <th className="p-4">Verified By</th>
                   <th className="p-4">Visit No</th>
                   <th className="p-4 text-right">Action</th>
                 </tr>
@@ -400,6 +435,9 @@ export default function ResultsPage() {
                       </td>
                       <td className="p-4 text-slate-500 max-w-xs truncate">
                         {item.remarks || "-"}
+                      </td>
+                      <td className="p-4 text-slate-700 font-medium">
+                        {getVerifierName(item)}
                       </td>
                       <td className="p-4 font-mono font-semibold text-slate-800">
                         {visitNumber}
