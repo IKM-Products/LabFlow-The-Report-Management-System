@@ -102,8 +102,8 @@ export default function EditReport({ report, onSuccess }: EditReportProps) {
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting} className="rounded-xl text-xs h-10">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">
-              {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Commit Modifications"}
+            <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">
+              {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
             </Button>
           </div>
         </form>

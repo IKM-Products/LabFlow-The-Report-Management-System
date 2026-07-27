@@ -49,3 +49,6 @@ export interface ApiErrorResponse {
   messages: string[];
   success: boolean;
 }
+
+// Convenience type for GET /visit response
+export type GetVisitsResponse = ApiResponse<VisitListItem[]>;

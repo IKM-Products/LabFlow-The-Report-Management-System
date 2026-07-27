@@ -34,20 +34,23 @@ export default function VisitsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
 
-  // Fetch list of patients for the dropdown menu on mount
+  // Fetch list of patients and all visits on mount
   useEffect(() => {
-    const loadPatients = async () => {
+    const loadInitialData = async () => {
       setIsLoadingPatients(true);
+      setIsLoading(true);
       try {
-        const response: any = await patientService.getPatients();
+        const [patientResponse, visitResponse] = await Promise.all([
+          patientService.getPatients(),
+          visitService.getVisits ? visitService.getVisits() : visitService.getVisitsByPatientId("")
+        ]);
 
-        // Safely extract patient array whether returned as a direct array or wrapped in { data: [...] }
-        const rawPatients = Array.isArray(response)
-          ? response
-          : response?.data || response?.patients || [];
+        // Safely extract patient array (removed invalid .patients property check)
+        const rawPatients = Array.isArray(patientResponse)
+          ? patientResponse
+          : patientResponse?.data || [];
 
-        // Formatting patient names across common schema conventions
-        const formatted = rawPatients.map((p: any) => {
+        const formattedPatients = rawPatients.map((p: any) => {
           const patientName =
             p.full_name ||
             p.patient_name ||
@@ -64,25 +67,35 @@ export default function VisitsPage() {
           };
         });
 
-        setPatients(formatted);
+        setPatients(formattedPatients);
+
+        // Normalize initial all-visits array extraction
+        const visitsData = Array.isArray(visitResponse)
+          ? visitResponse
+          : visitResponse?.data || [];
+        setVisits(visitsData);
       } catch (error) {
-        console.error("Error loading patients list:", error);
+        console.error("Error loading initial visit and patient data:", error);
       } finally {
         setIsLoadingPatients(false);
+        setIsLoading(false);
       }
     };
 
-    loadPatients();
+    loadInitialData();
   }, []);
 
-  const fetchVisits = async (targetPatientId: string) => {
-    if (!targetPatientId.trim()) {
-      setVisits([]);
-      return;
-    }
+  const fetchVisits = async (targetPatientId?: string) => {
     setIsLoading(true);
     try {
-      const response: any = await visitService.getVisitsByPatientId(targetPatientId.trim());
+      let response: any;
+      if (targetPatientId && targetPatientId.trim()) {
+        response = await visitService.getVisitsByPatientId(targetPatientId.trim());
+      } else {
+        response = visitService.getVisits 
+          ? await visitService.getVisits() 
+          : await visitService.getVisitsByPatientId("");
+      }
 
       // Normalize array extraction
       const visitsData = Array.isArray(response)
@@ -91,7 +104,7 @@ export default function VisitsPage() {
 
       setVisits(visitsData);
     } catch (error) {
-      console.error("Error fetching patient visit records:", error);
+      console.error("Error fetching visit records:", error);
       setVisits([]);
     } finally {
       setIsLoading(false);
@@ -105,9 +118,7 @@ export default function VisitsPage() {
   };
 
   const handleRefresh = () => {
-    if (activeQueryKey) {
-      fetchVisits(activeQueryKey);
-    }
+    fetchVisits(activeQueryKey);
   };
 
   return (
@@ -119,23 +130,21 @@ export default function VisitsPage() {
             Patient Visits
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Select a patient, record, and track patient consultation history.
+            View all visits, filter by patient, record, and track consultation history.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          {activeQueryKey && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="rounded-xl h-10 border-slate-200 text-slate-600"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
-              <span>Refresh</span>
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="rounded-xl h-10 border-slate-200 text-slate-600"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </Button>
 
           <VisitForm
             defaultPatientId={activeQueryKey}
@@ -154,9 +163,7 @@ export default function VisitsPage() {
             disabled={isLoadingPatients}
             className="w-full text-xs font-medium text-slate-900 bg-transparent border-none outline-hidden cursor-pointer"
           >
-            <option value="">
-              {isLoadingPatients ? "Loading patients..." : "-- Select a Patient --"}
-            </option>
+            <option value="">-- All Patients (Show All Visits) --</option>
             {patients.map((patient) => (
               <option key={patient.id} value={patient.id}>
                 {patient.name}
@@ -177,7 +184,7 @@ export default function VisitsPage() {
             <TableCaption className="text-xs text-slate-400 pb-4">
               {activeQueryKey
                 ? `Showing visit records for Patient ID: ${activeQueryKey}`
-                : "Select a patient from the dropdown above to load visit history."}
+                : "Showing all visit records across all patients."}
             </TableCaption>
             <TableHeader>
               <tr className="bg-slate-50 border-b border-slate-200">
@@ -191,24 +198,15 @@ export default function VisitsPage() {
               </tr>
             </TableHeader>
             <TableBody className="divide-y divide-slate-150">
-              {!activeQueryKey ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-400">
-                    <div className="flex flex-col items-center justify-center space-y-1">
-                      <User className="h-6 w-6 text-slate-300" />
-                      <p className="font-medium text-slate-500">
-                        Please select a patient from the dropdown to view visit records.
-                      </p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : visits.length === 0 ? (
+              {visits.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-400">
                     <div className="flex flex-col items-center justify-center space-y-1">
                       <ShieldAlert className="h-6 w-6 text-slate-300" />
                       <p className="font-medium text-slate-500">
-                        No visit records found for the selected patient.
+                        {activeQueryKey
+                          ? "No visit records found for the selected patient."
+                          : "No visit records found."}
                       </p>
                     </div>
                   </TableCell>
@@ -261,7 +259,7 @@ export default function VisitsPage() {
                     <TableCell className="text-right whitespace-nowrap">
                       <EditVisit
                         visit={visit}
-                        initialPatientId={activeQueryKey}
+                        initialPatientId={activeQueryKey || visit.patient_name}
                         initialDoctorId="SYSTEM_REF"
                         onSuccess={() => fetchVisits(activeQueryKey)}
                       />

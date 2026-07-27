@@ -9,6 +9,11 @@ export const visitService = {
     return response.data;
   },
 
+  getVisits: async (): Promise<ApiResponse<VisitListItem[]>> => {
+    const response = await axiosInstance.get<ApiResponse<VisitListItem[]>>("/visit");
+    return response.data;
+  },
+
   getVisitById: async (id: string): Promise<ApiResponse<VisitListItem>> => {
     const response = await axiosInstance.get<ApiResponse<VisitListItem>>(`/visit/${id}`);
     return response.data;
