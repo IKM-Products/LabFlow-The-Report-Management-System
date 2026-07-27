@@ -62,7 +62,8 @@ export default function EditReport({ report, onSuccess }: EditReportProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger className="inline-flex items-center justify-center rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 h-8 px-2 border border-transparent hover:border-blue-100 transition-colors cursor-pointer">
+      {/* Fixed: Styled DialogTrigger directly to bypass missing asChild support */}
+      <DialogTrigger className="inline-flex items-center justify-center rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 h-8 w-8 p-0 border border-transparent hover:border-blue-100 transition-colors cursor-pointer bg-transparent">
         <Edit2 className="h-3.5 w-3.5" />
       </DialogTrigger>
 
@@ -88,12 +89,11 @@ export default function EditReport({ report, onSuccess }: EditReportProps) {
             <select 
               {...register("status")} 
               disabled={isSubmitting} 
-              className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+              className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-blue-500 cursor-pointer"
             >
               <option value="draft">Draft</option>
-              <option value="verified">Verified</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="final">Final</option>
+              <option value="amended">Amended</option>
             </select>
             {errors.status && <p className="text-[10px] text-red-500 font-medium">{errors.status.message}</p>}
           </div>
