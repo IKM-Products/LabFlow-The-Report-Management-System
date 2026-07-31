@@ -37,9 +37,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     {
       groupName: "Organization",
       items: [
+        { name: "Labs", href: "/dashboard/admin/labs", icon: Microscope },
         { name: "Departments", href: "/dashboard/admin/departments", icon: Building2 },
         { name: "Doctors", href: "/dashboard/admin/doctors", icon: Stethoscope },
-        { name: "Labs", href: "/dashboard/admin/labs", icon: Microscope },
       ]
     },
     {

@@ -7,7 +7,6 @@ import {
   FlaskConical, 
   LayoutDashboard, 
   LogOut, 
-  Bell,
   Package,
   Users,
   FileText,
@@ -35,16 +34,16 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
     {
       groupName: "Operations",
       items: [
-        { name: "Orders", href: "/dashboard/technician/orders", icon: Package },
         { name: "Patients", href: "/dashboard/technician/patients", icon: Users },
         { name: "Visits", href: "/dashboard/technician/visits", icon: MapPin },
+        { name: "Orders", href: "/dashboard/technician/orders", icon: Package },
       ]
     },
     {
       groupName: "Diagnostics & Output",
       items: [
-        { name: "Results", href: "/dashboard/technician/results", icon: FileSpreadsheet },
         { name: "Reports", href: "/dashboard/technician/reports", icon: FileText },
+        { name: "Results", href: "/dashboard/technician/results", icon: FileSpreadsheet },
       ]
     }
   ];
@@ -149,13 +148,8 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
           </div>
           
           <div className="flex items-center gap-4 ml-auto">
-            <button className="relative p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all cursor-pointer">
-              <Bell className="h-4 w-4" />
-              <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-emerald-500 ring-2 ring-white" />
-            </button>
-
             {/* Account Identity Segment */}
-            <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200">
+            <div className="flex items-center gap-2.5">
               <div className="h-8 w-8 rounded-full bg-linear-to-br from-emerald-600 to-teal-600 text-white flex items-center justify-center text-xs font-bold shadow-sm shadow-emerald-600/10 select-none">
                 RS
               </div>

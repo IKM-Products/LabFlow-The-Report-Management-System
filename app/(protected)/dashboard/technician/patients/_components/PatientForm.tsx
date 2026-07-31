@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus, Loader2 } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { patientSchema, PatientFormValues } from "@/schemas/patient.schema";
@@ -74,9 +74,9 @@ export default function PatientForm({ onSuccess }: PatientFormProps) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center justify-center whitespace-nowrap text-sm h-10 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-xs transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
+        className="inline-flex items-center justify-center whitespace-nowrap text-sm h-10 px-4 py-2 bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl font-medium shadow-xs transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
       >
-        <UserPlus className="h-4 w-4 mr-2" />
+        <Plus className="h-4 w-4 mr-2" />
         Add Patient
       </button>
 
@@ -156,7 +156,7 @@ export default function PatientForm({ onSuccess }: PatientFormProps) {
               <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="rounded-xl text-xs h-10">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">
+              <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">
                 {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
               </Button>
             </div>

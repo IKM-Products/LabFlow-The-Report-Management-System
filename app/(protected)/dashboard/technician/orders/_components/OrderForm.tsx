@@ -219,7 +219,7 @@ export default function OrderForm({ defaultVisitId = "", onSuccess }: OrderFormP
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (!open ? handleClose() : setIsOpen(true))}>
-      <DialogTrigger className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium shadow-xs h-10 px-4 transition-colors cursor-pointer">
+      <DialogTrigger className="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-sm font-medium shadow-xs h-10 px-4 transition-colors cursor-pointer">
         <Plus className="h-4 w-4 mr-2" />
         Create Order
       </DialogTrigger>

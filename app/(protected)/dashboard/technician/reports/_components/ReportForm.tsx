@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FilePlus, Loader2, User, Calendar } from "lucide-react";
+import { FilePlus, Loader2, User, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { createReportSchema, CreateReportFormValues } from "@/schemas/report.schema";
@@ -159,8 +159,8 @@ export default function ReportForm({ defaultVisitId = "", onSuccess }: ReportFor
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (!open ? handleClose() : setIsOpen(true))}>
       {/* Styled DialogTrigger directly to bypass missing asChild support */}
-      <DialogTrigger className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-xs text-xs h-10 px-4 transition-colors cursor-pointer inline-flex items-center justify-center">
-        <FilePlus className="h-4 w-4 mr-2" />
+      <DialogTrigger className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl font-medium shadow-xs text-xs h-10 px-4 transition-colors cursor-pointer inline-flex items-center justify-center">
+        <Plus className="h-4 w-4 mr-2" />
         Generate Report
       </DialogTrigger>
 
@@ -229,7 +229,7 @@ export default function ReportForm({ defaultVisitId = "", onSuccess }: ReportFor
           {/* Visit Name Selection Dropdown */}
           <div className="space-y-1">
             <Label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 text-blue-600" />
+              <Plus className="h-3.5 w-3.5 text-blue-600" />
               Select Visit Record Name
             </Label>
             <div className="relative">
