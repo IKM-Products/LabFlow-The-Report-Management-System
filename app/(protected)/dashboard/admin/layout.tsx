@@ -10,8 +10,6 @@ import {
   FlaskConical, 
   Contact, 
   Users, 
-  ShieldCheck, 
-  Bell, 
   LogOut,
   Grid,
   BookOpen,
@@ -79,7 +77,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </h4>
         <div className="space-y-0.5 mt-1">
           {group.items.map((item) => {
-            // Strict exact match for the main Overview dashboard path, prefix match for sub-routes
             const isActive = item.href === "/dashboard/admin" 
               ? pathname === "/dashboard/admin" 
               : pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -162,13 +159,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
           
           <div className="flex items-center gap-4 ml-auto">
-            <button className="relative p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all cursor-pointer">
-              <Bell className="h-4 w-4" />
-              <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-emerald-500 ring-2 ring-white" />
-            </button>
-
             {/* Account Identity Segment */}
-            <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200">
+            <div className="flex items-center gap-2.5">
               <div className="h-8 w-8 rounded-full bg-linear-to-br from-emerald-600 to-teal-600 text-white flex items-center justify-center text-xs font-bold shadow-sm shadow-emerald-600/10 select-none">
                 IKM
               </div>
