@@ -10,7 +10,7 @@ import {
   UserCheck,
   FileText,
   Building2,
-  TestTube,
+  BookOpen,
   ListFilter,
 } from "lucide-react";
 
@@ -342,7 +342,7 @@ export default function ReferenceRangePage() {
           {/* Test Catalog Dropdown */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-              <TestTube className="w-3.5 h-3.5 text-slate-400" />
+              <BookOpen className="w-3.5 h-3.5 text-slate-400" />
               Test Catalog
             </label>
             <select

@@ -9,6 +9,7 @@ import {
   Loader2,
   RefreshCw,
   FlaskConical,
+  Microscope,
   Plus,
   X,
   CheckCircle2,
@@ -33,8 +34,6 @@ export default function AdminDashboardPage() {
     users: 0,
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [lastUpdated, setLastUpdated] = useState<string>("");
 
   // Modal and Form States
   const [activeModal, setActiveModal] = useState<QuickActionType>(null);
@@ -58,7 +57,7 @@ export default function AdminDashboardPage() {
     registration_no: "",
   });
 
-  // Lab Form Fields State (matching LabFormValues)
+  // Lab Form Fields State
   const [labData, setLabData] = useState({
     lab_name: "",
     tagline: "",
@@ -69,14 +68,14 @@ export default function AdminDashboardPage() {
     report_footer: "",
   });
 
-  // User Form Fields State (matching CreateUserSchema in UserForm.tsx)
+  // User Form Fields State (integrated from UserForm)
   const [userData, setUserData] = useState({
     first_name: "",
     last_name: "",
     email: "",
     phone: "",
     password: "",
-    role_name: "TECHNICIAN",
+    role_name: "",
   });
 
   const BASE_URL = (
@@ -142,6 +141,7 @@ export default function AdminDashboardPage() {
   };
 
   const fetchDashboardStats = useCallback(async () => {
+    setIsLoading(true);
     const token = getAuthToken();
 
     const headers: HeadersInit = {
@@ -173,15 +173,10 @@ export default function AdminDashboardPage() {
         labs: labsCount,
         users: usersCount,
       });
-
-      setLastUpdated(
-        new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-      );
     } catch (error) {
       console.error("[Dashboard Debug] Fetch error:", error);
     } finally {
       setIsLoading(false);
-      setIsRefreshing(false);
     }
   }, [BASE_URL, getAuthToken]);
 
@@ -203,11 +198,6 @@ export default function AdminDashboardPage() {
       window.removeEventListener("focus", handleSync);
     };
   }, [fetchDashboardStats, sessionStatus]);
-
-  const handleManualRefresh = () => {
-    setIsRefreshing(true);
-    fetchDashboardStats();
-  };
 
   const closeModal = () => {
     setActiveModal(null);
@@ -285,15 +275,13 @@ export default function AdminDashboardPage() {
         );
         break;
       case "user":
-        endpoint = `${BASE_URL}/user/create`;
-        payload = {
-          first_name: userData.first_name,
-          last_name: userData.last_name,
-          email: userData.email,
-          phone: userData.phone,
-          password: userData.password,
-          role_name: userData.role_name,
-        };
+        endpoint = `${BASE_URL}/special/user/create`;
+        payload = Object.fromEntries(
+          Object.entries(userData).map(([key, val]) => [
+            key,
+            typeof val === "string" && val.trim() === "" ? null : val,
+          ])
+        );
         break;
       default:
         setIsSubmitting(false);
@@ -310,9 +298,12 @@ export default function AdminDashboardPage() {
       const resData = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        const errorMsg = Array.isArray(resData.messages)
-          ? resData.messages.join(", ")
-          : resData.message || `Failed to create entry (Status ${res.status})`;
+        const serverMessages = resData?.messages || resData?.message;
+        const errorMsg = Array.isArray(serverMessages)
+          ? serverMessages.join(", ")
+          : typeof serverMessages === "string"
+          ? serverMessages
+          : `Failed to create entry (Status ${res.status})`;
         throw new Error(errorMsg);
       }
 
@@ -345,11 +336,11 @@ export default function AdminDashboardPage() {
     {
       label: "Laboratories",
       value: counts.labs,
-      icon: FlaskConical,
+      icon: Microscope,
       color: "text-amber-600 bg-amber-50 border-amber-100",
     },
     {
-      label: "Active Users",
+      label: "Users",
       value: counts.users,
       icon: Users,
       color: "text-emerald-600 bg-emerald-50 border-emerald-100",
@@ -368,18 +359,13 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {lastUpdated && (
-            <span className="text-xs text-slate-400 font-medium hidden sm:inline">
-              Last updated {lastUpdated}
-            </span>
-          )}
           <button
-            onClick={handleManualRefresh}
-            disabled={isLoading || isRefreshing}
+            onClick={fetchDashboardStats}
+            disabled={isLoading}
             className="inline-flex items-center gap-2 px-4 h-10 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-all shadow-2xs cursor-pointer self-start sm:self-auto disabled:opacity-50"
           >
             <RefreshCw
-              className={`w-3.5 h-3.5 text-slate-500 ${isRefreshing ? "animate-spin" : ""}`}
+              className={`w-3.5 h-3.5 text-slate-500 ${isLoading ? "animate-spin" : ""}`}
             />
             <span>Refresh</span>
           </button>
@@ -484,7 +470,7 @@ export default function AdminDashboardPage() {
                   {activeModal === "department" && "Create a new department in the system."}
                   {activeModal === "doctor" && "Enter the required information to create a new doctor in the system."}
                   {activeModal === "lab" && "Enter the required information to create a new lab in the system."}
-                  {activeModal === "user" && "Inject data attributes validating target structural access vectors"}
+                  {activeModal === "user" && "Enter the required details to create and provision a new user in the system."}
                 </p>
               </div>
               <button
@@ -733,7 +719,7 @@ export default function AdminDashboardPage() {
                 </div>
               )}
 
-              {/* 4. Add User Modal (Matching UserForm.tsx) */}
+              {/* 4. Add User Modal */}
               {activeModal === "user" && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
@@ -744,11 +730,11 @@ export default function AdminDashboardPage() {
                       <input
                         type="text"
                         required
-                        placeholder="First name"
                         value={userData.first_name}
                         onChange={(e) =>
                           setUserData({ ...userData, first_name: e.target.value })
                         }
+                        placeholder="First name"
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
                     </div>
@@ -759,11 +745,11 @@ export default function AdminDashboardPage() {
                       <input
                         type="text"
                         required
-                        placeholder="Last name"
                         value={userData.last_name}
                         onChange={(e) =>
                           setUserData({ ...userData, last_name: e.target.value })
                         }
+                        placeholder="Last name"
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
                     </div>
@@ -777,11 +763,11 @@ export default function AdminDashboardPage() {
                       <input
                         type="email"
                         required
-                        placeholder="operator@example.com"
                         value={userData.email}
                         onChange={(e) =>
                           setUserData({ ...userData, email: e.target.value })
                         }
+                        placeholder="operator@example.com"
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
                     </div>
@@ -791,11 +777,11 @@ export default function AdminDashboardPage() {
                       </label>
                       <input
                         type="text"
-                        placeholder="+123456789"
                         value={userData.phone}
                         onChange={(e) =>
                           setUserData({ ...userData, phone: e.target.value })
                         }
+                        placeholder="+123456789"
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
                     </div>
@@ -809,11 +795,11 @@ export default function AdminDashboardPage() {
                       <input
                         type="password"
                         required
-                        placeholder="••••••••"
                         value={userData.password}
                         onChange={(e) =>
                           setUserData({ ...userData, password: e.target.value })
                         }
+                        placeholder="••••••••"
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
                     </div>
@@ -823,11 +809,11 @@ export default function AdminDashboardPage() {
                       </label>
                       <input
                         type="text"
-                        placeholder="E.g., TECHNICIAN"
                         value={userData.role_name}
                         onChange={(e) =>
                           setUserData({ ...userData, role_name: e.target.value })
                         }
+                        placeholder="E.g., TECHNICIAN"
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
                     </div>

@@ -7,9 +7,9 @@ import {
   LayoutDashboard, 
   Building2, 
   Stethoscope, 
-  FlaskConical, 
+  FlaskConical,
+  Microscope, 
   Contact, 
-  Users, 
   LogOut,
   Grid,
   BookOpen,
@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       items: [
         { name: "Departments", href: "/dashboard/admin/departments", icon: Building2 },
         { name: "Doctors", href: "/dashboard/admin/doctors", icon: Stethoscope },
-        { name: "Labs", href: "/dashboard/admin/labs", icon: FlaskConical },
+        { name: "Labs", href: "/dashboard/admin/labs", icon: Microscope },
       ]
     },
     {
@@ -55,7 +55,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       groupName: "User Management",
       items: [
         { name: "Profiles", href: "/dashboard/admin/profiles", icon: Contact },
-        { name: "Users", href: "/dashboard/admin/users", icon: Users },
       ]
     }
   ];

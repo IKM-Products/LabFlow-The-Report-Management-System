@@ -5,6 +5,7 @@ import { RefreshCw, ShieldAlert, Mail, Phone, User2 } from "lucide-react";
 import { profileService } from "@/services/profile.service";
 import { Profile } from "@/types/profile.types";
 
+import UserForm from "./_components/UserForm";
 import EditProfile from "./_components/EditProfile";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +28,7 @@ export default function ProfilesPage() {
       const data = await profileService.getProfiles();
       setProfiles(data);
     } catch (error) {
-      console.error("Critical identity collection fault:", error);
+      console.error("Critical error fetching profile records:", error);
     } finally {
       setIsLoading(false);
     }
@@ -45,7 +46,7 @@ export default function ProfilesPage() {
             User Accounts Registry
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Global operational profiles configuration board. Audit or correct user identities.
+            Manage user accounts, contact details, and permission roles.
           </p>
         </div>
 
@@ -55,38 +56,40 @@ export default function ProfilesPage() {
             size="sm"
             onClick={fetchProfileRecords}
             disabled={isLoading}
-            className="rounded-xl h-10 border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center gap-2 px-3"
+            className="rounded-xl h-10 border-slate-200 text-slate-600"
           >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-            <span className="text-xs font-semibold">Refresh</span>
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
           </Button>
+
+          <UserForm onSuccess={fetchProfileRecords} />
         </div>
       </div>
 
       {isLoading ? (
         <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 animate-pulse bg-white border border-slate-200 rounded-2xl">
-          Synchronizing credentials schema records queue...
+          Loading profile data...
         </div>
       ) : (
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
-              Comprehensive list of all registered profile modules.
+              List of all registered profiles.
             </TableCaption>
             <TableHeader>
-              <TableRow className="bg-slate-50/80 border-b border-slate-200">
-                <TableHead className="w-16 font-bold text-slate-600">SN</TableHead>
+              <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="w-20 font-bold text-slate-600">S.N.</TableHead>
                 <TableHead className="font-bold text-slate-600">User Identity</TableHead>
                 <TableHead className="font-bold text-slate-600">Contact Specifics</TableHead>
                 <TableHead className="font-bold text-slate-600">Permission Role</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="divide-y divide-slate-100">
+            <TableBody className="divide-y divide-slate-150">
               {profiles.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="py-12 text-center text-sm text-slate-400">
-                    <div className="flex flex-col items-center justify-center space-y-2">
+                    <div className="flex flex-col items-center justify-center space-y-1">
                       <ShieldAlert className="h-6 w-6 text-slate-300" />
                       <p className="font-medium text-slate-500">No profile allocations configured.</p>
                     </div>
@@ -96,11 +99,13 @@ export default function ProfilesPage() {
                 profiles.map((profile, idx) => (
                   <TableRow key={profile.id} className="hover:bg-slate-50/60 transition-colors group">
                     <TableCell className="font-mono text-xs text-slate-400">{idx + 1}</TableCell>
-                    
+
                     <TableCell className="space-y-0.5">
                       <div className="font-semibold text-slate-900 flex items-center gap-1.5">
                         <User2 className="h-3.5 w-3.5 text-slate-400" />
-                        <span>{profile.first_name} {profile.last_name}</span>
+                        <span>
+                          {profile.first_name} {profile.last_name}
+                        </span>
                       </div>
                     </TableCell>
 
