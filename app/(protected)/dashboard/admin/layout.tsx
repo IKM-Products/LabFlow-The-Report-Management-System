@@ -35,17 +35,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       ]
     },
     {
-      groupName: "Organization",
+      groupName: "Clinical Management",
       items: [
-        { name: "Labs", href: "/dashboard/admin/labs", icon: Microscope },
+        { name: "Laboratories", href: "/dashboard/admin/labs", icon: Microscope },
         { name: "Departments", href: "/dashboard/admin/departments", icon: Building2 },
         { name: "Doctors", href: "/dashboard/admin/doctors", icon: Stethoscope },
       ]
     },
     {
-      groupName: "Laboratory Configuration",
+      groupName: "Test Management",
       items: [
-        { name: "Panels", href: "/dashboard/admin/panels", icon: Grid },
+        { name: "Test Panels", href: "/dashboard/admin/panels", icon: Grid },
         { name: "Test Catalogs", href: "/dashboard/admin/test-catalogs", icon: BookOpen },
         { name: "Test Parameters", href: "/dashboard/admin/test-parameters", icon: Sliders },
         { name: "Reference Ranges", href: "/dashboard/admin/reference-ranges", icon: Scale },
@@ -66,6 +66,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     } catch (error) {
       console.error("Critical error during session termination lifecycle:", error);
     }
+  };
+
+  const getHeaderTitle = (path: string) => {
+    if (path === "/dashboard/admin") return "Admin Workspace";
+    const segment = path.split("/").pop()?.replace(/-/g, " ") || "";
+    if (segment.toLowerCase() === "labs") return "Laboratories";
+    if (segment.toLowerCase() === "panels") return "Test Panels";
+    return segment;
   };
 
   const renderNavLinks = () => {
@@ -153,7 +161,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           
           <div className="text-xs font-semibold text-slate-400 tracking-wide uppercase">
             <span className="text-slate-700 font-bold text-lg italic capitalize">
-              {pathname === "/dashboard/admin" ? "Admin Workspace" : pathname.split("/").pop()?.replace("-", " ")}
+              {getHeaderTitle(pathname)}
             </span>
           </div>
           

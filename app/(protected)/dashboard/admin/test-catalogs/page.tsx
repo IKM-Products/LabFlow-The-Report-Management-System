@@ -232,7 +232,7 @@ export default function TestCatalogPage() {
             Laboratory Test Catalogs
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage diagnostic laboratory test catalogs organized by department or panel.
+            Manage laboratory test catalogs by department or test panel.
           </p>
         </div>
 
@@ -285,7 +285,7 @@ export default function TestCatalogPage() {
           }`}
         >
           <Grid className="w-4 h-4" />
-          By Panel
+          By Test Panel
         </button>
       </div>
 
@@ -333,7 +333,7 @@ export default function TestCatalogPage() {
                   ? "Loading departments..."
                   : departments.length === 0
                   ? "No departments loaded (Click Refresh to retry)"
-                  : "1. Select Department"}
+                  : "Select a Department"}
               </option>
               {departments.map((dept) => (
                 <option key={dept.dept_id} value={dept.dept_id}>
@@ -354,12 +354,12 @@ export default function TestCatalogPage() {
             >
               <option value="">
                 {!panelDeptId
-                  ? "2. Select Department First"
+                  ? "Select a Department First"
                   : loadingPanels
                   ? "Loading panels..."
                   : panels.length === 0
                   ? "No panels found for department"
-                  : "2. Select Panel"}
+                  : "Select a Test Panel"}
               </option>
               {panels.map((p) => (
                 <option key={p.panel_id} value={p.panel_id}>
@@ -401,14 +401,14 @@ export default function TestCatalogPage() {
               <Table>
                 <TableCaption className="text-xs text-slate-400 pb-4">
                   {activeDeptName
-                    ? `Showing test catalog records for ${activeDeptName}.`
-                    : "Select a department from the dropdown above to view records."}
+                    ? `List of all Test Catalogs for ${activeDeptName}.`
+                    : "Select a department above to view test catalogs."}
                 </TableCaption>
                 <TableHeader>
                   <tr className="bg-slate-50 border-b border-slate-200">
                     <TableHead className="w-20 font-bold text-slate-600">S.N.</TableHead>
                     <TableHead className="font-bold text-slate-600">Code</TableHead>
-                    <TableHead className="font-bold text-slate-600">Test Name</TableHead>
+                    <TableHead className="font-bold text-slate-600">Test Catalog Name</TableHead>
                     <TableHead className="font-bold text-slate-600">Sample Type</TableHead>
                     <TableHead className="font-bold text-slate-600">Price</TableHead>
                     <TableHead className="font-bold text-slate-600">Turnaround Time</TableHead>
@@ -424,7 +424,7 @@ export default function TestCatalogPage() {
                           <p className="font-medium text-slate-500">
                             {activeDeptName
                               ? `No test catalog items found for department "${activeDeptName}"`
-                              : "Select a department above to view test catalog records."}
+                              : "Select a department above to view test catalogs."}
                           </p>
                         </div>
                       </TableCell>
@@ -483,7 +483,7 @@ export default function TestCatalogPage() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <h2 className="text-xl font-bold text-slate-900">{panelDetails.panel_name}</h2>
-                    <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md font-mono text-xs font-semibold">
+                    <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-md font-mono text-xs font-semibold">
                       {panelDetails.panel_code}
                     </span>
                   </div>
@@ -550,8 +550,8 @@ export default function TestCatalogPage() {
                 <ShieldAlert className="h-6 w-6 text-slate-300" />
                 <p className="font-medium text-slate-500">
                   {!panelDeptId
-                    ? "Select a department and panel above to view catalog details."
-                    : "Select a panel above to view catalog details."}
+                    ? "Select a department and test panel above to view test catalogs."
+                    : "Select a department and test panel above to view test catalogs."}
                 </p>
               </div>
             </div>

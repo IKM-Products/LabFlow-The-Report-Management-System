@@ -103,10 +103,10 @@ export default function PanelsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-            Laboratory Panels
+            Laboratory Test Panels
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage laboratory panels organized by department.
+            Manage laboratory test panels by department.
           </p>
         </div>
 
@@ -169,14 +169,14 @@ export default function PanelsPage() {
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
               {activeDeptName 
-                ? `Showing panel records for ${activeDeptName}.` 
-                : "Select a department from the dropdown above to view records."}
+                ? `List of all Test Panels for ${activeDeptName}.` 
+                : "Select a department above to view test panels."}
             </TableCaption>
             <TableHeader>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <TableHead className="w-20 font-bold text-slate-600">S.N.</TableHead>
                 <TableHead className="font-bold text-slate-600">Code</TableHead>
-                <TableHead className="font-bold text-slate-600">Panel Name</TableHead>
+                <TableHead className="font-bold text-slate-600">Test Panel Name</TableHead>
                 <TableHead className="font-bold text-slate-600">Price</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </tr>
@@ -189,8 +189,8 @@ export default function PanelsPage() {
                       <ShieldAlert className="h-6 w-6 text-slate-300" />
                       <p className="font-medium text-slate-500">
                         {activeDeptName 
-                          ? `No panels found for department "${activeDeptName}"` 
-                          : "Select a department above to view panel records."}
+                          ? `No test panels found for department "${activeDeptName}"` 
+                          : "Select a department above to view test panels."}
                       </p>
                     </div>
                   </TableCell>

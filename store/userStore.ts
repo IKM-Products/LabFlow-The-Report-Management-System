@@ -20,7 +20,7 @@ export const useUserStore = create<UserState>()(
       clearAuthSession: () => set({ userId: null, userType: null, sessionId: null }),
     }),
     {
-      name: "telemetry-user-storage",
+      name: "User-Data-Storage",
     }
   )
 );

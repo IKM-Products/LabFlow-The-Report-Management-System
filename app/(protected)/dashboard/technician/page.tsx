@@ -12,7 +12,7 @@ import {
   X,
   CheckCircle2,
   AlertCircle,
-  UserPlus,
+  UserRound,
   FilePlus,
   CalendarPlus,
 } from "lucide-react";
@@ -303,20 +303,20 @@ export default function TechnicianDashboardPage() {
     {
       label: "Patients",
       value: metrics.patients,
-      icon: Users,
+      icon: UserRound,
       color: "text-emerald-600 bg-emerald-50 border-emerald-100",
     },
     {
       label: "Visits",
       value: metrics.visits,
       icon: MapPin,
-      color: "text-blue-600 bg-blue-50 border-blue-100",
+      color: "text-emerald-600 bg-emerald-50 border-emerald-100",
     },
     {
       label: "Orders",
       value: metrics.orders,
       icon: Package,
-      color: "text-amber-600 bg-amber-50 border-amber-100",
+      color: "text-emerald-600 bg-emerald-50 border-emerald-100",
     },
   ];
 
@@ -397,7 +397,7 @@ export default function TechnicianDashboardPage() {
             className="flex items-center gap-3 p-3 rounded-xl bg-[#00a66c] hover:bg-[#008f5d] text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
             <div className="p-2 rounded-lg bg-white/20 text-white group-hover:scale-110 transition-transform">
-              <UserPlus className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
             </div>
             <span>Add Patient</span>
           </button>
@@ -407,9 +407,9 @@ export default function TechnicianDashboardPage() {
             className="flex items-center gap-3 p-3 rounded-xl bg-[#00a66c] hover:bg-[#008f5d] text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
             <div className="p-2 rounded-lg bg-white/20 text-white group-hover:scale-110 transition-transform">
-              <CalendarPlus className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
             </div>
-            <span>New Visit</span>
+            <span>Add Visit</span>
           </button>
 
           <button
@@ -417,9 +417,9 @@ export default function TechnicianDashboardPage() {
             className="flex items-center gap-3 p-3 rounded-xl bg-[#00a66c] hover:bg-[#008f5d] text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
             <div className="p-2 rounded-lg bg-white/20 text-white group-hover:scale-110 transition-transform">
-              <FilePlus className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
             </div>
-            <span>New Order</span>
+            <span>Add Order</span>
           </button>
         </div>
       </div>

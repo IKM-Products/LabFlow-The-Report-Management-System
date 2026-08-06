@@ -53,7 +53,7 @@ export default function DepartmentPage() {
             Laboratory Departments
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage departments and their information.
+            Manage laboratory departments and their information.
           </p>
         </div>
 
@@ -81,7 +81,7 @@ export default function DepartmentPage() {
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
-              List of all departments.
+              List of all Departments.
             </TableCaption>
             <TableHeader>
               <TableRow className="bg-slate-50 border-b border-slate-200">

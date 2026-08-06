@@ -177,11 +177,8 @@ export default function ResetPasswordPage() {
         <div className="max-w-md w-full mx-auto my-auto space-y-8">
           {!isSubmitted ? (
             <>
-              <div className="space-y-2">
-                <h2 className="text-4xl font-semibold text-slate-900 tracking-tight">Reset Password</h2>
-                <p className="text-xs font-medium text-slate-500">
-                  Please enter your new password below.
-                </p>
+              <div className="space-y-1.5">
+                <h2 className="text-4xl font-semibold text-slate-900 tracking-tight">Reset Password!</h2>
               </div>
 
               {globalErrors.length > 0 && (

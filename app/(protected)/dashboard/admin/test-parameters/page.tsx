@@ -198,7 +198,7 @@ export default function TestParametersPage() {
                 ? "Select a Department first"
                 : testCatalogs.length === 0
                 ? "No test catalogs in this department"
-                : "2. Select a Test Catalog"}
+                : "Select a Test Catalog"}
             </option>
             {testCatalogs.map((test) => (
               <option key={test.test_catalog_id} value={test.test_catalog_id}>

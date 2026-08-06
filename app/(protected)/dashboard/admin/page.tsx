@@ -325,19 +325,19 @@ export default function AdminDashboardPage() {
       label: "Doctors",
       value: counts.doctors,
       icon: Stethoscope,
-      color: "text-blue-600 bg-blue-50 border-blue-100",
+      color: "text-emerald-600 bg-emerald-50 border-emerald-100",
     },
     {
       label: "Departments",
       value: counts.departments,
       icon: Building2,
-      color: "text-purple-600 bg-purple-50 border-purple-100",
+      color: "text-emerald-600 bg-emerald-50 border-emerald-100",
     },
     {
       label: "Laboratories",
       value: counts.labs,
       icon: Microscope,
-      color: "text-amber-600 bg-amber-50 border-amber-100",
+      color: "text-emerald-600 bg-emerald-50 border-emerald-100",
     },
     {
       label: "Users",
@@ -405,7 +405,7 @@ export default function AdminDashboardPage() {
           <div>
             <h2 className="text-lg font-bold text-black">Quick Actions</h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Quickly add new entries directly into the system.
+              Quickly add new entries to the system.
             </p>
           </div>
         </div>
@@ -413,19 +413,19 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
           <button
             onClick={() => setActiveModal("department")}
-            className="flex items-center gap-3 p-3 rounded-xl bg-[#00a66c] hover:bg-[#008f5d] text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
-            <div className="p-2 rounded-lg bg-white/20 text-white group-hover:scale-110 transition-transform">
-              <Building2 className="w-4 h-4" />
+            <div className="p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
+              <Plus className="w-4 h-4" />
             </div>
             <span>Add Department</span>
           </button>
 
           <button
             onClick={() => setActiveModal("doctor")}
-            className="flex items-center gap-3 p-3 rounded-xl bg-[#00a66c] hover:bg-[#008f5d] text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
+            className="flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
-            <div className="p-2 rounded-lg bg-white/20 text-white group-hover:scale-110 transition-transform">
+            <div className="p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
               <Plus className="w-4 h-4" />
             </div>
             <span>Add Doctor</span>
@@ -433,20 +433,20 @@ export default function AdminDashboardPage() {
 
           <button
             onClick={() => setActiveModal("lab")}
-            className="flex items-center gap-3 p-3 rounded-xl bg-[#00a66c] hover:bg-[#008f5d] text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
+            className="flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
-            <div className="p-2 rounded-lg bg-white/20 text-white group-hover:scale-110 transition-transform">
-              <FlaskConical className="w-4 h-4" />
+            <div className="p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
+              <Plus className="w-4 h-4" />
             </div>
-            <span>Add Lab</span>
+            <span>Add Laboratory</span>
           </button>
 
           <button
             onClick={() => setActiveModal("user")}
-            className="flex items-center gap-3 p-3 rounded-xl bg-[#00a66c] hover:bg-[#008f5d] text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
+            className="flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
-            <div className="p-2 rounded-lg bg-white/20 text-white group-hover:scale-110 transition-transform">
-              <Users className="w-4 h-4" />
+            <div className="p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
+              <Plus className="w-4 h-4" />
             </div>
             <span>Add User</span>
           </button>

@@ -8,7 +8,7 @@ import {
   LayoutDashboard, 
   LogOut, 
   Package,
-  Users,
+  UserRound,
   FileText,
   FileSpreadsheet,
   MapPin,
@@ -34,7 +34,7 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
     {
       groupName: "Operations",
       items: [
-        { name: "Patients", href: "/dashboard/technician/patients", icon: Users },
+        { name: "Patients", href: "/dashboard/technician/patients", icon: UserRound },
         { name: "Visits", href: "/dashboard/technician/visits", icon: MapPin },
         { name: "Orders", href: "/dashboard/technician/orders", icon: Package },
       ]

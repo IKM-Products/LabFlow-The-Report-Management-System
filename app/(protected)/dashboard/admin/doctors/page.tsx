@@ -43,10 +43,10 @@ export default function DoctorsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Doctor Accounts
+            Laboratory Doctors
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage internal and referring doctor accounts and information.
+            Manage laboratory doctors and their information.
           </p>
         </div>
 
@@ -74,14 +74,14 @@ export default function DoctorsPage() {
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
-              List of all doctors.
+              List of all Doctors.
             </TableCaption>
             <TableHeader>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <TableHead className="w-15 font-bold text-slate-600">S.N.</TableHead>
                 <TableHead className="font-bold text-slate-600">Doctor Name</TableHead>
-                <TableHead className="font-bold text-slate-600">Contact</TableHead>
-                <TableHead className="font-bold text-slate-600">Registration No.</TableHead>
+                <TableHead className="font-bold text-slate-600">Contact Information</TableHead>
+                <TableHead className="font-bold text-slate-600">NMC Registration No.</TableHead>
                 <TableHead className="font-bold text-slate-600">Qualifications</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </tr>

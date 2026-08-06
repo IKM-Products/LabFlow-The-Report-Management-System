@@ -46,7 +46,7 @@ export default function LabsPage() {
             Laboratory Facilities
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage laboratory details and contact information.
+            Manage laboratory facilities and their information.
           </p>
         </div>
 
@@ -74,13 +74,13 @@ export default function LabsPage() {
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
-              List of all labs.
+              List of all Laboratories.
             </TableCaption>
             <TableHeader>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <TableHead className="w-20 font-bold text-slate-600">S.N.</TableHead>
                 <TableHead className="font-bold text-slate-600">Lab Name</TableHead>
-                <TableHead className="font-bold text-slate-600">Contact & Address</TableHead>
+                <TableHead className="font-bold text-slate-600">Contact Information</TableHead>
                 <TableHead className="font-bold text-slate-600">Official Registration No.</TableHead>
                 <TableHead className="font-bold text-slate-600">Footer Settings</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
