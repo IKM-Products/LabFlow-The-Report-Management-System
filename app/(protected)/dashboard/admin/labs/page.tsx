@@ -79,7 +79,7 @@ export default function LabsPage() {
             <TableHeader>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <TableHead className="w-20 font-bold text-slate-600">S.N.</TableHead>
-                <TableHead className="font-bold text-slate-600">Lab Name</TableHead>
+                <TableHead className="font-bold text-slate-600">Laboratory Name</TableHead>
                 <TableHead className="font-bold text-slate-600">Contact Information</TableHead>
                 <TableHead className="font-bold text-slate-600">Official Registration No.</TableHead>
                 <TableHead className="font-bold text-slate-600">Footer Settings</TableHead>

@@ -1,4 +1,3 @@
-// app/(auth)/forgot-password/page.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -7,16 +6,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, AlertTriangle, CheckCircle2, FlaskConical, ArrowLeft } from "lucide-react";
 import * as z from "zod";
 import Link from "next/link";
+import { authService } from "@/services/auth.service";
+import { ForgotPasswordSchema } from "@/schemas/auth.schema";
 
-// Define schema locally for context validation consistency
-const ForgotPasswordSchema = z.object({
-  email: z.string().min(1, { message: "Email address is required." }).pipe(z.email({ message: "Invalid email address." })),
+const ForgotPasswordFormSchema = ForgotPasswordSchema.extend({
   acceptTerms: z.boolean().refine((val) => val === true, {
     message: "Please confirm that you are authorized to request a password reset.",
   }),
 });
 
-type FormData = z.infer<typeof ForgotPasswordSchema>;
+type FormData = z.infer<typeof ForgotPasswordFormSchema>;
 
 export default function ForgotPasswordPage() {
   const [globalErrors, setGlobalErrors] = useState<string[]>([]);
@@ -28,8 +27,9 @@ export default function ForgotPasswordPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>({
-    resolver: zodResolver(ForgotPasswordSchema),
+    resolver: zodResolver(ForgotPasswordFormSchema),
     defaultValues: {
+      email: "",
       acceptTerms: false,
     },
   });
@@ -38,13 +38,24 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
     setGlobalErrors([]);
     try {
-      // Simulated secure reset pipeline integration matching layout signatures
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      // If validation endpoint checks out, toggle state transition
-      setIsSubmitted(true);
-    } catch (err) {
-      setGlobalErrors(["Fatal synchronization breakdown crossing gateway route boundaries."]);
+      const response = await authService.forgotPassword({
+        email: data.email,
+      });
+
+      if (response.success) {
+        setIsSubmitted(true);
+      } else {
+        setGlobalErrors(["Failed to process password reset request."]);
+      }
+    } catch (err: any) {
+      const apiMessages = err?.response?.data?.messages;
+      if (Array.isArray(apiMessages) && apiMessages.length > 0) {
+        setGlobalErrors(apiMessages);
+      } else if (err?.response?.data?.message) {
+        setGlobalErrors([err.response.data.message]);
+      } else {
+        setGlobalErrors(["An error occurred while requesting password reset. Please try again."]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +63,6 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="w-full min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-white">
-      
       {/* Left Column: Dark Green Brand Display Panel */}
       <div className="bg-[#051610] p-8 sm:p-12 md:p-16 flex flex-col justify-between relative overflow-hidden text-white min-h-125 lg:min-h-screen">
         {/* Subtle Decorative Background Lines */}
@@ -71,22 +81,28 @@ export default function ForgotPasswordPage() {
           <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-white leading-[1.1] text-center lg:text-left">
             Manage <br /> your reports
           </h1>
-          
+
           {/* Simulated Smartphone Graphic Device */}
           <div className="w-64 h-340px bg-[#030d0a] rounded-[36px] border-[6px] border-[#0e271f] shadow-2xl overflow-hidden p-4 flex flex-col justify-between relative transform rotate-[-4deg] hover:rotate-0 transition-transform duration-500 origin-bottom">
             {/* Dynamic Island Ear-piece element */}
             <div className="absolute top-2 left-1/2 -translate-x-1/2 w-20 h-4 bg-black rounded-full z-20 flex items-center justify-center" />
-            
+
             <div className="space-y-4 mt-4">
               <div className="flex justify-between items-center text-[9px] text-emerald-500/60 font-medium">
                 <span>Report Analytics</span>
-                <div className="w-2.5 h-2.5 bg-emerald-950 rounded-full flex items-center justify-center text-[7px] text-emerald-400">i</div>
+                <div className="w-2.5 h-2.5 bg-emerald-950 rounded-full flex items-center justify-center text-[7px] text-emerald-400">
+                  i
+                </div>
               </div>
 
               {/* Lab Efficiency Widget */}
               <div>
-                <p className="text-xl font-semibold text-white tracking-tight">98.4 <span className="text-xs font-normal text-emerald-400">%</span></p>
-                <p className="text-[8px] text-emerald-500/60 mt-0.5">Throughput Efficiency Rate</p>
+                <p className="text-xl font-semibold text-white tracking-tight">
+                  98.4 <span className="text-xs font-normal text-emerald-400">%</span>
+                </p>
+                <p className="text-[8px] text-emerald-500/60 mt-0.5">
+                  Throughput Efficiency Rate
+                </p>
                 {/* Micro Bar Chart Cluster */}
                 <div className="flex items-end justify-between h-14 mt-3 px-1 gap-1">
                   <div className="w-2.5 h-6 bg-emerald-500/60 rounded-sm" />
@@ -101,7 +117,9 @@ export default function ForgotPasswordPage() {
 
               {/* Dynamic Categories Deck */}
               <div className="space-y-2 pt-2">
-                <p className="text-[9px] text-emerald-500/75 uppercase tracking-wider font-bold">Diagnostics</p>
+                <p className="text-[9px] text-emerald-500/75 uppercase tracking-wider font-bold">
+                  Diagnostics
+                </p>
                 <div className="bg-[#081a14] rounded-xl p-2 flex justify-between items-center border border-emerald-900/40">
                   <div className="flex items-center gap-2">
                     <div className="w-5 h-5 bg-emerald-900/40 rounded-lg flex items-center justify-center">
@@ -148,7 +166,6 @@ export default function ForgotPasswordPage() {
 
       {/* Right Column: Clean White Interface Form Layer */}
       <div className="p-8 sm:p-12 md:p-16 flex flex-col justify-between bg-white w-full lg:min-h-screen">
-        
         {/* Branding Navigation Header Row */}
         <div className="flex items-center justify-between w-full mb-12">
           {/* Dynamic Geometric Identity Logo */}
@@ -201,7 +218,11 @@ export default function ForgotPasswordPage() {
                       className="w-full h-13 px-6 text-sm font-medium rounded-full border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all disabled:opacity-60 bg-white"
                     />
                   </div>
-                  {errors.email && <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">{errors.email.message}</p>}
+                  {errors.email && (
+                    <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">
+                      {errors.email.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-3 pt-1">
@@ -215,7 +236,10 @@ export default function ForgotPasswordPage() {
                         disabled={isLoading}
                         className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer disabled:opacity-60 shrink-0 mt-0.5"
                       />
-                      <label htmlFor="acceptTerms" className="text-xs font-medium text-slate-500 cursor-pointer select-none disabled:opacity-60">
+                      <label
+                        htmlFor="acceptTerms"
+                        className="text-xs font-medium text-slate-500 cursor-pointer select-none disabled:opacity-60"
+                      >
                         I confirm that I am authorized to reset the password for this account.
                       </label>
                     </div>
@@ -261,8 +285,8 @@ export default function ForgotPasswordPage() {
 
           {/* Return Navigation Anchor Link Context */}
           <div className="text-center text-xs font-medium text-slate-500 pt-2">
-            <Link 
-              href="/login" 
+            <Link
+              href="/login"
               className="inline-flex items-center gap-2 font-semibold text-emerald-600 hover:text-emerald-700 hover:underline transition-all group"
             >
               <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
@@ -275,9 +299,7 @@ export default function ForgotPasswordPage() {
         <div className="flex flex-col sm:flex-row items-center justify-between text-[11px] font-medium text-slate-400 pt-8 border-t border-slate-100 gap-4 w-full">
           <span>© 2026 LabFlow Inc.</span>
         </div>
-
       </div>
-
     </div>
   );
 }

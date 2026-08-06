@@ -175,7 +175,7 @@ export default function PanelsPage() {
             <TableHeader>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <TableHead className="w-20 font-bold text-slate-600">S.N.</TableHead>
-                <TableHead className="font-bold text-slate-600">Code</TableHead>
+                <TableHead className="font-bold text-slate-600">Test Panel Code</TableHead>
                 <TableHead className="font-bold text-slate-600">Test Panel Name</TableHead>
                 <TableHead className="font-bold text-slate-600">Price</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>

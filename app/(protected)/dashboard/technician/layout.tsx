@@ -32,7 +32,7 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
       ]
     },
     {
-      groupName: "Operations",
+      groupName: "Operational Management",
       items: [
         { name: "Patients", href: "/dashboard/technician/patients", icon: UserRound },
         { name: "Visits", href: "/dashboard/technician/visits", icon: MapPin },
@@ -40,7 +40,7 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
       ]
     },
     {
-      groupName: "Diagnostics & Output",
+      groupName: "Diagnostic Management",
       items: [
         { name: "Reports", href: "/dashboard/technician/reports", icon: FileText },
         { name: "Results", href: "/dashboard/technician/results", icon: FileSpreadsheet },

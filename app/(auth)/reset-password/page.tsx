@@ -1,26 +1,30 @@
-// app/(auth)/reset-password/page.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, AlertTriangle, CheckCircle2, FlaskConical, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import * as z from "zod";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { authService } from "@/services/auth.service";
+import { ResetPasswordSchema } from "@/schemas/auth.schema";
 
-// Define schema locally for context validation consistency
-const ResetPasswordSchema = z.object({
-  password: z.string().min(8, { message: "Password must be at least 8 characters long." }),
+const ResetPasswordFormSchema = ResetPasswordSchema.extend({
   confirmPassword: z.string().min(1, { message: "Please confirm your password." }),
   logoutAllDevices: z.boolean().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
+}).refine((data) => data.new_password === data.confirmPassword, {
   message: "Passwords do not match.",
   path: ["confirmPassword"],
 });
 
-type FormData = z.infer<typeof ResetPasswordSchema>;
+type FormData = z.infer<typeof ResetPasswordFormSchema>;
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
+  const searchParams = useSearchParams();
+  const initialEmail = searchParams.get("email") || "";
+  const initialOtp = searchParams.get("otp") || "";
+
   const [globalErrors, setGlobalErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -32,9 +36,11 @@ export default function ResetPasswordPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>({
-    resolver: zodResolver(ResetPasswordSchema),
+    resolver: zodResolver(ResetPasswordFormSchema),
     defaultValues: {
-      password: "",
+      email: initialEmail,
+      otp: initialOtp,
+      new_password: "",
       confirmPassword: "",
       logoutAllDevices: true,
     },
@@ -44,21 +50,203 @@ export default function ResetPasswordPage() {
     setIsLoading(true);
     setGlobalErrors([]);
     try {
-      // Simulated secure password update pipeline integration matching layout signatures
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      // If validation endpoint checks out, toggle state transition
-      setIsSubmitted(true);
-    } catch (err) {
-      setGlobalErrors(["Fatal synchronization breakdown crossing gateway route boundaries."]);
+      const response = await authService.resetPassword({
+        email: data.email,
+        otp: data.otp,
+        new_password: data.new_password,
+      });
+
+      if (response.success) {
+        setIsSubmitted(true);
+      } else {
+        setGlobalErrors(["Failed to update password."]);
+      }
+    } catch (err: any) {
+      const apiMessages = err?.response?.data?.messages;
+      if (Array.isArray(apiMessages) && apiMessages.length > 0) {
+        setGlobalErrors(apiMessages);
+      } else if (err?.response?.data?.message) {
+        setGlobalErrors([err.response.data.message]);
+      } else {
+        setGlobalErrors(["An error occurred while resetting password. Please try again."]);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
+    <div className="max-w-md w-full mx-auto my-auto space-y-8">
+      {!isSubmitted ? (
+        <>
+          <div className="space-y-1.5">
+            <h2 className="text-4xl font-semibold text-slate-900 tracking-tight">Reset Password!</h2>
+          </div>
+
+          {globalErrors.length > 0 && (
+            <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 flex gap-3 items-start animate-fade-in">
+              <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="text-xs font-bold text-rose-950">Password Update Failed</p>
+                <ul className="list-none text-[11px] text-rose-700 font-medium space-y-0.5">
+                  {globalErrors.map((msg, i) => (
+                    <li key={i}>{msg}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Email Input Wrapper */}
+            <div className="space-y-1">
+              <div className="relative">
+                <input
+                  type="email"
+                  {...register("email")}
+                  disabled={isLoading}
+                  placeholder="Email"
+                  className="w-full h-13 px-6 text-sm font-medium rounded-full border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all disabled:opacity-60 bg-white"
+                />
+              </div>
+              {errors.email && (
+                <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            {/* OTP Input Wrapper */}
+            <div className="space-y-1">
+              <div className="relative">
+                <input
+                  type="text"
+                  {...register("otp")}
+                  disabled={isLoading}
+                  placeholder="OTP / Verification Code"
+                  className="w-full h-13 px-6 text-sm font-medium rounded-full border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all disabled:opacity-60 bg-white font-mono"
+                />
+              </div>
+              {errors.otp && (
+                <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">
+                  {errors.otp.message}
+                </p>
+              )}
+            </div>
+
+            {/* New Password Input Wrapper */}
+            <div className="space-y-1">
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  {...register("new_password")}
+                  disabled={isLoading}
+                  placeholder="New Password"
+                  className="w-full h-13 px-6 pr-12 text-sm font-medium rounded-full border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all disabled:opacity-60 bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {errors.new_password && (
+                <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">
+                  {errors.new_password.message}
+                </p>
+              )}
+            </div>
+
+            {/* Confirm Password Input Wrapper */}
+            <div className="space-y-1">
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  {...register("confirmPassword")}
+                  disabled={isLoading}
+                  placeholder="Confirm New Password"
+                  className="w-full h-13 px-6 pr-12 text-sm font-medium rounded-full border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all disabled:opacity-60 bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">
+                  {errors.confirmPassword.message}
+                </p>
+              )}
+            </div>
+
+            {/* Checkbox Option */}
+            <div className="flex items-center gap-3 px-2 pt-1">
+              <input
+                type="checkbox"
+                id="logoutAllDevices"
+                {...register("logoutAllDevices")}
+                disabled={isLoading}
+                className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer disabled:opacity-60"
+              />
+              <label htmlFor="logoutAllDevices" className="text-xs font-medium text-slate-600 cursor-pointer select-none">
+                Log out from all other active sessions
+              </label>
+            </div>
+
+            {/* Submit Configuration Pill Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full h-13 bg-linear-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:opacity-95 text-white font-semibold text-sm rounded-full transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed mt-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Updating password...</span>
+                </>
+              ) : (
+                <span>Reset Password</span>
+              )}
+            </button>
+          </form>
+        </>
+      ) : (
+        /* Success Response State Screen View */
+        <div className="space-y-6 text-center lg:text-left animate-fade-in">
+          <div className="mx-auto lg:mx-0 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100/60 shadow-xs">
+            <CheckCircle2 className="h-7 w-7" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-3xl font-semibold text-slate-900 tracking-tight">Password updated</h2>
+            <p className="text-xs font-medium text-slate-500 leading-relaxed">
+              Your password has been successfully reset. You can now sign in with your new credentials.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Return Navigation Anchor Link Context */}
+      <div className="text-center text-xs font-medium text-slate-500 pt-2">
+        <Link
+          href="/login"
+          className="inline-flex items-center gap-2 font-semibold text-emerald-600 hover:text-emerald-700 hover:underline transition-all group"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+          <span>Back to Sign In</span>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
     <div className="w-full min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-white">
-      
       {/* Left Column: Dark Green Brand Display Panel */}
       <div className="bg-[#051610] p-8 sm:p-12 md:p-16 flex flex-col justify-between relative overflow-hidden text-white min-h-125 lg:min-h-screen">
         {/* Subtle Decorative Background Lines */}
@@ -77,22 +265,28 @@ export default function ResetPasswordPage() {
           <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-white leading-[1.1] text-center lg:text-left">
             Manage <br /> your reports
           </h1>
-          
+
           {/* Simulated Smartphone Graphic Device */}
           <div className="w-64 h-340px bg-[#030d0a] rounded-[36px] border-[6px] border-[#0e271f] shadow-2xl overflow-hidden p-4 flex flex-col justify-between relative transform rotate-[-4deg] hover:rotate-0 transition-transform duration-500 origin-bottom">
             {/* Dynamic Island Ear-piece element */}
             <div className="absolute top-2 left-1/2 -translate-x-1/2 w-20 h-4 bg-black rounded-full z-20 flex items-center justify-center" />
-            
+
             <div className="space-y-4 mt-4">
               <div className="flex justify-between items-center text-[9px] text-emerald-500/60 font-medium">
                 <span>Report Analytics</span>
-                <div className="w-2.5 h-2.5 bg-emerald-950 rounded-full flex items-center justify-center text-[7px] text-emerald-400">i</div>
+                <div className="w-2.5 h-2.5 bg-emerald-950 rounded-full flex items-center justify-center text-[7px] text-emerald-400">
+                  i
+                </div>
               </div>
 
               {/* Lab Efficiency Widget */}
               <div>
-                <p className="text-xl font-semibold text-white tracking-tight">98.4 <span className="text-xs font-normal text-emerald-400">%</span></p>
-                <p className="text-[8px] text-emerald-500/60 mt-0.5">Throughput Efficiency Rate</p>
+                <p className="text-xl font-semibold text-white tracking-tight">
+                  98.4 <span className="text-xs font-normal text-emerald-400">%</span>
+                </p>
+                <p className="text-[8px] text-emerald-500/60 mt-0.5">
+                  Throughput Efficiency Rate
+                </p>
                 {/* Micro Bar Chart Cluster */}
                 <div className="flex items-end justify-between h-14 mt-3 px-1 gap-1">
                   <div className="w-2.5 h-6 bg-emerald-500/60 rounded-sm" />
@@ -107,7 +301,9 @@ export default function ResetPasswordPage() {
 
               {/* Dynamic Categories Deck */}
               <div className="space-y-2 pt-2">
-                <p className="text-[9px] text-emerald-500/75 uppercase tracking-wider font-bold">Diagnostics</p>
+                <p className="text-[9px] text-emerald-500/75 uppercase tracking-wider font-bold">
+                  Diagnostics
+                </p>
                 <div className="bg-[#081a14] rounded-xl p-2 flex justify-between items-center border border-emerald-900/40">
                   <div className="flex items-center gap-2">
                     <div className="w-5 h-5 bg-emerald-900/40 rounded-lg flex items-center justify-center">
@@ -154,7 +350,6 @@ export default function ResetPasswordPage() {
 
       {/* Right Column: Clean White Interface Form Layer */}
       <div className="p-8 sm:p-12 md:p-16 flex flex-col justify-between bg-white w-full lg:min-h-screen">
-        
         {/* Branding Navigation Header Row */}
         <div className="flex items-center justify-between w-full mb-12">
           {/* Dynamic Geometric Identity Logo */}
@@ -174,135 +369,21 @@ export default function ResetPasswordPage() {
         </div>
 
         {/* Central Core Input Block Area */}
-        <div className="max-w-md w-full mx-auto my-auto space-y-8">
-          {!isSubmitted ? (
-            <>
-              <div className="space-y-1.5">
-                <h2 className="text-4xl font-semibold text-slate-900 tracking-tight">Reset Password!</h2>
-              </div>
-
-              {globalErrors.length > 0 && (
-                <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 flex gap-3 items-start animate-fade-in">
-                  <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-rose-950">Password Update Failed</p>
-                    <ul className="list-none text-[11px] text-rose-700 font-medium space-y-0.5">
-                      {globalErrors.map((msg, i) => (
-                        <li key={i}>{msg}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                {/* New Password Input Wrapper */}
-                <div className="space-y-1">
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      {...register("password")}
-                      disabled={isLoading}
-                      placeholder="New Password"
-                      className="w-full h-13 px-6 pr-12 text-sm font-medium rounded-full border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all disabled:opacity-60 bg-white"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {errors.password && <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">{errors.password.message}</p>}
-                </div>
-
-                {/* Confirm Password Input Wrapper */}
-                <div className="space-y-1">
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      {...register("confirmPassword")}
-                      disabled={isLoading}
-                      placeholder="Confirm New Password"
-                      className="w-full h-13 px-6 pr-12 text-sm font-medium rounded-full border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all disabled:opacity-60 bg-white"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {errors.confirmPassword && <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">{errors.confirmPassword.message}</p>}
-                </div>
-
-                {/* Checkbox Option */}
-                <div className="flex items-center gap-3 px-2 pt-1">
-                  <input
-                    type="checkbox"
-                    id="logoutAllDevices"
-                    {...register("logoutAllDevices")}
-                    disabled={isLoading}
-                    className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer disabled:opacity-60"
-                  />
-                  <label htmlFor="logoutAllDevices" className="text-xs font-medium text-slate-600 cursor-pointer select-none">
-                    Log out from all other active sessions
-                  </label>
-                </div>
-
-                {/* Submit Configuration Pill Button */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full h-13 bg-linear-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:opacity-95 text-white font-semibold text-sm rounded-full transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed mt-2"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Updating password...</span>
-                    </>
-                  ) : (
-                    <span>Reset Password</span>
-                  )}
-                </button>
-              </form>
-            </>
-          ) : (
-            /* Success Response State Screen View */
-            <div className="space-y-6 text-center lg:text-left animate-fade-in">
-              <div className="mx-auto lg:mx-0 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100/60 shadow-xs">
-                <CheckCircle2 className="h-7 w-7" />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-3xl font-semibold text-slate-900 tracking-tight">Password updated</h2>
-                <p className="text-xs font-medium text-slate-500 leading-relaxed">
-                  Your password has been successfully reset. You can now sign in with your new credentials.
-                </p>
-              </div>
+        <Suspense
+          fallback={
+            <div className="flex h-48 items-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
             </div>
-          )}
-
-          {/* Return Navigation Anchor Link Context */}
-          <div className="text-center text-xs font-medium text-slate-500 pt-2">
-            <Link 
-              href="/login" 
-              className="inline-flex items-center gap-2 font-semibold text-emerald-600 hover:text-emerald-700 hover:underline transition-all group"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-              <span>Back to Sign In</span>
-            </Link>
-          </div>
-        </div>
+          }
+        >
+          <ResetPasswordContent />
+        </Suspense>
 
         {/* Structural Design Form Footer */}
         <div className="flex flex-col sm:flex-row items-center justify-between text-[11px] font-medium text-slate-400 pt-8 border-t border-slate-100 gap-4 w-full">
           <span>© 2026 LabFlow Inc.</span>
         </div>
-
       </div>
-
     </div>
   );
 }

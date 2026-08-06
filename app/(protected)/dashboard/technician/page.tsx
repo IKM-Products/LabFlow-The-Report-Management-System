@@ -386,7 +386,7 @@ export default function TechnicianDashboardPage() {
           <div>
             <h2 className="text-lg font-bold text-black">Quick Actions</h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Quickly add new entries directly into the system.
+              Quickly add new entries to the system.
             </p>
           </div>
         </div>
@@ -394,9 +394,9 @@ export default function TechnicianDashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
           <button
             onClick={() => setActiveModal("patient")}
-            className="flex items-center gap-3 p-3 rounded-xl bg-[#00a66c] hover:bg-[#008f5d] text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
+            className="flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
-            <div className="p-2 rounded-lg bg-white/20 text-white group-hover:scale-110 transition-transform">
+            <div className="p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
               <Plus className="w-4 h-4" />
             </div>
             <span>Add Patient</span>
@@ -404,9 +404,9 @@ export default function TechnicianDashboardPage() {
 
           <button
             onClick={() => setActiveModal("visit")}
-            className="flex items-center gap-3 p-3 rounded-xl bg-[#00a66c] hover:bg-[#008f5d] text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
+            className="flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
-            <div className="p-2 rounded-lg bg-white/20 text-white group-hover:scale-110 transition-transform">
+            <div className="p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
               <Plus className="w-4 h-4" />
             </div>
             <span>Add Visit</span>
@@ -414,9 +414,9 @@ export default function TechnicianDashboardPage() {
 
           <button
             onClick={() => setActiveModal("order")}
-            className="flex items-center gap-3 p-3 rounded-xl bg-[#00a66c] hover:bg-[#008f5d] text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
+            className="flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
-            <div className="p-2 rounded-lg bg-white/20 text-white group-hover:scale-110 transition-transform">
+            <div className="p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
               <Plus className="w-4 h-4" />
             </div>
             <span>Add Order</span>

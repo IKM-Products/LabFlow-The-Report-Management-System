@@ -8,7 +8,6 @@ import {
   RefreshCw,
   Building2,
   Clock,
-  Layers,
   Tag,
   Grid,
 } from "lucide-react";
@@ -407,7 +406,7 @@ export default function TestCatalogPage() {
                 <TableHeader>
                   <tr className="bg-slate-50 border-b border-slate-200">
                     <TableHead className="w-20 font-bold text-slate-600">S.N.</TableHead>
-                    <TableHead className="font-bold text-slate-600">Code</TableHead>
+                    <TableHead className="font-bold text-slate-600">Test Catalog Code</TableHead>
                     <TableHead className="font-bold text-slate-600">Test Catalog Name</TableHead>
                     <TableHead className="font-bold text-slate-600">Sample Type</TableHead>
                     <TableHead className="font-bold text-slate-600">Price</TableHead>
@@ -476,84 +475,75 @@ export default function TestCatalogPage() {
             <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 animate-pulse bg-white border rounded-2xl">
               Loading panel catalog details...
             </div>
-          ) : panelDetails ? (
-            <div className="space-y-6">
-              {/* Panel Overview Card */}
-              <div className="p-5 bg-white border border-slate-200 rounded-2xl shadow-2xs flex flex-wrap items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-bold text-slate-900">{panelDetails.panel_name}</h2>
-                    <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-md font-mono text-xs font-semibold">
-                      {panelDetails.panel_code}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 font-mono">Panel ID: {panelDetails.panel_id}</p>
-                </div>
-                <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
-                  <Tag className="w-4 h-4 text-emerald-600" />
-                  <span className="text-xs text-slate-500">Panel Price:</span>
-                  <span className="text-lg font-bold text-emerald-600">
-                    ${panelDetails.panel_price.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Panel Catalog Items Table */}
-              <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
-                <Table>
-                  <TableCaption className="text-xs text-slate-400 pb-4">
-                    Showing test catalog items included in panel "{panelDetails.panel_name}".
-                  </TableCaption>
-                  <TableHeader>
-                    <tr className="bg-slate-50 border-b border-slate-200">
-                      <TableHead className="w-20 font-bold text-slate-600">S.N.</TableHead>
-                      <TableHead className="font-bold text-slate-600">Catalog Code</TableHead>
-                      <TableHead className="font-bold text-slate-600">Test Catalog Name</TableHead>
-                      <TableHead className="font-bold text-slate-600">Price</TableHead>
-                    </tr>
-                  </TableHeader>
-                  <TableBody className="divide-y divide-slate-150">
-                    {panelDetails.test_catalog_items.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="py-12 text-center text-sm text-slate-400">
-                          <div className="flex flex-col items-center justify-center space-y-1">
-                            <ShieldAlert className="h-6 w-6 text-slate-300" />
-                            <p className="font-medium text-slate-500">
-                              No test catalog items assigned to this panel.
-                            </p>
-                          </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+              <Table>
+                <TableCaption className="text-xs text-slate-400 pb-4">
+                  {panelDetails
+                    ? `List all Test Catalogs for Test Panel "${panelDetails.panel_name}".`
+                    : "Select a department and test panel above to view test catalogs."}
+                </TableCaption>
+                <TableHeader>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <TableHead className="w-16 font-bold text-slate-600">S.N.</TableHead>
+                    <TableHead className="font-bold text-slate-600">Test Panel Code</TableHead>
+                    <TableHead className="font-bold text-slate-600">Test Panel Name</TableHead>
+                    <TableHead className="font-bold text-slate-600">Test Panel Price</TableHead>
+                    <TableHead className="font-bold text-slate-600">Test Catalog Code</TableHead>
+                    <TableHead className="font-bold text-slate-600">Test Catalog Name</TableHead>
+                    <TableHead className="font-bold text-slate-600">Price</TableHead>
+                  </tr>
+                </TableHeader>
+                <TableBody className="divide-y divide-slate-150">
+                  {!panelDetails ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-400">
+                        <div className="flex flex-col items-center justify-center space-y-1">
+                          <ShieldAlert className="h-6 w-6 text-slate-300" />
+                          <p className="font-medium text-slate-500">
+                            Select a department and test panel above to view test catalogs.
+                          </p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : panelDetails.test_catalog_items.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-400">
+                        <div className="flex flex-col items-center justify-center space-y-1">
+                          <ShieldAlert className="h-6 w-6 text-slate-300" />
+                          <p className="font-medium text-slate-500">
+                            No test catalog items assigned to this panel.
+                          </p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    panelDetails.test_catalog_items.map((item, idx) => (
+                      <TableRow key={item.test_catalog_id} className="hover:bg-slate-50/60 transition-colors">
+                        <TableCell className="font-mono text-xs text-slate-400">{idx + 1}</TableCell>
+                        <TableCell>
+                          <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md font-mono text-[10px] font-semibold">
+                            {panelDetails.panel_code}
+                          </span>
+                        </TableCell>
+                        <TableCell className="font-semibold text-slate-900">{panelDetails.panel_name}</TableCell>
+                        <TableCell className="font-semibold text-emerald-600">
+                          ${panelDetails.panel_price.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md font-mono text-[10px] font-semibold">
+                            {item.test_catalog_code}
+                          </span>
+                        </TableCell>
+                        <TableCell className="font-semibold text-slate-900">{item.test_catalog_name}</TableCell>
+                        <TableCell className="font-semibold text-emerald-600">
+                          ${item.test_catalog_price.toFixed(2)}
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      panelDetails.test_catalog_items.map((item, idx) => (
-                        <TableRow key={item.test_catalog_id} className="hover:bg-slate-50/60 transition-colors">
-                          <TableCell className="font-mono text-xs text-slate-400">{idx + 1}</TableCell>
-                          <TableCell>
-                            <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md font-mono text-[10px] font-semibold">
-                              {item.test_catalog_code}
-                            </span>
-                          </TableCell>
-                          <TableCell className="font-semibold text-slate-900">{item.test_catalog_name}</TableCell>
-                          <TableCell className="font-semibold text-emerald-600">
-                            ${item.test_catalog_price.toFixed(2)}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-400">
-              <div className="flex flex-col items-center justify-center space-y-1">
-                <ShieldAlert className="h-6 w-6 text-slate-300" />
-                <p className="font-medium text-slate-500">
-                  {!panelDeptId
-                    ? "Select a department and test panel above to view test catalogs."
-                    : "Select a department and test panel above to view test catalogs."}
-                </p>
-              </div>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </div>
           )}
         </>

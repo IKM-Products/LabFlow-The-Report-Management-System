@@ -135,7 +135,7 @@ export default function TestParametersPage() {
             Laboratory Test Parameters
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage test components, result fields, and units by department and test catalog.
+            Manage laboratory test parameters by test catalog.
           </p>
         </div>
 
