@@ -4,6 +4,22 @@ export interface BaseApiResponse<T> {
   success: boolean;
 }
 
+export interface OrderListItem {
+  id: string;
+  visit_no: number;
+  patinet_name?: string; 
+  patient_name?: string; 
+  test_code?: string;
+  test_name?: string;
+  test_price?: number;
+  panel_code?: string;
+  panel_name?: string;
+  panel_price?: number;
+  price: number;
+  status: string;
+  collected_by: string | null;
+}
+
 export interface Order {
   id: string;
   panel_id: string;

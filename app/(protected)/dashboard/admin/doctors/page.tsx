@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { RefreshCw, ShieldAlert } from "lucide-react";
+import { RefreshCw, ShieldAlert, Mail, Phone } from "lucide-react";
 import { doctorService } from "@/services/doctor.service";
 import { DoctorListItem } from "@/types/doctor.types";
 
@@ -103,9 +103,15 @@ export default function DoctorsPage() {
                     <TableCell className="font-semibold text-slate-900">
                       {`Dr. ${doc.first_name} ${doc.last_name}`}
                     </TableCell>
-                    <TableCell className="text-xs text-slate-600 space-y-0.5">
-                      <div className="font-medium">{doc.email}</div>
-                      <div className="text-slate-400">{doc.phone}</div>
+                    <TableCell className="text-xs text-slate-600 space-y-1 py-3">
+                      <div className="flex items-center gap-1.5">
+                        <Mail className="h-3 w-3 text-slate-400" />
+                        <span>{doc.email}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Phone className="h-3 w-3 text-slate-400" />
+                        <span>{doc.phone}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="font-mono text-xs font-medium text-slate-600">{doc.registration_no}</TableCell>
                     <TableCell>

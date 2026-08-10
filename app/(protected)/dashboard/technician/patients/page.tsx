@@ -46,10 +46,10 @@ export default function PatientsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Patient Profiles
+            Clinical Patients
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage patient demographics, identification records, and contact info.
+            Manage clinical patients and their information.
           </p>
         </div>
 

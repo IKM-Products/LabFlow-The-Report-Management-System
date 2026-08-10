@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { RefreshCw, ShieldAlert, Mail, Phone, User2 } from "lucide-react";
+import { RefreshCw, ShieldAlert, Mail, Phone } from "lucide-react";
 import { profileService } from "@/services/profile.service";
 import { Profile } from "@/types/profile.types";
 
@@ -43,10 +43,10 @@ export default function ProfilesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            User Accounts Registry
+            User Accounts
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage user accounts, contact details, and permission roles.
+            Manage user accounts and their information.
           </p>
         </div>
 
@@ -74,14 +74,14 @@ export default function ProfilesPage() {
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
-              List of all registered profiles.
+              List of all Profiles.
             </TableCaption>
             <TableHeader>
               <TableRow className="bg-slate-50 border-b border-slate-200">
                 <TableHead className="w-20 font-bold text-slate-600">S.N.</TableHead>
-                <TableHead className="font-bold text-slate-600">User Identity</TableHead>
-                <TableHead className="font-bold text-slate-600">Contact Specifics</TableHead>
-                <TableHead className="font-bold text-slate-600">Permission Role</TableHead>
+                <TableHead className="font-bold text-slate-600">User Name</TableHead>
+                <TableHead className="font-bold text-slate-600">Contact Information</TableHead>
+                <TableHead className="font-bold text-slate-600">User Role</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -102,7 +102,6 @@ export default function ProfilesPage() {
 
                     <TableCell className="space-y-0.5">
                       <div className="font-semibold text-slate-900 flex items-center gap-1.5">
-                        <User2 className="h-3.5 w-3.5 text-slate-400" />
                         <span>
                           {profile.first_name} {profile.last_name}
                         </span>
@@ -121,7 +120,7 @@ export default function ProfilesPage() {
                     </TableCell>
 
                     <TableCell>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                      <span className="px-2.5 py-1 bg-emerald-50 text-slate-600 rounded-md text-[11px] font-medium">
                         {profile.role_name}
                       </span>
                     </TableCell>
