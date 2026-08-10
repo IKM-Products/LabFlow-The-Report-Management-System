@@ -149,7 +149,7 @@ export default function EditVisit({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center justify-center rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 h-8 px-2 border border-transparent hover:border-blue-100 transition-colors cursor-pointer"
+        className="inline-flex items-center justify-center rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 h-8 px-2 border border-transparent hover:border-blue-100 transition-colors cursor-pointer"
       >
         <Edit2 className="h-3.5 w-3.5" />
       </button>

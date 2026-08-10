@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { RefreshCw, ShieldAlert } from "lucide-react";
+import { RefreshCw, ShieldAlert, Mail, Phone, MapPin } from "lucide-react";
 import { patientService } from "@/services/patient.service";
 import { Patient } from "@/types/patient.types";
 
@@ -77,16 +77,14 @@ export default function PatientsPage() {
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
-              List of all active patient profiles.
+              List of all Patients.
             </TableCaption>
             <TableHeader>
               <TableRow className="bg-slate-50 border-b border-slate-200">
-                <TableHead className="w-15 font-bold text-slate-600">S.N.</TableHead>
                 <TableHead className="font-bold text-slate-600">MRN</TableHead>
                 <TableHead className="font-bold text-slate-600">Patient Name</TableHead>
                 <TableHead className="font-bold text-slate-600">Gender / DOB</TableHead>
-                <TableHead className="font-bold text-slate-600">Contact</TableHead>
-                <TableHead className="font-bold text-slate-600">Address</TableHead>
+                <TableHead className="font-bold text-slate-600">Contact Information</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -105,7 +103,6 @@ export default function PatientsPage() {
               ) : (
                 patients.map((patient, idx) => (
                   <TableRow key={patient.id} className="hover:bg-slate-50/60 transition-colors group">
-                    <TableCell className="font-mono text-xs text-slate-400">{idx + 1}</TableCell>
                     <TableCell className="font-mono text-xs font-bold text-slate-900">
                       {patient.mrn}
                     </TableCell>
@@ -114,18 +111,26 @@ export default function PatientsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-medium bg-slate-100 text-slate-600 border rounded-md px-1.5 py-0.5 capitalize">
+                        <span className="px-2.5 py-1 bg-emerald-50 text-slate-600 rounded-md text-[11px] font-medium">
                           {patient.gender}
                         </span>
+                        /
                         <span className="text-xs text-slate-500 font-mono">{patient.dob}</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-xs text-slate-600 space-y-0.5">
-                      <div className="font-medium">{patient.email}</div>
-                      <div className="text-slate-400 font-mono">{patient.phone}</div>
-                    </TableCell>
-                    <TableCell className="text-xs text-slate-500 max-w-xs truncate">
-                      {patient.address}
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="h-3 w-3 text-slate-400" />
+                        <span>{patient.address}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Mail className="h-3 w-3 text-slate-400" />
+                        <span>{patient.email}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Phone className="h-3 w-3 text-slate-600" />
+                        <span>{patient.phone}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap">
                       <EditPatient patient={patient} onSuccess={fetchPatients} />

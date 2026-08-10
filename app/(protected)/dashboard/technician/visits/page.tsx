@@ -127,10 +127,10 @@ export default function VisitsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Patient Visits
+            Clinical Visits
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            View all visits, filter by patient, record, and track consultation history.
+            Manage clinical visits and their information.
           </p>
         </div>
 
@@ -154,16 +154,16 @@ export default function VisitsPage() {
       </div>
 
       {/* Patient Selection Dropdown */}
-      <div className="flex items-center gap-2 max-w-md bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs">
-        <div className="flex items-center gap-2 flex-1 px-3 text-slate-400">
-          <User className="h-4 w-4 shrink-0 text-slate-400" />
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center gap-3">
+        <div className="relative flex-1">
+          <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
           <select
             value={activeQueryKey}
             onChange={handlePatientSelect}
             disabled={isLoadingPatients}
-            className="w-full text-xs font-medium text-slate-900 bg-transparent border-none outline-hidden cursor-pointer"
+            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 cursor-pointer disabled:bg-slate-50"
           >
-            <option value="">-- All Patients (Show All Visits) --</option>
+            <option value="">All Patients (Show All Visits)</option>
             {patients.map((patient) => (
               <option key={patient.id} value={patient.id}>
                 {patient.name}
@@ -191,7 +191,7 @@ export default function VisitsPage() {
                 <TableHead className="w-16 font-bold text-slate-600">S.N.</TableHead>
                 <TableHead className="font-bold text-slate-600">Visit No.</TableHead>
                 <TableHead className="font-bold text-slate-600">Patient Name</TableHead>
-                <TableHead className="font-bold text-slate-600">Attending Doctor</TableHead>
+                <TableHead className="font-bold text-slate-600">Referring Doctor</TableHead>
                 <TableHead className="font-bold text-slate-600">Status</TableHead>
                 <TableHead className="font-bold text-slate-600">Date & Logged By</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
@@ -230,7 +230,7 @@ export default function VisitsPage() {
                     </TableCell>
 
                     <TableCell className="text-xs text-slate-700 font-medium">
-                      {visit.doctor_name}
+                      {`Dr. ${visit.doctor_name}`}
                     </TableCell>
 
                     <TableCell>
