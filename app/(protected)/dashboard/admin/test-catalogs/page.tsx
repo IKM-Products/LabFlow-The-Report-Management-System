@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  FlaskConical,
   AlertCircle,
   ShieldAlert,
   RefreshCw,
@@ -433,13 +432,13 @@ export default function TestCatalogPage() {
                       <TableRow key={item.test_catalog_id} className="hover:bg-slate-50/60 transition-colors group">
                         <TableCell className="font-mono text-xs text-slate-400">{idx + 1}</TableCell>
                         <TableCell>
-                          <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md font-mono text-[10px] font-semibold">
+                          <span className="px-2.5 py-1 bg-emerald-50 text-slate-600 rounded-md text-[11px] font-medium">
                             {item.test_code}
                           </span>
                         </TableCell>
                         <TableCell className="font-semibold text-slate-900">{item.test_name}</TableCell>
                         <TableCell>
-                          <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-[11px] font-medium">
+                          <span className="px-2.5 py-1 bg-emerald-50 text-slate-600 rounded-md text-[11px] font-medium">
                             {item.sample_type}
                           </span>
                         </TableCell>
@@ -522,7 +521,7 @@ export default function TestCatalogPage() {
                       <TableRow key={item.test_catalog_id} className="hover:bg-slate-50/60 transition-colors">
                         <TableCell className="font-mono text-xs text-slate-400">{idx + 1}</TableCell>
                         <TableCell>
-                          <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md font-mono text-[10px] font-semibold">
+                          <span className="px-2.5 py-1 bg-emerald-50 text-slate-600 rounded-md text-[11px] font-medium">
                             {panelDetails.panel_code}
                           </span>
                         </TableCell>
@@ -531,7 +530,7 @@ export default function TestCatalogPage() {
                           ${panelDetails.panel_price.toFixed(2)}
                         </TableCell>
                         <TableCell>
-                          <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md font-mono text-[10px] font-semibold">
+                          <span className="px-2.5 py-1 bg-emerald-50 text-slate-600 rounded-md text-[11px] font-medium">
                             {item.test_catalog_code}
                           </span>
                         </TableCell>

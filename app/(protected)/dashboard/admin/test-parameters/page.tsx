@@ -6,8 +6,7 @@ import {
   ShieldAlert,
   RefreshCw,
   Building2,
-  FlaskConical,
-  Tag
+  BookOpen
 } from "lucide-react";
 
 import { testParameterService } from "@/services/test-parameter.service";
@@ -169,10 +168,10 @@ export default function TestParametersPage() {
             value={selectedDeptId}
             onChange={handleDepartmentChange}
             disabled={loadingDepts}
-            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 cursor-pointer disabled:bg-slate-50"
+            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
           >
             <option value="">
-              {loadingDepts ? "Loading departments..." : "1. Select a Department"}
+              {loadingDepts ? "Loading departments..." : "Select a Department"}
             </option>
             {departments.map((dept) => (
               <option key={dept.dept_id} value={dept.dept_id}>
@@ -184,18 +183,18 @@ export default function TestParametersPage() {
 
         {/* Test Catalog Dropdown */}
         <div className="relative">
-          <FlaskConical className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
+          <BookOpen className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
           <select
             value={selectedTestId}
             onChange={handleTestChange}
             disabled={loadingCatalogs || !selectedDeptId}
-            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 cursor-pointer disabled:bg-slate-50"
+            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
           >
             <option value="">
               {loadingCatalogs
                 ? "Loading test catalogs..."
                 : !selectedDeptId
-                ? "Select a Department first"
+                ? "Select a Department First"
                 : testCatalogs.length === 0
                 ? "No test catalogs in this department"
                 : "Select a Test Catalog"}
@@ -227,13 +226,13 @@ export default function TestParametersPage() {
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
               {activeTestName 
-                ? `Showing test parameter records for ${activeTestName}.` 
-                : "Select a department and test catalog from the dropdowns above to view records."}
+                ? `List of all Test Parameters for ${activeTestName}.` 
+                : "Select a department and test catalog above to view test parameters."}
             </TableCaption>
             <TableHeader>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <TableHead className="w-20 font-bold text-slate-600">S.N.</TableHead>
-                <TableHead className="font-bold text-slate-600">Parameter Name</TableHead>
+                <TableHead className="font-bold text-slate-600">Test Parameter Name</TableHead>
                 <TableHead className="font-bold text-slate-600">Result Type</TableHead>
                 <TableHead className="font-bold text-slate-600">Unit</TableHead>
                 <TableHead className="w-20 text-right font-bold text-slate-600">Actions</TableHead>
@@ -248,7 +247,7 @@ export default function TestParametersPage() {
                       <p className="font-medium text-slate-500">
                         {activeTestName 
                           ? `No test parameters found for catalog "${activeTestName}"` 
-                          : "Select a department and test catalog above to view parameter records."}
+                          : "Select a department and test catalog above to view test parameters."}
                       </p>
                     </div>
                   </TableCell>
@@ -257,12 +256,11 @@ export default function TestParametersPage() {
                 parameters.map((item, idx) => (
                   <TableRow key={item.parameter_id} className="hover:bg-slate-50/60 transition-colors group">
                     <TableCell className="font-mono text-xs text-slate-400">
-                      #{item.sequence_no ?? idx + 1}
+                      {item.sequence_no ?? idx + 1}
                     </TableCell>
                     <TableCell className="font-semibold text-slate-900">{item.parameter_name}</TableCell>
                     <TableCell>
-                      <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[10px] font-semibold flex items-center gap-1 w-fit border border-emerald-100">
-                        <Tag className="w-3 h-3" />
+                      <span className="px-2.5 py-1 bg-emerald-50 text-slate-600 rounded-md text-[11px] font-medium">
                         {item.result_type}
                       </span>
                     </TableCell>

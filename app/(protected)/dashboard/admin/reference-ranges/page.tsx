@@ -11,7 +11,7 @@ import {
   FileText,
   Building2,
   BookOpen,
-  ListFilter,
+  SlidersHorizontal,
 } from "lucide-react";
 
 import { referenceRangeService } from "@/services/reference-range.service";
@@ -104,6 +104,9 @@ export default function ReferenceRangePage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [editingItem, setEditingItem] = useState<ReferenceRangeItem | null>(null);
+
+  // Get current parameter name
+  const selectedParamName = availableParameters.find((p) => p.id === parameterId)?.name || parameterId;
 
   // --- 1. Fetch Departments on Mount ---
   useEffect(() => {
@@ -290,7 +293,7 @@ export default function ReferenceRangePage() {
             Laboratory Reference Range
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Configure normal reference values and ranges based on age and gender.
+            Manage laboratory test reference ranges by test parameters.
           </p>
         </div>
 
@@ -315,21 +318,18 @@ export default function ReferenceRangePage() {
 
       {/* Cascading Search Dropdowns Row */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Department Dropdown */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-slate-400" />
-              Department
-            </label>
+          <div className="relative">
+            <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
             <select
               value={selectedDepartment}
               onChange={(e) => setSelectedDepartment(e.target.value)}
               disabled={loadingDepartments}
-              className="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
+              className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
             >
               <option value="">
-                {loadingDepartments ? "Loading departments..." : "Select Department..."}
+                {loadingDepartments ? "Loading departments..." : "Select a Department..."}
               </option>
               {departments.map((dept, index) => (
                 <option key={dept.id || `dept-${index}`} value={dept.id}>
@@ -340,23 +340,20 @@ export default function ReferenceRangePage() {
           </div>
 
           {/* Test Catalog Dropdown */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5 text-slate-400" />
-              Test Catalog
-            </label>
+          <div className="relative">
+            <BookOpen className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
             <select
               value={selectedCatalog}
               onChange={(e) => setSelectedCatalog(e.target.value)}
               disabled={!selectedDepartment || loadingCatalogs}
-              className="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
+              className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
             >
               <option value="">
                 {loadingCatalogs
                   ? "Loading test catalogs..."
                   : !selectedDepartment
-                  ? "Select Department first..."
-                  : "Select Test Catalog..."}
+                  ? "Select a Department First"
+                  : "Select a Test Catalog"}
               </option>
               {availableCatalogs.map((cat, index) => (
                 <option key={cat.id || `cat-${index}`} value={cat.id}>
@@ -367,23 +364,20 @@ export default function ReferenceRangePage() {
           </div>
 
           {/* Parameter Dropdown */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-              <ListFilter className="w-3.5 h-3.5 text-slate-400" />
-              Parameter
-            </label>
+          <div className="relative">
+            <SlidersHorizontal className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
             <select
               value={parameterId}
               onChange={(e) => setParameterId(e.target.value)}
               disabled={!selectedCatalog || loadingParameters}
-              className="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
+              className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
             >
               <option value="">
                 {loadingParameters
                   ? "Loading parameters..."
                   : !selectedCatalog
-                  ? "Select Test Catalog first..."
-                  : "Select Parameter..."}
+                  ? "Select a Test Catalog First"
+                  : "Select a Test Parameter"}
               </option>
               {availableParameters.map((param, index) => (
                 <option key={param.id || `param-${index}`} value={param.id}>
@@ -414,74 +408,68 @@ export default function ReferenceRangePage() {
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
               {searched && parameterId
-                ? "Showing reference range records for selected parameter."
-                : "Select Department, Test Catalog, and Parameter above to view reference range records."}
+                ? `List of all Test Reference Ranges for ${selectedParamName}.`
+                : "Select department, test catalog, and test parameter above to view test reference range."}
             </TableCaption>
             <TableHeader>
               <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="w-16 font-bold text-slate-600">S.N.</TableHead>
                 <TableHead className="font-bold text-slate-600">Gender</TableHead>
-                <TableHead className="font-bold text-slate-600">Age Range</TableHead>
-                <TableHead className="font-bold text-slate-600">Normal Value Range</TableHead>
-                <TableHead className="font-bold text-slate-600">Text Range</TableHead>
-                <TableHead className="font-bold text-slate-600">Note</TableHead>
+                <TableHead className="font-bold text-slate-600">Age Group</TableHead>
+                <TableHead className="font-bold text-slate-600">Test Reference Range</TableHead>
+                <TableHead className="font-bold text-slate-600">Text Value</TableHead>
                 <TableHead className="w-20 text-right font-bold text-slate-600">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-slate-150">
               {references.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-12 text-center text-sm text-slate-400">
+                  <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-400">
                     <div className="flex flex-col items-center justify-center space-y-1">
                       <ShieldAlert className="h-6 w-6 text-slate-300" />
                       <p className="font-medium text-slate-500">
                         {searched
                           ? "No reference ranges found for selected parameter"
-                          : "Select Department, Test Catalog, and Parameter above to view reference range records."}
+                          : "Select department, test catalog, and test parameter above to view test reference range."}
                       </p>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                references.map((item, index) => (
-                  <TableRow key={item.ref_id || `ref-${index}`} className="hover:bg-slate-50/60 transition-colors group">
-                    <TableCell>
-                      <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-[10px] font-semibold flex items-center gap-1 w-fit border border-slate-200">
-                        <UserCheck className="w-3 h-3 text-slate-500" />
-                        {item.gender}
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-slate-600">
-                      {item.age || "All ages"}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs font-bold text-emerald-600">
-                      {item.value || "—"}
-                    </TableCell>
-                    <TableCell className="text-xs text-slate-600">
-                      {item.text_range || "—"}
-                    </TableCell>
-                    <TableCell className="text-xs text-slate-500 max-w-xs truncate" title={item.note}>
-                      {item.note ? (
-                        <span className="flex items-center gap-1">
-                          <FileText className="w-3 h-3 shrink-0 text-slate-400" />
-                          {item.note}
+                references.map((item, index) => {
+                  return (
+                    <TableRow key={item.ref_id || `ref-${index}`} className="hover:bg-slate-50/60 transition-colors group">
+                      <TableCell className="font-mono text-xs text-slate-400">
+                        {index + 1}
+                      </TableCell>
+                      <TableCell>
+                        <span className="px-2.5 py-1 bg-emerald-50 text-slate-600 rounded-md text-[11px] font-medium">
+                          {item.gender}
                         </span>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingItem(item)}
-                        className="h-8 w-8 p-0 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
-                        title="Edit Reference Range"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-slate-600">
+                        {item.age || "All ages"}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs font-bold text-emerald-600">
+                        {item.value || "—"}
+                      </TableCell>
+                      <TableCell className="text-xs text-slate-600">
+                        {item.text_range || "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingItem(item)}
+                          className="h-8 w-8 p-0 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                          title="Edit Reference Range"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

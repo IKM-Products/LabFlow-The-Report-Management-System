@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { 
-  FlaskConical, 
   Layers, 
   AlertCircle,
   ShieldAlert,
@@ -200,7 +199,7 @@ export default function PanelsPage() {
                   <TableRow key={panel.panel_id} className="hover:bg-slate-50/60 transition-colors group">
                     <TableCell className="font-mono text-xs text-slate-400">{idx + 1}</TableCell>
                     <TableCell>
-                      <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md font-mono text-[10px]">
+                      <span className="px-2.5 py-1 bg-emerald-50 text-slate-600 rounded-md text-[11px] font-medium">
                         {panel.panel_code}
                       </span>
                     </TableCell>

@@ -13,8 +13,8 @@ import {
   LogOut,
   Grid,
   BookOpen,
-  Scale,
-  Sliders,
+  Ruler,
+  SlidersHorizontal,
   AlertTriangle
 } from "lucide-react";
 
@@ -47,8 +47,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       items: [
         { name: "Test Panels", href: "/dashboard/admin/panels", icon: Grid },
         { name: "Test Catalogs", href: "/dashboard/admin/test-catalogs", icon: BookOpen },
-        { name: "Test Parameters", href: "/dashboard/admin/test-parameters", icon: Sliders },
-        { name: "Reference Ranges", href: "/dashboard/admin/reference-ranges", icon: Scale },
+        { name: "Test Parameters", href: "/dashboard/admin/test-parameters", icon: SlidersHorizontal },
+        { name: "Test Reference Ranges", href: "/dashboard/admin/reference-ranges", icon: Ruler },
       ]
     },
     {
@@ -73,6 +73,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const segment = path.split("/").pop()?.replace(/-/g, " ") || "";
     if (segment.toLowerCase() === "labs") return "Laboratories";
     if (segment.toLowerCase() === "panels") return "Test Panels";
+    if (segment.toLowerCase() === "reference ranges") return "Test Reference Ranges";
     return segment;
   };
 

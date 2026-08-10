@@ -107,9 +107,9 @@ export default function DoctorsPage() {
                       <div className="font-medium">{doc.email}</div>
                       <div className="text-slate-400">{doc.phone}</div>
                     </TableCell>
-                    <TableCell className="font-mono text-xs font-medium text-slate-700">{doc.registration_no}</TableCell>
+                    <TableCell className="font-mono text-xs font-medium text-slate-600">{doc.registration_no}</TableCell>
                     <TableCell>
-                      <span className="text-xs font-medium bg-slate-100 text-slate-600 border rounded-md px-2 py-0.5 inline-block">
+                      <span className="px-2.5 py-1 bg-emerald-50 text-slate-600 rounded-md text-[11px] font-medium">
                         {doc.qualification}
                       </span>
                     </TableCell>
