@@ -6,7 +6,8 @@ import {
   ClipboardList,
   ShieldAlert,
   Calendar,
-  User,
+  UserRound,
+  MapPin
 } from "lucide-react";
 
 import { orderService } from "@/services/order.service";
@@ -208,19 +209,18 @@ export default function TechnicianOrdersPage() {
         </div>
       </div>
 
-      {/* Filter Controls (Patient & Visit Dropdowns) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-        {/* Patient Selection Dropdown */}
-        <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="flex items-center gap-2 flex-1 px-3 text-slate-400">
-            <User className="h-4 w-4 shrink-0 text-slate-400" />
+        {/* Filter Controls (Patient & Visit Dropdowns) */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Patient Selection Dropdown */}
+          <div className="relative">
+            <UserRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
             <select
               value={selectedPatientId}
               onChange={handlePatientSelect}
               disabled={isLoadingPatients}
-              className="w-full text-xs font-medium text-slate-900 bg-transparent border-none outline-hidden cursor-pointer"
+              className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
             >
-              <option value="">-- All Patients (Show All Orders) --</option>
+              <option value="">Select a Patient (List of all Orders)</option>
               {patients.map((patient) => (
                 <option key={patient.id} value={patient.id}>
                   {patient.name}
@@ -228,26 +228,24 @@ export default function TechnicianOrdersPage() {
               ))}
             </select>
           </div>
-        </div>
 
-        {/* Visit Selection Dropdown */}
-        <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="flex items-center gap-2 flex-1 px-3 text-slate-400">
-            <ClipboardList className="h-4 w-4 shrink-0 text-slate-400" />
+          {/* Visit Selection Dropdown */}
+          <div className="relative">
+            <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
             <select
               value={selectedVisitId}
               onChange={handleVisitSelect}
               disabled={!selectedPatientId || isLoadingVisits}
-              className="w-full text-xs font-medium text-slate-900 bg-transparent border-none outline-hidden cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
             >
               <option value="">
                 {!selectedPatientId
-                  ? "-- Filter by Visit (Select Patient First) --"
+                  ? "Select a Patient First"
                   : isLoadingVisits
                   ? "Loading visits..."
                   : visits.length === 0
                   ? "No visits found"
-                  : "-- All Visits for Patient --"}
+                  : "Select a Visit (List of all Orders)"}
               </option>
               {visits.map((visit) => (
                 <option key={visit.id} value={visit.id}>
@@ -257,7 +255,6 @@ export default function TechnicianOrdersPage() {
             </select>
           </div>
         </div>
-      </div>
 
       {/* Table Data View */}
       {isLoading ? (
@@ -272,15 +269,15 @@ export default function TechnicianOrdersPage() {
                 ? `Showing order records for Visit ID: ${selectedVisitId}`
                 : selectedPatientId
                 ? `Showing order records for Patient ID: ${selectedPatientId}`
-                : "Showing all order records across all patients and visits."}
+                : "List of all Orders."}
             </TableCaption>
             <TableHeader>
               <TableRow className="bg-slate-50 border-b border-slate-200">
                 <TableHead className="w-16 font-bold text-slate-600">S.N.</TableHead>
-                <TableHead className="font-bold text-slate-600">Order Ref</TableHead>
+                <TableHead className="font-bold text-slate-600">Order No.</TableHead>
                 <TableHead className="font-bold text-slate-600">Assigned Cost</TableHead>
-                <TableHead className="font-bold text-slate-600">Collection Metadata</TableHead>
-                <TableHead className="font-bold text-slate-600">Status</TableHead>
+                <TableHead className="font-bold text-slate-600">Date & Logged By</TableHead>
+                <TableHead className="font-bold text-slate-600">Order Status</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -312,8 +309,8 @@ export default function TechnicianOrdersPage() {
                       {order.order_number || order.order_ref || `Order #${idx + 1}`}
                     </TableCell>
 
-                    <TableCell className="font-mono text-xs font-semibold text-emerald-700">
-                      Rs. {typeof order.price === "number" ? order.price.toFixed(2) : order.price || "0.00"}
+                    <TableCell className="font-semibold text-emerald-600">
+                      Rs {typeof order.price === "number" ? order.price.toFixed(2) : order.price || "0.00"}
                     </TableCell>
 
                     <TableCell className="text-xs text-slate-600 space-y-0.5">
@@ -351,12 +348,12 @@ export default function TechnicianOrdersPage() {
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
                           order.status?.toLowerCase() === "completed"
-                            ? "bg-slate-50 text-slate-600 border-slate-200"
+                            ? "bg-slate-50 text-slate-600"
                             : order.status?.toLowerCase() === "in_progress" || order.status?.toLowerCase() === "active"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            ? "bg-emerald-50 text-emerald-600"
                             : order.status?.toLowerCase() === "cancelled"
-                            ? "bg-rose-50 text-rose-700 border-rose-200"
-                            : "bg-amber-50 text-amber-700 border-amber-200"
+                            ? "bg-rose-50 text-rose-600"
+                            : "bg-amber-50 text-amber-600"
                         }`}
                       >
                         {order.status || "N/A"}

@@ -1,4 +1,3 @@
-// app/(dashboard)/technician/patients/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -81,6 +80,7 @@ export default function PatientsPage() {
             </TableCaption>
             <TableHeader>
               <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="w-16 font-bold text-slate-600">S.N.</TableHead>
                 <TableHead className="font-bold text-slate-600">MRN</TableHead>
                 <TableHead className="font-bold text-slate-600">Patient Name</TableHead>
                 <TableHead className="font-bold text-slate-600">Gender / DOB</TableHead>
@@ -91,7 +91,7 @@ export default function PatientsPage() {
             <TableBody className="divide-y divide-slate-150">
               {patients.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-400">
+                  <TableCell colSpan={6} className="py-12 text-center text-sm text-slate-400">
                     <div className="flex flex-col items-center justify-center space-y-1">
                       <ShieldAlert className="h-6 w-6 text-slate-300" />
                       <p className="font-medium text-slate-500">
@@ -103,6 +103,9 @@ export default function PatientsPage() {
               ) : (
                 patients.map((patient, idx) => (
                   <TableRow key={patient.id} className="hover:bg-slate-50/60 transition-colors group">
+                    <TableCell className="font-mono text-xs text-slate-400">
+                      {idx + 1}
+                    </TableCell>
                     <TableCell className="font-mono text-xs font-bold text-slate-900">
                       {patient.mrn}
                     </TableCell>

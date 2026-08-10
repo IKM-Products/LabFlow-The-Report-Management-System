@@ -409,7 +409,7 @@ export default function ReferenceRangePage() {
             <TableCaption className="text-xs text-slate-400 pb-4">
               {searched && parameterId
                 ? `List of all Test Reference Ranges for ${selectedParamName}.`
-                : "Select department, test catalog, and test parameter above to view test reference range."}
+                : "Select a department, test catalog, and test parameter above to view test reference range."}
             </TableCaption>
             <TableHeader>
               <TableRow className="bg-slate-50 border-b border-slate-200">
@@ -430,7 +430,7 @@ export default function ReferenceRangePage() {
                       <p className="font-medium text-slate-500">
                         {searched
                           ? "No reference ranges found for selected parameter"
-                          : "Select department, test catalog, and test parameter above to view test reference range."}
+                          : "Select a department, test catalog, and test parameter above to view test reference range."}
                       </p>
                     </div>
                   </TableCell>

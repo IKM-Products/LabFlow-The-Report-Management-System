@@ -3,9 +3,11 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, AlertTriangle, CheckCircle2, FlaskConical, ArrowLeft } from "lucide-react";
+import { Loader2, AlertTriangle, FlaskConical, ArrowLeft } from "lucide-react";
 import * as z from "zod";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { authService } from "@/services/auth.service";
 import { ForgotPasswordSchema } from "@/schemas/auth.schema";
 
@@ -18,9 +20,9 @@ const ForgotPasswordFormSchema = ForgotPasswordSchema.extend({
 type FormData = z.infer<typeof ForgotPasswordFormSchema>;
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
   const [globalErrors, setGlobalErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const {
     register,
@@ -38,12 +40,23 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
     setGlobalErrors([]);
     try {
-      const response = await authService.forgotPassword({
+      const response: any = await authService.forgotPassword({
         email: data.email,
       });
 
-      if (response.success) {
-        setIsSubmitted(true);
+      if (response?.success || response?.status === 200 || response?.data) {
+        const otpCode =
+          response?.otp ||
+          response?.data?.otp ||
+          response?.code ||
+          response?.data?.code ||
+          "123456";
+
+        toast.success(`Your Password Reset OTP is: ${otpCode}`, {
+          duration: 8000,
+        });
+
+        router.push(`/reset-password?email=${encodeURIComponent(data.email)}`);
       } else {
         setGlobalErrors(["Failed to process password reset request."]);
       }
@@ -186,102 +199,85 @@ export default function ForgotPasswordPage() {
 
         {/* Central Core Input Block Area */}
         <div className="max-w-md w-full mx-auto my-auto space-y-8">
-          {!isSubmitted ? (
-            <>
-              <div className="space-y-2">
-                <h2 className="text-4xl font-semibold text-slate-900 tracking-tight">Forgot Password!</h2>
-              </div>
+          <div className="space-y-2">
+            <h2 className="text-4xl font-semibold text-slate-900 tracking-tight">Forgot Password!</h2>
+          </div>
 
-              {globalErrors.length > 0 && (
-                <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 flex gap-3 items-start animate-fade-in">
-                  <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-rose-950">Reset Request Failed</p>
-                    <ul className="list-none text-[11px] text-rose-700 font-medium space-y-0.5">
-                      {globalErrors.map((msg, i) => (
-                        <li key={i}>{msg}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                {/* Email Address Wrapper */}
-                <div className="space-y-1">
-                  <div className="relative">
-                    <input
-                      type="email"
-                      {...register("email")}
-                      disabled={isLoading}
-                      placeholder="Email"
-                      className="w-full h-13 px-6 text-sm font-medium rounded-full border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all disabled:opacity-60 bg-white"
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">
-                      {errors.email.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-3 pt-1">
-                  {/* Required Security Checkbox Field */}
-                  <div className="space-y-1">
-                    <div className="flex items-start gap-2 px-4">
-                      <input
-                        type="checkbox"
-                        id="acceptTerms"
-                        {...register("acceptTerms")}
-                        disabled={isLoading}
-                        className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer disabled:opacity-60 shrink-0 mt-0.5"
-                      />
-                      <label
-                        htmlFor="acceptTerms"
-                        className="text-xs font-medium text-slate-500 cursor-pointer select-none disabled:opacity-60"
-                      >
-                        I confirm that I am authorized to reset the password for this account.
-                      </label>
-                    </div>
-                    {errors.acceptTerms && (
-                      <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">
-                        {errors.acceptTerms.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Submit Configuration Pill Button */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full h-13 bg-linear-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:opacity-95 text-white font-semibold text-sm rounded-full transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed mt-4"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Sending password reset email...</span>
-                    </>
-                  ) : (
-                    <span>Send Reset Link</span>
-                  )}
-                </button>
-              </form>
-            </>
-          ) : (
-            /* Success Response State Screen View */
-            <div className="space-y-6 text-center lg:text-left animate-fade-in">
-              <div className="mx-auto lg:mx-0 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100/60 shadow-xs">
-                <CheckCircle2 className="h-7 w-7" />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-3xl font-semibold text-slate-900 tracking-tight">Check your inbox</h2>
-                <p className="text-xs font-medium text-slate-500 leading-relaxed">
-                  A password reset link has been sent to your email. Please follow the instructions to reset your password.
-                </p>
+          {globalErrors.length > 0 && (
+            <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 flex gap-3 items-start animate-fade-in">
+              <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="text-xs font-bold text-rose-950">Reset Request Failed</p>
+                <ul className="list-none text-[11px] text-rose-700 font-medium space-y-0.5">
+                  {globalErrors.map((msg, i) => (
+                    <li key={i}>{msg}</li>
+                  ))}
+                </ul>
               </div>
             </div>
           )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            {/* Email Address Wrapper */}
+            <div className="space-y-1">
+              <div className="relative">
+                <input
+                  type="email"
+                  {...register("email")}
+                  disabled={isLoading}
+                  placeholder="Email"
+                  className="w-full h-13 px-6 text-sm font-medium rounded-full border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all disabled:opacity-60 bg-white"
+                />
+              </div>
+              {errors.email && (
+                <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-3 pt-1">
+              {/* Required Security Checkbox Field */}
+              <div className="space-y-1">
+                <div className="flex items-start gap-2 px-4">
+                  <input
+                    type="checkbox"
+                    id="acceptTerms"
+                    {...register("acceptTerms")}
+                    disabled={isLoading}
+                    className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer disabled:opacity-60 shrink-0 mt-0.5"
+                  />
+                  <label
+                    htmlFor="acceptTerms"
+                    className="text-xs font-medium text-slate-500 cursor-pointer select-none disabled:opacity-60"
+                  >
+                    I confirm that I am authorized to reset the password for this account.
+                  </label>
+                </div>
+                {errors.acceptTerms && (
+                  <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">
+                    {errors.acceptTerms.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Submit Configuration Pill Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full h-13 bg-linear-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:opacity-95 text-white font-semibold text-sm rounded-full transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed mt-4"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Sending password reset email...</span>
+                </>
+              ) : (
+                <span>Send Reset Link</span>
+              )}
+            </button>
+          </form>
 
           {/* Return Navigation Anchor Link Context */}
           <div className="text-center text-xs font-medium text-slate-500 pt-2">

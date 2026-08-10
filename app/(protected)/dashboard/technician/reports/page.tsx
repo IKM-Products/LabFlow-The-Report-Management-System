@@ -1,8 +1,13 @@
-// app/(protected)/dashboard/technician/reports/page.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Loader2, FileSpreadsheet, User, Calendar, FileText } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  RefreshCw,
+  ShieldAlert,
+  Calendar,
+  UserRound,
+  MapPin,
+} from "lucide-react";
 
 import { reportService } from "@/services/report.service";
 import { patientService } from "@/services/patient.service";
@@ -15,6 +20,16 @@ import { VisitListItem } from "@/types/visit.types";
 import ReportForm from "./_components/ReportForm";
 import EditReport from "./_components/EditReport";
 import ReportPrint from "./_components/ReportPrint";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 /**
  * Validates standard UUID v4/v1 format
@@ -32,7 +47,7 @@ const isValidUUID = (str?: string): boolean => {
 const getEntityId = (entity: any): string => {
   if (!entity) return "";
   return String(
-    entity.visit_id || entity.id || entity._id || entity.uuid || ""
+    entity.visit_id || entity.patient_id || entity.id || entity._id || entity.uuid || ""
   ).trim();
 };
 
@@ -44,14 +59,14 @@ export default function ReportsPage() {
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [selectedVisitId, setSelectedVisitId] = useState<string>("");
 
-  const [isPatientsLoading, setIsPatientsLoading] = useState<boolean>(false);
-  const [isVisitsLoading, setIsVisitsLoading] = useState<boolean>(false);
-  const [isReportsLoading, setIsReportsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoadingPatients, setIsLoadingPatients] = useState<boolean>(false);
+  const [isLoadingVisits, setIsLoadingVisits] = useState<boolean>(false);
 
-  // 1. Load initial patient list on mount
+  // Load initial patient list on mount
   useEffect(() => {
     const fetchPatients = async () => {
-      setIsPatientsLoading(true);
+      setIsLoadingPatients(true);
       try {
         const res = await patientService.getPatients();
         if (res?.success && Array.isArray(res.data)) {
@@ -62,54 +77,50 @@ export default function ReportsPage() {
       } catch (error) {
         console.error("Failed to load patients:", error);
       } finally {
-        setIsPatientsLoading(false);
+        setIsLoadingPatients(false);
       }
     };
 
     fetchPatients();
   }, []);
 
-  // 2. Fetch visits whenever selected patient changes
-  useEffect(() => {
-    if (!selectedPatientId || !isValidUUID(selectedPatientId)) {
+  // Fetch visits when patient changes
+  const fetchVisitsByPatient = useCallback(async (patientId: string) => {
+    if (!patientId || !isValidUUID(patientId)) {
       setVisits([]);
       setSelectedVisitId("");
       setReports([]);
       return;
     }
 
-    const fetchVisits = async () => {
-      setIsVisitsLoading(true);
-      setSelectedVisitId("");
-      setReports([]);
-      try {
-        const res = await visitService.getVisitsByPatientId(selectedPatientId);
-        if (res?.success && Array.isArray(res.data)) {
-          setVisits(res.data as VisitListItem[]);
-        } else if (Array.isArray(res)) {
-          setVisits(res as unknown as VisitListItem[]);
-        } else {
-          setVisits([]);
-        }
-      } catch (error) {
-        console.error("Failed to load visits for patient:", error);
+    setIsLoadingVisits(true);
+    setSelectedVisitId("");
+    setReports([]);
+    try {
+      const res = await visitService.getVisitsByPatientId(patientId);
+      if (res?.success && Array.isArray(res.data)) {
+        setVisits(res.data as VisitListItem[]);
+      } else if (Array.isArray(res)) {
+        setVisits(res as unknown as VisitListItem[]);
+      } else {
         setVisits([]);
-      } finally {
-        setIsVisitsLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Failed to load visits for patient:", error);
+      setVisits([]);
+    } finally {
+      setIsLoadingVisits(false);
+    }
+  }, []);
 
-    fetchVisits();
-  }, [selectedPatientId]);
-
-  // 3. Fetch reports for a selected visit
-  const fetchReports = async (visitId: string) => {
+  // Fetch reports for a selected visit
+  const fetchReports = useCallback(async (visitId: string) => {
     if (!visitId || !isValidUUID(visitId)) {
       setReports([]);
       return;
     }
 
-    setIsReportsLoading(true);
+    setIsLoading(true);
     try {
       const response = await reportService.getReportsByVisitId(visitId);
       if (response?.success && Array.isArray(response.data)) {
@@ -123,14 +134,27 @@ export default function ReportsPage() {
       console.error("Failed to fetch reports:", error);
       setReports([]);
     } finally {
-      setIsReportsLoading(false);
+      setIsLoading(false);
     }
+  }, []);
+
+  const handlePatientSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const patientId = e.target.value;
+    setSelectedPatientId(patientId);
+    setSelectedVisitId("");
+    fetchVisitsByPatient(patientId);
   };
 
-  const handleVisitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleVisitSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const visitId = e.target.value;
     setSelectedVisitId(visitId);
     fetchReports(visitId);
+  };
+
+  const handleRefresh = () => {
+    if (selectedVisitId) {
+      fetchReports(selectedVisitId);
+    }
   };
 
   const getPatientDisplayName = (patient: any): string => {
@@ -142,11 +166,6 @@ export default function ReportsPage() {
     return `Patient Profile`;
   };
 
-  const getSelectedPatientName = (): string => {
-    const found = patients.find((p) => getEntityId(p) === selectedPatientId);
-    return found ? getPatientDisplayName(found) : "";
-  };
-
   const getVisitDisplayName = (visitId: string): string => {
     const foundVisit = visits.find((v) => getEntityId(v) === visitId);
     if (!foundVisit) return "Associated Visit";
@@ -156,186 +175,198 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+    <div className="space-y-8 p-6">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5 text-blue-600" />
-            Diagnostic Reporting Matrix
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Clinical Reports
           </h1>
-          <p className="text-xs text-slate-500">
-            Select a patient and visit mapping to view or manage diagnostic reports.
+          <p className="text-sm text-slate-500 mt-1">
+            Manage clinical reports and their information.
           </p>
         </div>
-        <ReportForm
-          defaultVisitId={selectedVisitId}
-          onSuccess={() => fetchReports(selectedVisitId)}
-        />
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="rounded-xl h-10 border-slate-200 text-slate-600"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </Button>
+
+          <ReportForm
+            defaultVisitId={selectedVisitId}
+            onSuccess={() => fetchReports(selectedVisitId)}
+          />
+        </div>
       </div>
 
-      {/* Cascading Selection Dropdowns */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
+      {/* Filter Controls (Patient & Visit Dropdowns) */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* Patient Selection Dropdown */}
-        <div className="space-y-1">
-          <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5 text-blue-600" />
-            1. Select Patient
-          </label>
-          <div className="relative">
-            <select
-              value={selectedPatientId}
-              onChange={(e) => setSelectedPatientId(e.target.value)}
-              disabled={isPatientsLoading}
-              className="w-full h-9 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-blue-500 font-medium text-slate-800 disabled:opacity-50 cursor-pointer"
-            >
-              <option value="">
-                {isPatientsLoading ? "Loading patients..." : "-- Choose Patient --"}
-              </option>
-              {patients.map((patient: any, index: number) => {
-                const pId = getEntityId(patient);
-                return (
-                  <option key={pId || `patient-${index}`} value={pId}>
-                    {getPatientDisplayName(patient)}{" "}
-                    {patient.patient_code ? `(${patient.patient_code})` : ""}
-                  </option>
-                );
-              })}
-            </select>
-            {isPatientsLoading && (
-              <Loader2 className="h-3.5 w-3.5 text-slate-400 animate-spin absolute right-3 top-2.5" />
-            )}
-          </div>
+        <div className="relative">
+          <UserRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
+          <select
+            value={selectedPatientId}
+            onChange={handlePatientSelect}
+            disabled={isLoadingPatients}
+            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
+          >
+            <option value="">
+              {isLoadingPatients ? "Loading patients..." : "Select a Patient"}
+            </option>
+            {patients.map((patient: any, index: number) => {
+              const pId = getEntityId(patient);
+              return (
+                <option key={pId || `patient-${index}`} value={pId}>
+                  {getPatientDisplayName(patient)}{" "}
+                  {patient.patient_code ? `(${patient.patient_code})` : ""}
+                </option>
+              );
+            })}
+          </select>
         </div>
 
         {/* Visit Selection Dropdown */}
-        <div className="space-y-1">
-          <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-            <Calendar className="h-3.5 w-3.5 text-blue-600" />
-            2. Select Visit
-          </label>
-          <div className="relative">
-            <select
-              value={selectedVisitId}
-              onChange={handleVisitChange}
-              disabled={!selectedPatientId || isVisitsLoading}
-              className="w-full h-9 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-blue-500 font-medium text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            >
-              <option value="">
-                {!selectedPatientId
-                  ? "Select a patient first"
-                  : isVisitsLoading
-                  ? "Loading visits..."
-                  : visits.length === 0
-                  ? "No visits found"
-                  : "-- Choose Visit --"}
-              </option>
-              {visits.map((visit, index) => {
-                const vId = getEntityId(visit);
-                return (
-                  <option key={vId || `visit-${index}`} value={vId}>
-                    {visit.visit_no
-                      ? `Visit #${visit.visit_no}`
-                      : `Visit Record #${index + 1}`}
-                    {visit.visit_date
-                      ? ` (${String(visit.visit_date).split("T")[0]})`
-                      : ""}
-                  </option>
-                );
-              })}
-            </select>
-            {isVisitsLoading && (
-              <Loader2 className="h-3.5 w-3.5 text-slate-400 animate-spin absolute right-3 top-2.5" />
-            )}
-          </div>
+        <div className="relative">
+          <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
+          <select
+            value={selectedVisitId}
+            onChange={handleVisitSelect}
+            disabled={!selectedPatientId || isLoadingVisits}
+            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
+          >
+            <option value="">
+              {!selectedPatientId
+                ? "Select a Patient First"
+                : isLoadingVisits
+                ? "Loading visits..."
+                : visits.length === 0
+                ? "No visits found"
+                : "Select a Visit"}
+            </option>
+            {visits.map((visit, index) => {
+              const vId = getEntityId(visit);
+              return (
+                <option key={vId || `visit-${index}`} value={vId}>
+                  {visit.visit_no
+                    ? `Visit #${visit.visit_no}`
+                    : `Visit Record #${index + 1}`}
+                  {visit.visit_date
+                    ? ` (${String(visit.visit_date).split("T")[0]})`
+                    : ""}
+                </option>
+              );
+            })}
+          </select>
         </div>
       </div>
 
-      {/* Reports Table Section */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-        {/* Context Banner */}
-        {selectedPatientId && selectedVisitId && (
-          <div className="bg-slate-50/80 px-6 py-3 border-b border-slate-100 flex items-center gap-2 text-xs text-slate-600">
-            <FileText className="h-4 w-4 text-blue-600" />
-            <span>
-              Showing reports for <strong className="text-slate-900">{getSelectedPatientName()}</strong> under{" "}
-              <strong className="text-slate-900">{getVisitDisplayName(selectedVisitId)}</strong>
-            </span>
-          </div>
-        )}
-
-        {isReportsLoading ? (
-          <div className="flex flex-col items-center justify-center p-20 gap-3">
-            <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
-            <p className="text-xs text-slate-400 font-medium">
-              Extracting related report payload data...
-            </p>
-          </div>
-        ) : !selectedPatientId ? (
-          <div className="text-center p-16 text-slate-400 text-xs font-medium">
-            Please select a patient to view their available visits.
-          </div>
-        ) : !selectedVisitId ? (
-          <div className="text-center p-16 text-slate-400 text-xs font-medium">
-            Please select a visit from the dropdown to display diagnostic reports.
-          </div>
-        ) : reports.length === 0 ? (
-          <div className="text-center p-16 text-slate-400 text-xs font-medium">
-            No active metrics data sheets located inside tracking context for this visit.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100 text-slate-600 text-[11px] font-bold uppercase tracking-wider">
-                  <th className="p-4">Report Reference</th>
-                  <th className="p-4">Visit Details</th>
-                  <th className="p-4">Workflow Phase</th>
-                  <th className="p-4">Storage File Target</th>
-                  <th className="p-4">Generation Stamps</th>
-                  <th className="p-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
-                {reports.map((report, index) => {
-                  const reportKey = getEntityId(report) || `report-${index}`;
+      {/* Table Data View */}
+      {isLoading ? (
+        <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 animate-pulse bg-white border border-slate-200 rounded-2xl">
+          Loading report data...
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <Table>
+            <TableCaption className="text-xs text-slate-400 pb-4">
+              {selectedVisitId
+                ? `Showing report records for Visit ID: ${selectedVisitId}`
+                : selectedPatientId
+                ? `Showing visit choices for Patient ID: ${selectedPatientId}`
+                : "List of all Reports."}
+            </TableCaption>
+            <TableHeader>
+              <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="w-16 font-bold text-slate-600">S.N.</TableHead>
+                <TableHead className="font-bold text-slate-600">Report No.</TableHead>
+                <TableHead className="font-bold text-slate-600">Visit Details</TableHead>
+                <TableHead className="font-bold text-slate-600">Date & Logged By</TableHead>
+                <TableHead className="font-bold text-slate-600">Report Status</TableHead>
+                <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-150">
+              {reports.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-12 text-center text-sm text-slate-400">
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <ShieldAlert className="h-6 w-6 text-slate-300" />
+                      <p className="font-medium text-slate-500">
+                        {!selectedPatientId
+                          ? "Select a patient and visit above to view reports."
+                          : !selectedVisitId
+                          ? "Select a visit above to view report."
+                          : "No report records found for the selected visit."}
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                reports.map((report, idx) => {
+                  const reportKey = getEntityId(report) || `report-${idx}`;
                   return (
-                    <tr
+                    <TableRow
                       key={reportKey}
-                      className="hover:bg-slate-50/70 transition-colors"
+                      className="hover:bg-slate-50/60 transition-colors group"
                     >
-                      <td className="p-4 font-mono font-bold text-slate-900">
-                        {report.report_no}
-                      </td>
-                      <td className="p-4 font-medium text-slate-700">
+                      <TableCell className="font-mono text-xs text-slate-400">
+                        {idx + 1}
+                      </TableCell>
+
+                      <TableCell className="font-mono text-xs text-slate-500 max-w-30 truncate">
+                        {report.report_no || `Report #${idx + 1}`}
+                      </TableCell>
+
+                      <TableCell className="text-xs font-medium text-slate-700">
                         {getVisitDisplayName(report.visit_id)}
-                      </td>
-                      <td className="p-4">
+                      </TableCell>
+
+                      <TableCell className="text-xs text-slate-600 space-y-0.5">
+                        {report.generated_at ? (
+                          <>
+                            <div className="flex items-center gap-1 text-slate-700 font-medium">
+                              <Calendar className="h-3 w-3 text-slate-400" />
+                              <span suppressHydrationWarning>
+                                {new Date(report.generated_at).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-400">
+                              Author: {report.generated_by || "Technician"}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-slate-400 italic">
+                            Pending generation
+                          </span>
+                        )}
+                      </TableCell>
+
+                      <TableCell>
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                            report.status === "verified" ||
-                            report.status === "completed"
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                              : report.status === "cancelled"
-                              ? "bg-rose-50 text-rose-700 border border-rose-100"
-                              : "bg-amber-50 text-amber-700 border border-amber-100"
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
+                            report.status?.toLowerCase() === "verified" ||
+                            report.status?.toLowerCase() === "completed"
+                              ? "bg-slate-50 text-slate-600"
+                              : report.status?.toLowerCase() === "in_progress" ||
+                                report.status?.toLowerCase() === "active"
+                              ? "bg-emerald-50 text-emerald-600"
+                              : report.status?.toLowerCase() === "cancelled"
+                              ? "bg-rose-50 text-rose-600"
+                              : "bg-amber-50 text-amber-600"
                           }`}
                         >
-                          {report.status || "draft"}
+                          {report.status || "N/A"}
                         </span>
-                      </td>
-                      <td className="p-4 font-mono text-slate-400 text-[11px] max-w-xs truncate">
-                        {report.pdf_path || "Unassigned Repository Path"}
-                      </td>
-                      <td className="p-4 space-y-0.5">
-                        <div className="text-slate-500 font-mono text-[11px]">
-                          {report.generated_at}
-                        </div>
-                        <div className="text-slate-400 text-[10px]">
-                          Author: {report.generated_by}
-                        </div>
-                      </td>
-                      <td className="p-4 text-right space-x-1 whitespace-nowrap">
+                      </TableCell>
+
+                      <TableCell className="text-right whitespace-nowrap space-x-1">
                         <ReportPrint
                           reportId={report.id}
                           reportNo={report.report_no}
@@ -344,15 +375,15 @@ export default function ReportsPage() {
                           report={report}
                           onSuccess={() => fetchReports(selectedVisitId)}
                         />
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }

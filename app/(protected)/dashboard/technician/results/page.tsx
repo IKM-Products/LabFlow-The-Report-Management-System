@@ -1,9 +1,13 @@
-// app/dashboard/technician/results/page.tsx
-
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Loader2, Layers, ClipboardList, RefreshCw, User, ShieldAlert } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  RefreshCw,
+  ShieldAlert,
+  UserRound,
+  MapPin,
+  ClipboardList,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { resultService } from "@/services/result.service";
@@ -16,7 +20,15 @@ import { ResultItem } from "@/types/result.types";
 import ResultForm from "./_components/ResultForm";
 import EditResult from "./_components/EditResult";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface PatientOption {
   id: string;
@@ -119,7 +131,7 @@ export default function ResultsPage() {
   }, []);
 
   // 2. Fetch visits when a patient is selected
-  const fetchVisitsByPatient = async (patientId: string) => {
+  const fetchVisitsByPatient = useCallback(async (patientId: string) => {
     if (!patientId.trim()) {
       setVisits([]);
       setSelectedVisitId("");
@@ -155,10 +167,10 @@ export default function ResultsPage() {
     } finally {
       setIsLoadingVisits(false);
     }
-  };
+  }, []);
 
   // 3. Fetch orders when a visit is selected
-  const fetchOrdersByVisit = async (targetVisitId: string) => {
+  const fetchOrdersByVisit = useCallback(async (targetVisitId: string) => {
     if (!targetVisitId.trim() || !isUUID(targetVisitId.trim())) {
       setOrders([]);
       setSelectedOrderId("");
@@ -178,7 +190,6 @@ export default function ResultsPage() {
         ? response
         : response?.data || [];
 
-      // Extract raw ref and status values from backend payload
       const formatted = rawOrders.map((o: any, idx: number) => ({
         id: o.order_id || o.id,
         orderRef: String(o.order_ref || o.order_number || o.order_no || idx + 1),
@@ -192,10 +203,10 @@ export default function ResultsPage() {
     } finally {
       setIsLoadingOrders(false);
     }
-  };
+  }, []);
 
   // 4. Fetch results when an order is selected
-  const fetchResultsByOrder = async (targetOrderId: string) => {
+  const fetchResultsByOrder = useCallback(async (targetOrderId: string) => {
     if (!targetOrderId.trim() || !isUUID(targetOrderId.trim())) {
       setResults([]);
       return;
@@ -216,7 +227,7 @@ export default function ResultsPage() {
     } finally {
       setIsLoadingResults(false);
     }
-  };
+  }, []);
 
   // Handlers
   const handlePatientSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -243,19 +254,16 @@ export default function ResultsPage() {
     }
   };
 
-  const activeVisitObj = visits.find((v) => v.id === selectedVisitId);
-
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-8 p-6">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
-            <Layers className="h-5 w-5 text-blue-600" />
-            Clinical Analysis Ledger Matrix
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Clinical Results
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Verify and catalog multi-parameter quantitative telemetry entries indexing transactional workflows.
+          <p className="text-sm text-slate-500 mt-1">
+            Manage clinical results and their information.
           </p>
         </div>
 
@@ -283,18 +291,18 @@ export default function ResultsPage() {
       </div>
 
       {/* Cascading Filter Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Step 1: Patient Selection */}
-        <div className="space-y-1">
-          <Label className="text-xs font-semibold text-slate-700">1. Patient Directory</Label>
+        <div className="relative">
+          <UserRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
           <select
             value={selectedPatientId}
             onChange={handlePatientSelect}
             disabled={isLoadingPatients}
-            className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white outline-hidden cursor-pointer disabled:opacity-50"
+            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
           >
             <option value="">
-              {isLoadingPatients ? "Loading patients..." : "-- Select Patient --"}
+              {isLoadingPatients ? "Loading patients..." : "Select a Patient"}
             </option>
             {patients.map((patient) => (
               <option key={patient.id} value={patient.id}>
@@ -305,22 +313,22 @@ export default function ResultsPage() {
         </div>
 
         {/* Step 2: Visit Selection */}
-        <div className="space-y-1">
-          <Label className="text-xs font-semibold text-slate-700">2. Clinical Visit Sequence</Label>
+        <div className="relative">
+          <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
           <select
             value={selectedVisitId}
             onChange={handleVisitSelect}
             disabled={!selectedPatientId || isLoadingVisits}
-            className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white outline-hidden cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
           >
             <option value="">
               {!selectedPatientId
-                ? "-- Select Patient First --"
+                ? "Select a Patient First"
                 : isLoadingVisits
                 ? "Loading visits..."
                 : visits.length === 0
                 ? "No visits found"
-                : "-- Select Visit --"}
+                : "Select a Visit"}
             </option>
             {visits.map((visit) => (
               <option key={visit.id} value={visit.id}>
@@ -331,25 +339,24 @@ export default function ResultsPage() {
         </div>
 
         {/* Step 3: Work Order Selection */}
-        <div className="space-y-1">
-          <Label className="text-xs font-semibold text-slate-700">3. Work Order Reference</Label>
+        <div className="relative">
+          <ClipboardList className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
           <select
             value={selectedOrderId}
             onChange={handleOrderSelect}
             disabled={!selectedVisitId || isLoadingOrders}
-            className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white outline-hidden cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
           >
             <option value="">
               {!selectedVisitId
-                ? "-- Select Visit First --"
+                ? "Select a Visit First"
                 : isLoadingOrders
                 ? "Loading orders..."
                 : orders.length === 0
                 ? "No orders found"
-                : "-- Select Work Order --"}
+                : "Select a Work Order"}
             </option>
             {orders.map((order) => {
-              // Ensure prefix is 'order#' and format directly as order#1(completed)
               const refLabel = order.orderRef.toLowerCase().startsWith("order#")
                 ? order.orderRef
                 : `order#${order.orderRef}`;
@@ -364,95 +371,101 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      {/* Results Table Section */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-        {isLoadingResults ? (
-          <div className="flex flex-col items-center justify-center p-20 gap-3">
-            <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
-            <p className="text-xs text-slate-400 font-medium tracking-wide">
-              Extracting verified dataset arrays...
-            </p>
-          </div>
-        ) : !selectedPatientId ? (
-          <div className="flex flex-col items-center justify-center text-center p-16 text-slate-400 text-xs font-medium gap-2">
-            <User className="h-8 w-8 text-slate-300 stroke-1" />
-            Please select a Patient to start viewing clinical records.
-          </div>
-        ) : !selectedVisitId ? (
-          <div className="flex flex-col items-center justify-center text-center p-16 text-slate-400 text-xs font-medium gap-2">
-            <ClipboardList className="h-8 w-8 text-slate-300 stroke-1" />
-            Please select a Visit to display available work orders.
-          </div>
-        ) : !selectedOrderId ? (
-          <div className="flex flex-col items-center justify-center text-center p-16 text-slate-400 text-xs font-medium gap-2">
-            <Layers className="h-8 w-8 text-slate-300 stroke-1" />
-            Please select a Work Order to build indexing matrices.
-          </div>
-        ) : results.length === 0 ? (
-          <div className="flex flex-col items-center justify-center text-center p-16 text-slate-400 text-xs font-medium gap-2">
-            <ShieldAlert className="h-8 w-8 text-slate-300 stroke-1" />
-            No tracked data telemetry payloads located within index for entity match sequence.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider">
-                  <th className="p-4">Result Metric</th>
-                  <th className="p-4">Operational Severity Flag</th>
-                  <th className="p-4">Clinical Observations / Remarks</th>
-                  <th className="p-4">Verified By</th>
-                  <th className="p-4">Visit No</th>
-                  <th className="p-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
-                {results.map((item, index) => {
+      {/* Table Data View */}
+      {isLoadingResults ? (
+        <div className="flex h-48 items-center justify-center text-sm font-medium text-slate-400 animate-pulse bg-white border border-slate-200 rounded-2xl">
+          Loading result data...
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <Table>
+            <TableCaption className="text-xs text-slate-400 pb-4">
+              {selectedOrderId
+                ? `Showing result records for Work Order ID: ${selectedOrderId}`
+                : selectedVisitId
+                ? `Showing order choices for Visit ID: ${selectedVisitId}`
+                : selectedPatientId
+                ? `Showing visit choices for Patient ID: ${selectedPatientId}`
+                : "List of all Results."}
+            </TableCaption>
+            <TableHeader>
+              <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="w-16 font-bold text-slate-600">S.N.</TableHead>
+                <TableHead className="font-bold text-slate-600">Result Value</TableHead>
+                <TableHead className="font-bold text-slate-600">Priority Level</TableHead>
+                <TableHead className="font-bold text-slate-600">Verified By</TableHead>
+                <TableHead className="font-bold text-slate-600">Remarks</TableHead>
+                <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-150">
+              {results.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-12 text-center text-sm text-slate-400">
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <ShieldAlert className="h-6 w-6 text-slate-300" />
+                      <p className="font-medium text-slate-500">
+                        {!selectedPatientId
+                          ? "Select a patient, visit, and order above to view results."
+                          : !selectedVisitId
+                          ? "Select a visit, and order above to view results."
+                          : !selectedOrderId
+                          ? "Select a order above to view results."
+                          : "No result records found for the selected work order."}
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                results.map((item, index) => {
                   const itemId = item.id || (item as any)._id || `result-${index}`;
-                  const visitNumber =
-                    (item as any).visit_no ||
-                    (item as any).visit_number ||
-                    activeVisitObj?.visitNo ||
-                    "-";
 
                   return (
-                    <tr key={itemId} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="p-4 font-medium text-slate-800">
+                    <TableRow
+                      key={itemId}
+                      className="hover:bg-slate-50/60 transition-colors group"
+                    >
+                      <TableCell className="font-mono text-xs text-slate-400">
+                        {index + 1}
+                      </TableCell>
+
+                      <TableCell className="text-xs font-medium text-slate-800">
                         {item.result_value}
-                      </td>
-                      <td className="p-4">
+                      </TableCell>
+
+                      <TableCell>
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
                             item.flag === "normal"
                               ? "bg-slate-50 text-slate-600 border-slate-200"
                               : item.flag === "critical"
-                              ? "bg-rose-50 text-rose-700 border-rose-100 animate-pulse"
-                              : "bg-amber-50 text-amber-700 border-amber-100"
+                              ? "bg-rose-50 text-rose-600 border-rose-100 animate-pulse"
+                              : "bg-amber-50 text-amber-600 border-amber-100"
                           }`}
                         >
                           {item.flag || "normal"}
                         </span>
-                      </td>
-                      <td className="p-4 text-slate-500 max-w-xs truncate">
-                        {item.remarks || "-"}
-                      </td>
-                      <td className="p-4 text-slate-700 font-medium">
+                      </TableCell>
+
+                      <TableCell className="text-xs font-medium text-slate-700">
                         {getVerifierName(item)}
-                      </td>
-                      <td className="p-4 font-mono font-semibold text-slate-800">
-                        {visitNumber}
-                      </td>
-                      <td className="p-4 text-right">
+                      </TableCell>
+
+                      <TableCell className="text-xs text-slate-500 max-w-xs truncate">
+                        {item.remarks || "-"}
+                      </TableCell>
+
+                      <TableCell className="text-right whitespace-nowrap">
                         <EditResult result={item} onSuccess={handleRefresh} />
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }

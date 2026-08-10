@@ -163,7 +163,7 @@ export default function VisitsPage() {
             disabled={isLoadingPatients}
             className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 cursor-pointer disabled:bg-slate-50"
           >
-            <option value="">All Patients (Show All Visits)</option>
+            <option value="">Select a Patient (List of all Visits)</option>
             {patients.map((patient) => (
               <option key={patient.id} value={patient.id}>
                 {patient.name}
@@ -183,8 +183,8 @@ export default function VisitsPage() {
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
               {activeQueryKey
-                ? `Showing visit records for Patient ID: ${activeQueryKey}`
-                : "Showing all visit records across all patients."}
+                ? `List of all Visits for Patient ID: ${activeQueryKey}`
+                : "List of all Visits"}
             </TableCaption>
             <TableHeader>
               <tr className="bg-slate-50 border-b border-slate-200">
@@ -192,7 +192,7 @@ export default function VisitsPage() {
                 <TableHead className="font-bold text-slate-600">Visit No.</TableHead>
                 <TableHead className="font-bold text-slate-600">Patient Name</TableHead>
                 <TableHead className="font-bold text-slate-600">Referring Doctor</TableHead>
-                <TableHead className="font-bold text-slate-600">Status</TableHead>
+                <TableHead className="font-bold text-slate-600">Visit Status</TableHead>
                 <TableHead className="font-bold text-slate-600">Date & Logged By</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </tr>
@@ -235,17 +235,17 @@ export default function VisitsPage() {
 
                     <TableCell>
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
+                        className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold border ${
                           visit.status === "completed"
-                            ? "bg-slate-50 text-slate-600 border-slate-200"
+                            ? "bg-slate-50 text-slate-600"
                             : visit.status === "in_progress" || visit.status === "active"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            ? "bg-emerald-50 text-slate-600"
                             : visit.status === "cancelled"
-                            ? "bg-rose-50 text-rose-700 border-rose-200"
-                            : "bg-amber-50 text-amber-700 border-amber-200"
+                            ? "bg-rose-50 text-rose-600"
+                            : "bg-amber-50 text-amber-600"
                         }`}
                       >
-                        {visit.status === "in_progress" ? "In Progress" : visit.status || "registered"}
+                        {visit.status === "in_progress" ? "In Progress" : visit.status || "registered" ? "Registered" : visit.status}
                       </span>
                     </TableCell>
 
