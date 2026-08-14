@@ -1,7 +1,7 @@
 // app/(dashboard)/technician/reports/_components/ReportPrint.tsx
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Printer, Loader2, History } from "lucide-react";
@@ -93,8 +93,7 @@ export default function ReportPrint({ reportId, reportNo }: ReportPrintProps) {
       <DialogContent className="sm:max-w-lg bg-white rounded-2xl border border-slate-200 p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <Printer className="h-4 w-4 text-emerald-600" />
-            Print Registry Outlines
+            Print Report
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
             Execute copies logging infrastructure tracking validation rules for {reportNo}.
@@ -106,8 +105,8 @@ export default function ReportPrint({ reportId, reportNo }: ReportPrintProps) {
             <Label className="text-xs font-semibold text-slate-700">Copy Quantity Identity</Label>
             <Input type="number" {...register("copy_number")} disabled={isSubmitting} className="rounded-xl border-slate-200 text-xs" />
           </div>
-          <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs h-9 font-bold tracking-wide">
-            {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Log Print"}
+          <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs h-9 font-bold tracking-wide">
+            {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Print"}
           </Button>
         </form>
         {errors.copy_number && <p className="text-[10px] text-red-500 font-medium -mt-2">{errors.copy_number.message}</p>}

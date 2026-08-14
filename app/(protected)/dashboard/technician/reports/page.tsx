@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   RefreshCw,
   ShieldAlert,
-  Calendar,
   UserRound,
   MapPin,
 } from "lucide-react";
@@ -166,13 +165,14 @@ export default function ReportsPage() {
     return `Patient Profile`;
   };
 
-  const getVisitDisplayName = (visitId: string): string => {
-    const foundVisit = visits.find((v) => getEntityId(v) === visitId);
-    if (!foundVisit) return "Associated Visit";
-    const vNo = foundVisit.visit_no || "";
-    const vDate = foundVisit.visit_date ? String(foundVisit.visit_date).split("T")[0] : "";
-    return vNo ? `Visit #${vNo}${vDate ? ` (${vDate})` : ""}` : `Visit Record ${vDate || ""}`;
-  };
+  // Find active patient and visit objects for display texts
+  const currentPatient = patients.find((p) => getEntityId(p) === selectedPatientId);
+  const currentPatientName = currentPatient ? getPatientDisplayName(currentPatient) : "";
+
+  const currentVisit = visits.find((v) => getEntityId(v) === selectedVisitId);
+  const currentVisitNo = currentVisit?.visit_no
+    ? `Visit #${currentVisit.visit_no}`
+    : "Selected Visit";
 
   return (
     <div className="space-y-8 p-6">
@@ -254,12 +254,7 @@ export default function ReportsPage() {
               const vId = getEntityId(visit);
               return (
                 <option key={vId || `visit-${index}`} value={vId}>
-                  {visit.visit_no
-                    ? `Visit #${visit.visit_no}`
-                    : `Visit Record #${index + 1}`}
-                  {visit.visit_date
-                    ? ` (${String(visit.visit_date).split("T")[0]})`
-                    : ""}
+                  {visit.visit_no ? `Visit #${visit.visit_no}` : `Visit #${index + 1}`}
                 </option>
               );
             })}
@@ -277,17 +272,15 @@ export default function ReportsPage() {
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
               {selectedVisitId
-                ? `Showing report records for Visit ID: ${selectedVisitId}`
+                ? `Showing report records for ${currentPatientName ? `${currentPatientName} (${currentVisitNo})` : currentVisitNo}`
                 : selectedPatientId
-                ? `Showing visit choices for Patient ID: ${selectedPatientId}`
+                ? `Showing visit choices for Patient: ${currentPatientName}`
                 : "List of all Reports."}
             </TableCaption>
             <TableHeader>
               <TableRow className="bg-slate-50 border-b border-slate-200">
                 <TableHead className="w-16 font-bold text-slate-600">S.N.</TableHead>
                 <TableHead className="font-bold text-slate-600">Report No.</TableHead>
-                <TableHead className="font-bold text-slate-600">Visit Details</TableHead>
-                <TableHead className="font-bold text-slate-600">Date & Logged By</TableHead>
                 <TableHead className="font-bold text-slate-600">Report Status</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </TableRow>
@@ -324,42 +317,18 @@ export default function ReportsPage() {
                         {report.report_no || `Report #${idx + 1}`}
                       </TableCell>
 
-                      <TableCell className="text-xs font-medium text-slate-700">
-                        {getVisitDisplayName(report.visit_id)}
-                      </TableCell>
-
-                      <TableCell className="text-xs text-slate-600 space-y-0.5">
-                        {report.generated_at ? (
-                          <>
-                            <div className="flex items-center gap-1 text-slate-700 font-medium">
-                              <Calendar className="h-3 w-3 text-slate-400" />
-                              <span suppressHydrationWarning>
-                                {new Date(report.generated_at).toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-slate-400">
-                              Author: {report.generated_by || "Technician"}
-                            </div>
-                          </>
-                        ) : (
-                          <span className="text-slate-400 italic">
-                            Pending generation
-                          </span>
-                        )}
-                      </TableCell>
-
                       <TableCell>
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
                             report.status?.toLowerCase() === "verified" ||
                             report.status?.toLowerCase() === "completed"
-                              ? "bg-slate-50 text-slate-600"
+                              ? "bg-slate-50 text-slate-600 border-slate-50/60"
                               : report.status?.toLowerCase() === "in_progress" ||
                                 report.status?.toLowerCase() === "active"
-                              ? "bg-emerald-50 text-emerald-600"
+                              ? "bg-emerald-50 text-slate-600 border-slate-50/60"
                               : report.status?.toLowerCase() === "cancelled"
-                              ? "bg-rose-50 text-rose-600"
-                              : "bg-amber-50 text-amber-600"
+                              ? "bg-rose-50 text-slate-600 border-slate-50/60"
+                              : "bg-amber-50 text-slate-600 border-slate-50/60"
                           }`}
                         >
                           {report.status || "N/A"}

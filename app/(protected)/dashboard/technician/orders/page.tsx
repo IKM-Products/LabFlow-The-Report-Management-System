@@ -3,9 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   RefreshCw,
-  ClipboardList,
   ShieldAlert,
-  Calendar,
   UserRound,
   MapPin
 } from "lucide-react";
@@ -177,6 +175,10 @@ export default function TechnicianOrdersPage() {
     fetchOrders(selectedVisitId);
   };
 
+  // Find selected patient name & visit number for dynamic table caption display
+  const selectedPatientName = patients.find((p) => p.id === selectedPatientId)?.name;
+  const selectedVisitNo = visits.find((v) => v.id === selectedVisitId)?.visitNo;
+
   return (
     <div className="space-y-8 p-6">
       {/* Header Section */}
@@ -209,52 +211,52 @@ export default function TechnicianOrdersPage() {
         </div>
       </div>
 
-        {/* Filter Controls (Patient & Visit Dropdowns) */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* Patient Selection Dropdown */}
-          <div className="relative">
-            <UserRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
-            <select
-              value={selectedPatientId}
-              onChange={handlePatientSelect}
-              disabled={isLoadingPatients}
-              className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
-            >
-              <option value="">Select a Patient (List of all Orders)</option>
-              {patients.map((patient) => (
-                <option key={patient.id} value={patient.id}>
-                  {patient.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Visit Selection Dropdown */}
-          <div className="relative">
-            <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
-            <select
-              value={selectedVisitId}
-              onChange={handleVisitSelect}
-              disabled={!selectedPatientId || isLoadingVisits}
-              className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
-            >
-              <option value="">
-                {!selectedPatientId
-                  ? "Select a Patient First"
-                  : isLoadingVisits
-                  ? "Loading visits..."
-                  : visits.length === 0
-                  ? "No visits found"
-                  : "Select a Visit (List of all Orders)"}
+      {/* Filter Controls (Patient & Visit Dropdowns) */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Patient Selection Dropdown */}
+        <div className="relative">
+          <UserRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
+          <select
+            value={selectedPatientId}
+            onChange={handlePatientSelect}
+            disabled={isLoadingPatients}
+            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
+          >
+            <option value="">Select a Patient (List of all Orders)</option>
+            {patients.map((patient) => (
+              <option key={patient.id} value={patient.id}>
+                {patient.name}
               </option>
-              {visits.map((visit) => (
-                <option key={visit.id} value={visit.id}>
-                  Visit #{visit.visitNo}
-                </option>
-              ))}
-            </select>
-          </div>
+            ))}
+          </select>
         </div>
+
+        {/* Visit Selection Dropdown */}
+        <div className="relative">
+          <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
+          <select
+            value={selectedVisitId}
+            onChange={handleVisitSelect}
+            disabled={!selectedPatientId || isLoadingVisits}
+            className="w-full h-10 pl-10 pr-8 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
+          >
+            <option value="">
+              {!selectedPatientId
+                ? "Select a Patient First"
+                : isLoadingVisits
+                ? "Loading visits..."
+                : visits.length === 0
+                ? "No visits found"
+                : "Select a Visit (List of all Orders)"}
+            </option>
+            {visits.map((visit) => (
+              <option key={visit.id} value={visit.id}>
+                Visit #{visit.visitNo}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {/* Table Data View */}
       {isLoading ? (
@@ -266,17 +268,16 @@ export default function TechnicianOrdersPage() {
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
               {selectedVisitId
-                ? `Showing order records for Visit ID: ${selectedVisitId}`
+                ? `List of all Orders for Visit #${selectedVisitNo || selectedVisitId}`
                 : selectedPatientId
-                ? `Showing order records for Patient ID: ${selectedPatientId}`
+                ? `List of all Orders for ${selectedPatientName || selectedPatientId}`
                 : "List of all Orders."}
             </TableCaption>
             <TableHeader>
               <TableRow className="bg-slate-50 border-b border-slate-200">
                 <TableHead className="w-16 font-bold text-slate-600">S.N.</TableHead>
                 <TableHead className="font-bold text-slate-600">Order No.</TableHead>
-                <TableHead className="font-bold text-slate-600">Assigned Cost</TableHead>
-                <TableHead className="font-bold text-slate-600">Date & Logged By</TableHead>
+                <TableHead className="font-bold text-slate-600">Price</TableHead>
                 <TableHead className="font-bold text-slate-600">Order Status</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </TableRow>
@@ -284,7 +285,7 @@ export default function TechnicianOrdersPage() {
             <TableBody className="divide-y divide-slate-150">
               {orders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-12 text-center text-sm text-slate-400">
+                  <TableCell colSpan={5} className="py-12 text-center text-sm text-slate-400">
                     <div className="flex flex-col items-center justify-center space-y-1">
                       <ShieldAlert className="h-6 w-6 text-slate-300" />
                       <p className="font-medium text-slate-500">
@@ -296,75 +297,47 @@ export default function TechnicianOrdersPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                orders.map((order: any, idx) => (
-                  <TableRow
-                    key={order.id || `order-${idx}`}
-                    className="hover:bg-slate-50/60 transition-colors group"
-                  >
-                    <TableCell className="font-mono text-xs text-slate-400">
-                      {idx + 1}
-                    </TableCell>
+                orders.map((order: any, idx) => {
+                  const statusLower = order.status?.toLowerCase();
+                  return (
+                    <TableRow
+                      key={order.id || `order-${idx}`}
+                      className="hover:bg-slate-50/60 transition-colors group"
+                    >
+                      <TableCell className="font-mono text-xs text-slate-400">
+                        {idx + 1}
+                      </TableCell>
 
-                    <TableCell className="font-mono text-xs text-slate-500 max-w-30 truncate">
-                      {order.order_number || order.order_ref || `Order #${idx + 1}`}
-                    </TableCell>
+                      <TableCell className="font-mono text-xs text-slate-500 max-w-30 truncate">
+                        {order.order_number || order.order_ref || `Order #${idx + 1}`}
+                      </TableCell>
 
-                    <TableCell className="font-semibold text-emerald-600">
-                      Rs {typeof order.price === "number" ? order.price.toFixed(2) : order.price || "0.00"}
-                    </TableCell>
+                      <TableCell className="font-semibold text-emerald-600">
+                        Rs {typeof order.price === "number" ? order.price.toFixed(2) : order.price || "0.00"}
+                      </TableCell>
 
-                    <TableCell className="text-xs text-slate-600 space-y-0.5">
-                      {order.collected_at ? (
-                        <>
-                          <div className="flex items-center gap-1 text-slate-700 font-medium">
-                            <Calendar className="h-3 w-3 text-slate-400" />
-                            <span suppressHydrationWarning>
-                              {new Date(order.collected_at).toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-slate-400">
-                            Logged by: {
-                              order.collector_name || 
-                              order.collector?.full_name || 
-                              `${order.collector?.first_name || ""} ${order.collector?.last_name || ""}`.trim() || 
-                              order.technician_name ||
-                              order.technician?.full_name ||
-                              `${order.technician?.first_name || ""} ${order.technician?.last_name || ""}`.trim() ||
-                              (typeof order.collected_by === "object" ? order.collected_by?.name || order.collected_by?.full_name : null) || 
-                              (typeof order.collected_by === "string" && !order.collected_by.includes("-") ? order.collected_by : null) ||
-                              (typeof order.technician === "string" && !order.technician.includes("-") ? order.technician : null) ||
-                              "Technician"
-                            }
-                          </div>
-                        </>
-                      ) : (
-                        <span className="text-slate-400 italic">
-                          Pending collection event
+                      <TableCell>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold border ${
+                            statusLower === "completed"
+                              ? "bg-emerald-50 text-slate-600 border-emerald-50/60"
+                              : statusLower === "in_progress" || statusLower === "active"
+                              ? "bg-slate-50 text-slate-600 border-slate-50/60"
+                              : statusLower === "cancelled"
+                              ? "bg-rose-50 text-slate-600 border-rose-50/60"
+                              : "bg-amber-50 text-slate-600 border-amber-50/60"
+                          }`}
+                        >
+                          {order.status || "N/A"}
                         </span>
-                      )}
-                    </TableCell>
+                      </TableCell>
 
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
-                          order.status?.toLowerCase() === "completed"
-                            ? "bg-slate-50 text-slate-600"
-                            : order.status?.toLowerCase() === "in_progress" || order.status?.toLowerCase() === "active"
-                            ? "bg-emerald-50 text-emerald-600"
-                            : order.status?.toLowerCase() === "cancelled"
-                            ? "bg-rose-50 text-rose-600"
-                            : "bg-amber-50 text-amber-600"
-                        }`}
-                      >
-                        {order.status || "N/A"}
-                      </span>
-                    </TableCell>
-
-                    <TableCell className="text-right whitespace-nowrap">
-                      <EditOrder order={order} onSuccess={handleRefresh} />
-                    </TableCell>
-                  </TableRow>
-                ))
+                      <TableCell className="text-right whitespace-nowrap">
+                        <EditOrder order={order} onSuccess={handleRefresh} />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

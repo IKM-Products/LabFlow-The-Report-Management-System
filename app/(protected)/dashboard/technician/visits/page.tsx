@@ -1,5 +1,3 @@
-// app/dashboard/technician/visits/page.tsx
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -45,7 +43,6 @@ export default function VisitsPage() {
           visitService.getVisits ? visitService.getVisits() : visitService.getVisitsByPatientId("")
         ]);
 
-        // Safely extract patient array (removed invalid .patients property check)
         const rawPatients = Array.isArray(patientResponse)
           ? patientResponse
           : patientResponse?.data || [];
@@ -69,7 +66,6 @@ export default function VisitsPage() {
 
         setPatients(formattedPatients);
 
-        // Normalize initial all-visits array extraction
         const visitsData = Array.isArray(visitResponse)
           ? visitResponse
           : visitResponse?.data || [];
@@ -120,6 +116,9 @@ export default function VisitsPage() {
   const handleRefresh = () => {
     fetchVisits(activeQueryKey);
   };
+
+  // Find selected patient name for display in caption
+  const selectedPatientName = patients.find((p) => p.id === activeQueryKey)?.name;
 
   return (
     <div className="space-y-8 p-6">
@@ -183,7 +182,7 @@ export default function VisitsPage() {
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
               {activeQueryKey
-                ? `List of all Visits for Patient ID: ${activeQueryKey}`
+                ? `List of all Visits for ${selectedPatientName || activeQueryKey}`
                 : "List of all Visits"}
             </TableCaption>
             <TableHeader>
@@ -193,14 +192,13 @@ export default function VisitsPage() {
                 <TableHead className="font-bold text-slate-600">Patient Name</TableHead>
                 <TableHead className="font-bold text-slate-600">Referring Doctor</TableHead>
                 <TableHead className="font-bold text-slate-600">Visit Status</TableHead>
-                <TableHead className="font-bold text-slate-600">Date & Logged By</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </tr>
             </TableHeader>
             <TableBody className="divide-y divide-slate-150">
               {visits.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-400">
+                  <TableCell colSpan={6} className="py-12 text-center text-sm text-slate-400">
                     <div className="flex flex-col items-center justify-center space-y-1">
                       <ShieldAlert className="h-6 w-6 text-slate-300" />
                       <p className="font-medium text-slate-500">
@@ -237,23 +235,22 @@ export default function VisitsPage() {
                       <span
                         className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold border ${
                           visit.status === "completed"
-                            ? "bg-slate-50 text-slate-600"
+                            ? "bg-emerald-50 text-slate-600 border-emerald-50/60"
                             : visit.status === "in_progress" || visit.status === "active"
-                            ? "bg-emerald-50 text-slate-600"
+                            ? "bg-slate-50 text-slate-600 border-slate-50/60"
                             : visit.status === "cancelled"
-                            ? "bg-rose-50 text-rose-600"
-                            : "bg-amber-50 text-amber-600"
+                            ? "bg-rose-50 text-slate-600 border-rose-50/60"
+                            : "bg-amber-50 text-slate-600 border-amber-50/60"
                         }`}
                       >
-                        {visit.status === "in_progress" ? "In Progress" : visit.status || "registered" ? "Registered" : visit.status}
+                        {visit.status === "in_progress"
+                          ? "In Progress"
+                          : visit.status === "completed"
+                          ? "Completed"
+                          : visit.status === "cancelled"
+                          ? "Cancelled"
+                          : "Registered"}
                       </span>
-                    </TableCell>
-
-                    <TableCell className="text-xs text-slate-600 space-y-0.5">
-                      <div className="font-mono text-slate-500">{visit.visit_date}</div>
-                      <div className="text-[11px] text-slate-400">
-                        Logged by: {visit.registered_by}
-                      </div>
                     </TableCell>
 
                     <TableCell className="text-right whitespace-nowrap">

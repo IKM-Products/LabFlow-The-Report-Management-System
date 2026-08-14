@@ -201,7 +201,7 @@ export default function OrderForm({ defaultVisitId = "", onSuccess }: OrderFormP
         ...values,
         visit_id: defaultVisitId || values.visit_id,
       });
-      toast.success("New diagnostic order generated successfully.");
+      toast.success("New order created successfully.");
       onSuccess();
       handleClose();
     } catch (error: any) {
@@ -221,16 +221,16 @@ export default function OrderForm({ defaultVisitId = "", onSuccess }: OrderFormP
     <Dialog open={isOpen} onOpenChange={(open) => (!open ? handleClose() : setIsOpen(true))}>
       <DialogTrigger className="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-sm font-medium shadow-xs h-10 px-4 transition-colors cursor-pointer">
         <Plus className="h-4 w-4 mr-2" />
-        Create Order
+        Add Order
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight">
-            Generate Lab Order
+            Add New Order
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Provision processing steps for laboratory data panels.
+            Enter the required information to create a new order in the system.
           </DialogDescription>
         </DialogHeader>
 
@@ -248,7 +248,7 @@ export default function OrderForm({ defaultVisitId = "", onSuccess }: OrderFormP
               className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white outline-hidden cursor-pointer disabled:opacity-50"
             >
               <option value="">
-                {isLoadingDepts ? "Loading departments..." : "-- Select Department --"}
+                {isLoadingDepts ? "Loading departments..." : "Select a Department"}
               </option>
               {departments.map((dept) => (
                 <option key={dept.id} value={dept.id}>
@@ -260,7 +260,7 @@ export default function OrderForm({ defaultVisitId = "", onSuccess }: OrderFormP
 
           {/* Panel Select */}
           <div className="space-y-1">
-            <Label className="text-xs font-semibold text-slate-700">Panel</Label>
+            <Label className="text-xs font-semibold text-slate-700">Test Panel</Label>
             <select
               {...register("panel_id")}
               value={selectedPanelId}
@@ -273,10 +273,10 @@ export default function OrderForm({ defaultVisitId = "", onSuccess }: OrderFormP
             >
               <option value="">
                 {!selectedDeptId
-                  ? "-- Select Department First --"
+                  ? "Select Department First"
                   : isLoadingPanels
                   ? "Loading panels..."
-                  : "-- Select Panel --"}
+                  : "Select a Test Panel"}
               </option>
               {panels.map((panel) => (
                 <option key={panel.id} value={panel.id}>
@@ -311,10 +311,10 @@ export default function OrderForm({ defaultVisitId = "", onSuccess }: OrderFormP
             >
               <option value="">
                 {!selectedDeptId
-                  ? "-- Select Department First --"
+                  ? "Select a Department First"
                   : isLoadingTests
                   ? "Loading tests..."
-                  : "-- Select Test Catalog --"}
+                  : "Select a Test Catalog"}
               </option>
               {tests.map((test) => (
                 <option key={test.id} value={test.id}>
@@ -330,13 +330,13 @@ export default function OrderForm({ defaultVisitId = "", onSuccess }: OrderFormP
           {/* Price & Status Grid */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Assigned Price</Label>
+              <Label className="text-xs font-semibold text-slate-700">Price</Label>
               <Input
                 type="number"
                 step="0.01"
                 {...register("price", { valueAsNumber: true })}
                 disabled={isSubmitting}
-                className="rounded-xl border-slate-200 text-xs"
+                className="rounded-xl border-slate-200 text-xs h-10"
               />
               {errors.price && (
                 <p className="text-[10px] text-red-500 font-medium">{errors.price.message}</p>
@@ -344,7 +344,7 @@ export default function OrderForm({ defaultVisitId = "", onSuccess }: OrderFormP
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Initial Status</Label>
+              <Label className="text-xs font-semibold text-slate-700">Order Status</Label>
               <select
                 {...register("status")}
                 disabled={isSubmitting}

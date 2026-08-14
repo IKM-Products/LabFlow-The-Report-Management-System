@@ -161,7 +161,7 @@ export default function EditVisit({
               Edit Visit
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Edit the clinical visit information in the system.
+              Edit the visit information in the system.
             </DialogDescription>
           </DialogHeader>
 
@@ -173,12 +173,12 @@ export default function EditVisit({
 
             {/* Visit Number */}
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Visit Number</Label>
+              <Label className="text-xs font-semibold text-slate-700">Visit No.</Label>
               <Input
                 {...register("visit_no")}
                 disabled={isSubmitting}
                 className="rounded-xl border-slate-200 text-xs font-mono"
-                placeholder="VST-2026-XXXX"
+                placeholder="V-XXXX"
               />
               {errors.visit_no && (
                 <p className="text-[10px] text-red-500 font-medium">{errors.visit_no.message}</p>

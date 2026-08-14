@@ -1,7 +1,7 @@
 // app/(dashboard)/technician/patients/_components/PatientForm.tsx
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Loader2 } from "lucide-react";
@@ -42,7 +42,7 @@ export default function PatientForm({ onSuccess }: PatientFormProps) {
       email: "",
       phone: "",
       dob: "",
-      gender: "M",
+      gender: "ALL",
       address: "",
       mrn: "",
     },
@@ -57,12 +57,12 @@ export default function PatientForm({ onSuccess }: PatientFormProps) {
     setIsSubmitting(true);
     try {
       await patientService.createPatient(values);
-      toast.success("New patient record created successfully.");
+      toast.success("New patient created successfully.");
       onSuccess();
       handleClose();
     } catch (error: any) {
       const serverMessages = error.response?.data?.messages;
-      const errorMsg = serverMessages ? serverMessages.join(", ") : "Operation process rejected.";
+      const errorMsg = serverMessages ? serverMessages.join(", ") : "Operation failed.";
       toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
@@ -87,7 +87,7 @@ export default function PatientForm({ onSuccess }: PatientFormProps) {
               Add New Patient
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Enter the required information to create a new patient record in the system.
+              Enter the required information to create a new patient in the system.
             </DialogDescription>
           </DialogHeader>
 
@@ -137,8 +137,9 @@ export default function PatientForm({ onSuccess }: PatientFormProps) {
                 <select 
                   {...register("gender")} 
                   disabled={isSubmitting} 
-                  className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                  className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-slate-700"
                 >
+                  <option value="ALL">Select a Gender</option>
                   <option value="M">Male</option>
                   <option value="F">Female</option>
                   <option value="O">Other</option>

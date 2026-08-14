@@ -1,3 +1,4 @@
+// app/(dashboard)/technician/patients/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -30,7 +31,7 @@ export default function PatientsPage() {
         setPatients(response.data);
       }
     } catch (error) {
-      console.error("Critical error reading patient profiles:", error);
+      console.error("Couldn’t load patients:", error);
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +96,7 @@ export default function PatientsPage() {
                     <div className="flex flex-col items-center justify-center space-y-1">
                       <ShieldAlert className="h-6 w-6 text-slate-300" />
                       <p className="font-medium text-slate-500">
-                        No active medical profiles located inside registries.
+                        No active patients found.
                       </p>
                     </div>
                   </TableCell>

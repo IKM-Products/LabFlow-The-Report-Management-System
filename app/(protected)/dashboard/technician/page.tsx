@@ -1,9 +1,9 @@
+// app/(protected)/dashboard/technician/page.tsx
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
-  Users,
   Package,
   MapPin,
   Loader2,
@@ -13,8 +13,6 @@ import {
   CheckCircle2,
   AlertCircle,
   UserRound,
-  FilePlus,
-  CalendarPlus,
 } from "lucide-react";
 
 interface TechnicianMetrics {
@@ -154,7 +152,7 @@ export default function TechnicianDashboardPage() {
     try {
       const [patientsRes, ordersRes, visitsRes] = await Promise.allSettled([
         fetch(`${BASE_URL}/patient`, fetchOpts),
-        fetch(`${BASE_URL}/order`, fetchOpts),
+        fetch(`${BASE_URL}/order/list`, fetchOpts),
         fetch(`${BASE_URL}/visit`, fetchOpts),
       ]);
 
@@ -293,7 +291,7 @@ export default function TechnicianDashboardPage() {
       }, 1200);
     } catch (err: any) {
       console.error("[Technician Quick Action Error]:", err);
-      setFormError(err.message || "An unexpected error occurred. Please try again.");
+      setFormError(err.message || "Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -437,7 +435,7 @@ export default function TechnicianDashboardPage() {
                   {activeModal === "order" && "Create New Lab Order"}
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  {activeModal === "patient" && "Enter details to register a new patient."}
+                  {activeModal === "patient" && "Enter the required information to create a new patient record in the system."}
                   {activeModal === "visit" && "Log a new visit entry for a patient."}
                   {activeModal === "order" && "Generate a new laboratory order."}
                 </p>

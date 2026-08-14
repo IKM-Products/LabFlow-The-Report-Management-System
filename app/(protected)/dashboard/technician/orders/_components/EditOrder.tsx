@@ -123,10 +123,10 @@ export default function EditOrder({ order, onSuccess }: EditOrderProps) {
       <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight">
-            Modify Order Parameters
+            Edit Order
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Alter tracking metadata profiles for specific diagnostic units.
+            Edit the order information in the system.
           </DialogDescription>
         </DialogHeader>
 
@@ -135,7 +135,7 @@ export default function EditOrder({ order, onSuccess }: EditOrderProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs font-semibold text-slate-700">
-                Adjusted Pricing
+                Price
               </Label>
               <Input
                 type="number"
@@ -153,7 +153,7 @@ export default function EditOrder({ order, onSuccess }: EditOrderProps) {
 
             <div className="space-y-1">
               <Label className="text-xs font-semibold text-slate-700">
-                Workflow Status
+                Order Status
               </Label>
               <select
                 {...register("status")}
@@ -185,12 +185,12 @@ export default function EditOrder({ order, onSuccess }: EditOrderProps) {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25 cursor-pointer"
+              className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25 cursor-pointer"
             >
               {isSubmitting ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
               ) : (
-                "Save Shifts"
+                "Save"
               )}
             </Button>
           </div>

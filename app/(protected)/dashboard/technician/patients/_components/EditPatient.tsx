@@ -53,12 +53,12 @@ export default function EditPatient({ patient, onSuccess }: EditPatientProps) {
     setIsSubmitting(true);
     try {
       await patientService.updatePatient(patient.id, values);
-      toast.success("Patient profile updated successfully.");
+      toast.success("Patient updated successfully.");
       onSuccess();
       setIsOpen(false);
     } catch (error: any) {
       const serverMessages = error.response?.data?.messages;
-      const errorMsg = serverMessages ? serverMessages.join(", ") : "Operation process rejected.";
+      const errorMsg = serverMessages ? serverMessages.join(", ") : "Operation failed.";
       toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
@@ -134,6 +134,7 @@ export default function EditPatient({ patient, onSuccess }: EditPatientProps) {
                   disabled={isSubmitting} 
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                 >
+                  <option value="ALL">Select a Gender</option>
                   <option value="M">Male</option>
                   <option value="F">Female</option>
                   <option value="O">Other</option>
@@ -151,7 +152,7 @@ export default function EditPatient({ patient, onSuccess }: EditPatientProps) {
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting} className="rounded-xl text-xs h-10">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">
+              <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs h-10 px-4 font-bold shadow-xs min-w-25">
                 {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
               </Button>
             </div>

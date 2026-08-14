@@ -1,5 +1,3 @@
-// app/(protected)/dashboard/technician/visits/_components/VisitForm.tsx
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -58,7 +56,6 @@ export default function VisitForm({ defaultPatientId = "", onSuccess }: VisitFor
     },
   });
 
-  // Keep patient_id form value in sync when defaultPatientId prop changes
   useEffect(() => {
     if (defaultPatientId) {
       setValue("patient_id", defaultPatientId);
@@ -82,10 +79,26 @@ export default function VisitForm({ defaultPatientId = "", onSuccess }: VisitFor
             ? patientsRes.value
             : (patientsRes.value as any)?.data || [];
 
-          const formattedPatients = rawPatients.map((p: any) => ({
-            id: p.patient_id || p.id,
-            name: p.full_name || p.patient_name || p.name || "Unknown Patient",
-          }));
+          const formattedPatients = rawPatients.map((p: any) => {
+            const patientName =
+              p.full_name ||
+              p.patient_name ||
+              (p.first_name
+                ? `${p.first_name} ${p.last_name || ""}`.trim()
+                : null) ||
+              p.name ||
+              p.user?.full_name ||
+              (p.user?.first_name
+                ? `${p.user.first_name} ${p.user.last_name || ""}`.trim()
+                : null) ||
+              p.user?.name ||
+              "Unknown Patient";
+
+            return {
+              id: p.patient_id || p.id,
+              name: patientName,
+            };
+          });
           setPatients(formattedPatients);
         }
 
@@ -94,10 +107,25 @@ export default function VisitForm({ defaultPatientId = "", onSuccess }: VisitFor
             ? doctorsRes.value
             : (doctorsRes.value as any)?.data || [];
 
-          const formattedDoctors = rawDoctors.map((d: any) => ({
-            id: d.doctor_id || d.id,
-            name: d.full_name || d.doctor_name || d.name || `Dr. ${d.first_name || ""} ${d.last_name || ""}`.trim(),
-          }));
+          const formattedDoctors = rawDoctors.map((d: any) => {
+            const doctorName =
+              d.full_name ||
+              d.doctor_name ||
+              (d.first_name
+                ? `${d.first_name} ${d.last_name || ""}`.trim()
+                : null) ||
+              d.name ||
+              d.user?.full_name ||
+              (d.user?.first_name
+                ? `${d.user.first_name} ${d.user.last_name || ""}`.trim()
+                : null) ||
+              "Unknown Doctor";
+
+            return {
+              id: d.doctor_id || d.id,
+              name: doctorName.startsWith("Dr.") ? doctorName : `Dr. ${doctorName}`,
+            };
+          });
           setDoctors(formattedDoctors);
         }
       } catch (error) {
@@ -123,7 +151,6 @@ export default function VisitForm({ defaultPatientId = "", onSuccess }: VisitFor
   const onSubmit = async (values: CreateVisitFormValues) => {
     setIsSubmitting(true);
     try {
-      // Convert empty strings ("") to null so backend validators accept optional fields
       const payload = Object.fromEntries(
         Object.entries(values).map(([key, val]) => [
           key,
@@ -166,18 +193,18 @@ export default function VisitForm({ defaultPatientId = "", onSuccess }: VisitFor
               Add New Visit
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Select the patient and doctor to log a new clinical visit in the system.
+              Enter the required information to create a new visit in the system.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Visit Number</Label>
+              <Label className="text-xs font-semibold text-slate-700">Visit No.</Label>
               <Input
                 {...register("visit_no")}
                 disabled={isSubmitting}
                 className="rounded-xl border-slate-200 text-xs font-mono"
-                placeholder="VST-2026-XXXX"
+                placeholder="V-XXXX"
               />
               {errors.visit_no && (
                 <p className="text-[10px] text-red-500 font-medium">{errors.visit_no.message}</p>
@@ -186,14 +213,14 @@ export default function VisitForm({ defaultPatientId = "", onSuccess }: VisitFor
 
             {/* Select Patient Dropdown */}
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Patient</Label>
+              <Label className="text-xs font-semibold text-slate-700">Patient Name</Label>
               <select
                 {...register("patient_id")}
                 disabled={isSubmitting || isLoadingOptions}
                 className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-slate-950 disabled:opacity-50 cursor-pointer"
               >
                 <option value="">
-                  {isLoadingOptions ? "Loading patients..." : "-- Select Patient --"}
+                  {isLoadingOptions ? "Loading patients..." : "Select a Patient"}
                 </option>
                 {patients.map((patient) => (
                   <option key={patient.id} value={patient.id}>
@@ -209,14 +236,14 @@ export default function VisitForm({ defaultPatientId = "", onSuccess }: VisitFor
             <div className="grid grid-cols-2 gap-3">
               {/* Select Doctor Dropdown */}
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">Attending Doctor</Label>
+                <Label className="text-xs font-semibold text-slate-700">Referring Doctor</Label>
                 <select
                   {...register("doctor_id")}
                   disabled={isSubmitting || isLoadingOptions}
                   className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-slate-950 disabled:opacity-50 cursor-pointer"
                 >
                   <option value="">
-                    {isLoadingOptions ? "Loading..." : "-- Select Doctor --"}
+                    {isLoadingOptions ? "Loading..." : "Select a Doctor"}
                   </option>
                   {doctors.map((doctor) => (
                     <option key={doctor.id} value={doctor.id}>
