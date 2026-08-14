@@ -50,7 +50,6 @@ export default function LoginPage() {
         const session = await res.json();
         
         if (session?.userId) {
-          // Normalize role check across common backend keys (ROLE_ADMIN, ADMIN, admin, etc.)
           const rawRole = (
             session.userType ||
             session.role ||
@@ -69,7 +68,7 @@ export default function LoginPage() {
         }
       }
     } catch (err) {
-      setGlobalErrors(["Fatal synchronization breakdown crossing gateway route boundaries."]);
+      setGlobalErrors(["Sync failed while crossing gateway routes."]);
       setIsLoading(false);
     }
   };

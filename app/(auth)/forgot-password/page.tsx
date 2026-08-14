@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, AlertTriangle, FlaskConical, ArrowLeft } from "lucide-react";
@@ -13,7 +13,7 @@ import { ForgotPasswordSchema } from "@/schemas/auth.schema";
 
 const ForgotPasswordFormSchema = ForgotPasswordSchema.extend({
   acceptTerms: z.boolean().refine((val) => val === true, {
-    message: "Please confirm that you are authorized to request a password reset.",
+    message: "Please confirm you’re authorized to reset the password.",
   }),
 });
 
@@ -56,9 +56,11 @@ export default function ForgotPasswordPage() {
           duration: 8000,
         });
 
-        router.push(`/reset-password?email=${encodeURIComponent(data.email)}`);
+        router.push(
+          `/reset-password?email=${encodeURIComponent(data.email)}&otp=${encodeURIComponent(otpCode)}`
+        );
       } else {
-        setGlobalErrors(["Failed to process password reset request."]);
+        setGlobalErrors(["Failed to forget password. Please try again."]);
       }
     } catch (err: any) {
       const apiMessages = err?.response?.data?.messages;
@@ -67,7 +69,7 @@ export default function ForgotPasswordPage() {
       } else if (err?.response?.data?.message) {
         setGlobalErrors([err.response.data.message]);
       } else {
-        setGlobalErrors(["An error occurred while requesting password reset. Please try again."]);
+        setGlobalErrors(["Password reset failed while processing the request."]);
       }
     } finally {
       setIsLoading(false);
@@ -207,7 +209,7 @@ export default function ForgotPasswordPage() {
             <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 flex gap-3 items-start animate-fade-in">
               <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
               <div className="space-y-0.5">
-                <p className="text-xs font-bold text-rose-950">Reset Request Failed</p>
+                <p className="text-xs font-bold text-rose-950">Password Reset Request Failed</p>
                 <ul className="list-none text-[11px] text-rose-700 font-medium space-y-0.5">
                   {globalErrors.map((msg, i) => (
                     <li key={i}>{msg}</li>
@@ -271,10 +273,10 @@ export default function ForgotPasswordPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Sending password reset email...</span>
+                  <span>Preparing your password reset...</span>
                 </>
               ) : (
-                <span>Send Reset Link</span>
+                <span>Send Reset Code</span>
               )}
             </button>
           </form>

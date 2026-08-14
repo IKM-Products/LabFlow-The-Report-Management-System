@@ -10,10 +10,10 @@ import * as z from "zod";
 import Link from "next/link";
 
 const SignupSchema = z.object({
-  email: z.string().trim().min(1, "Email address is required.").pipe(z.email("Invalid email address format.")),
+  email: z.string().trim().min(1, "Email address is required.").pipe(z.email("Please enter a valid email address.")),
   first_name: z.string().min(1, "First name is required."),
   last_name: z.string().min(1, "Last name is required."),
-  password: z.string().min(8, "Password must be at least 6 characters long."),
+  password: z.string().min(8, "Password must be at least 8 characters long."),
   phone: z.string().min(10, "Please enter a valid phone number."),
   role_name: z.enum(["ROLE_USER", "ROLE_TECHNICIAN", "ROLE_ADMIN"], {
     message: "Please select a valid role.",
@@ -64,7 +64,7 @@ export default function SignupPage() {
         }, 2000);
       }
     } catch (err) {
-      setGlobalErrors(["Failed to process signup request. Please try again."]);
+      setGlobalErrors(["Failed to sign-up. Please try again."]);
       setIsLoading(false);
     }
   };
@@ -230,7 +230,7 @@ export default function SignupPage() {
                 type="email"
                 {...register("email")}
                 disabled={isLoading || isSuccess}
-                placeholder="Email Address"
+                placeholder="Email"
                 className="w-full h-13 px-6 text-sm font-medium rounded-full border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all disabled:opacity-60 bg-white"
               />
               {errors.email && <p className="text-[10px] text-rose-600 font-semibold px-4 mt-0.5">{errors.email.message}</p>}

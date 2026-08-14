@@ -1,6 +1,7 @@
+// app/(auth)/reset-password/page.tsx
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, AlertTriangle, CheckCircle2, FlaskConical, ArrowLeft, Eye, EyeOff } from "lucide-react";
@@ -34,6 +35,7 @@ function ResetPasswordContent() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(ResetPasswordFormSchema),
@@ -45,6 +47,15 @@ function ResetPasswordContent() {
       logoutAllDevices: true,
     },
   });
+
+  useEffect(() => {
+    if (initialEmail) {
+      setValue("email", initialEmail);
+    }
+    if (initialOtp) {
+      setValue("otp", initialOtp);
+    }
+  }, [initialEmail, initialOtp, setValue]);
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
@@ -59,7 +70,7 @@ function ResetPasswordContent() {
       if (response.success) {
         setIsSubmitted(true);
       } else {
-        setGlobalErrors(["Failed to update password."]);
+        setGlobalErrors(["Failed to reset password. Please try again."]);
       }
     } catch (err: any) {
       const apiMessages = err?.response?.data?.messages;
@@ -68,7 +79,7 @@ function ResetPasswordContent() {
       } else if (err?.response?.data?.message) {
         setGlobalErrors([err.response.data.message]);
       } else {
-        setGlobalErrors(["An error occurred while resetting password. Please try again."]);
+        setGlobalErrors(["Password reset failed while completing the request."]);
       }
     } finally {
       setIsLoading(false);
@@ -123,7 +134,7 @@ function ResetPasswordContent() {
                   type="text"
                   {...register("otp")}
                   disabled={isLoading}
-                  placeholder="OTP / Verification Code"
+                  placeholder={initialOtp ? `OTP: ${initialOtp}` : "OTP / Verification Code"}
                   className="w-full h-13 px-6 text-sm font-medium rounded-full border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all disabled:opacity-60 bg-white font-mono"
                 />
               </div>
@@ -207,7 +218,7 @@ function ResetPasswordContent() {
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Updating password...</span>
+                  <span>Preparing your password update...</span>
                 </>
               ) : (
                 <span>Reset Password</span>
@@ -222,7 +233,7 @@ function ResetPasswordContent() {
             <CheckCircle2 className="h-7 w-7" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-3xl font-semibold text-slate-900 tracking-tight">Password updated</h2>
+            <h2 className="text-3xl font-semibold text-slate-900 tracking-tight">Password Updated!</h2>
             <p className="text-xs font-medium text-slate-500 leading-relaxed">
               Your password has been successfully reset. You can now sign in with your new credentials.
             </p>
