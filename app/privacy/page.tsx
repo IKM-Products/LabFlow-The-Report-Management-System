@@ -1,6 +1,5 @@
-import React from "react";
 import Link from "next/link";
-import { ArrowLeft, FlaskConical, ShieldCheck, Lock } from "lucide-react";
+import { ArrowLeft, FlaskConical, ShieldCheck } from "lucide-react";
 
 export default function PrivacyPolicyPage() {
   return (
@@ -8,16 +7,18 @@ export default function PrivacyPolicyPage() {
       {/* Header Bar */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-20">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 shadow-md shadow-emerald-500/20">
-              <FlaskConical className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-3 cursor-pointer select-none group">
+            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30">
+              <div className="absolute inset-0 rounded-xl bg-emerald-400/40 blur-md animate-pulse" />
+              <FlaskConical className="relative w-5 h-5 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 animate-bounce" />
             </div>
-            <span className="text-lg font-bold tracking-tight bg-linear-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+
+            <span className="text-xl font-bold tracking-tight bg-linear-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
               LabFlow
             </span>
           </div>
           <Link
-            href="/login"
+            href="/signup"
             className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -29,15 +30,15 @@ export default function PrivacyPolicyPage() {
       {/* Main Content Area */}
       <main className="max-w-4xl mx-auto px-6 py-12 w-full flex-1 space-y-10">
         <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/60 text-emerald-700 text-xs font-semibold">
-            <ShieldCheck className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/60 text-slate-600 text-xs font-semibold">
+            <ShieldCheck className="w-3.5 h-3.5 text-slate-600" />
             <span>Data Protection</span>
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
             Privacy Policy
           </h1>
-          <p className="text-sm font-medium text-slate-500">
-            Last updated: August 14, 2026
+          <p className="text-sm mt-1 text-slate-500">
+            Please review this Privacy Policy to understand how your information is collected, used, protected, and managed when using this system. Thank you!
           </p>
         </div>
 
@@ -48,7 +49,7 @@ export default function PrivacyPolicyPage() {
               1. Information We Collect
             </h2>
             <p>
-              We collect user account details (such as your registered email address and institutional affiliations) and diagnostic report data processed through the LabFlow platform to facilitate laboratory workflows.
+              We collect user account details and diagnostic report data processed through the LabFlow platform to support laboratory operations and reporting processes.
             </p>
           </section>
 
@@ -64,7 +65,7 @@ export default function PrivacyPolicyPage() {
               <li>Generating and organizing lab diagnostic reports.</li>
               <li>Authenticating users and providing secure account management.</li>
               <li>Delivering automated password reset OTP tokens and security updates.</li>
-              <li>Improving platform speed and throughput performance.</li>
+              <li>Improving platform speed and overall performance.</li>
             </ul>
           </section>
 
@@ -74,7 +75,7 @@ export default function PrivacyPolicyPage() {
               3. Data Encryption & Security
             </h2>
             <p>
-              LabFlow implements industry-standard encryption protocols for data in transit and at rest. Patient information and login security verification tokens are processed with stringent access controls.
+              LabFlow implements industry-standard encryption protocols for data in transit and at rest. Patient information and login security verification tokens are processed with strict access controls.
             </p>
           </section>
 
@@ -84,7 +85,7 @@ export default function PrivacyPolicyPage() {
               4. Data Sharing & Third Parties
             </h2>
             <p>
-              We do not sell or rent personal or medical diagnostic data to third parties. Data is shared only with authorized service integrations necessary for platform functionality (e.g., transactional email/OTP services).
+              We do not sell or rent personal or medical diagnostic data to third parties. Data is shared only with authorized service integrations necessary for platform functionality.
             </p>
           </section>
 
@@ -106,7 +107,7 @@ export default function PrivacyPolicyPage() {
             <p>
               If you have any privacy-related queries or security concerns, please email us at{" "}
               <a href="mailto:privacy@labflow.com" className="text-emerald-600 underline font-medium">
-                privacy@labflow.com
+                labflowsystem@gmail.com
               </a>.
             </p>
           </section>
@@ -115,8 +116,8 @@ export default function PrivacyPolicyPage() {
 
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-6">
-        <div className="max-w-5xl mx-auto px-6 text-center text-xs font-medium text-slate-400">
-          © 2026 LabFlow Inc. All rights reserved.
+        <div className="max-w-5xl mx-auto px-6 text-center text-[11px] font-medium text-slate-400">
+          © 2026 LabFlow Inc.
         </div>
       </footer>
     </div>
