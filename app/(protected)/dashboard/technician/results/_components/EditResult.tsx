@@ -132,11 +132,10 @@ export default function EditResult({ result, onSuccess }: EditResultProps) {
       <DialogContent className="max-w-md bg-white rounded-2xl border border-slate-200 p-6 shadow-xl">
         <DialogHeader>
           <DialogTitle className="text-base font-bold text-slate-900 tracking-tight">
-            Modify Result
+            Edit Result
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Updating result for{" "}
-            <span className="font-semibold text-slate-800">{displayName}</span>.
+            Edit the result information in the system.
           </DialogDescription>
         </DialogHeader>
 
@@ -155,33 +154,23 @@ export default function EditResult({ result, onSuccess }: EditResultProps) {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Flag</Label>
+          <div className="space-y-1">
+            <Label className="text-xs font-semibold text-slate-700">Result Status</Label>
               <select
                 {...register("flag")}
                 disabled={isSubmitting}
-                className="w-full h-9.5 px-3 rounded-xl border border-slate-200 bg-white text-xs focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                className="w-full h-9.5 px-3 rounded-xl border border-slate-200 bg-white text-xs focus:outline-hidden focus:ring-1 focus:ring-slate-700"
               >
+                <option value="">Select a Result Status</option>
                 <option value="normal">Normal</option>
                 <option value="low">Low</option>
                 <option value="high">High</option>
                 <option value="critical">Critical</option>
+                <option value="na">N/A</option>
               </select>
               {errors.flag && (
                 <p className="text-[10px] text-red-500 font-medium">{errors.flag.message}</p>
               )}
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Verified By</Label>
-              <Input
-                value={technicianDisplayName}
-                disabled={true}
-                readOnly
-                className="rounded-xl text-xs h-9.5 bg-slate-50 text-slate-600 cursor-not-allowed"
-              />
-            </div>
           </div>
 
           <div className="space-y-1">

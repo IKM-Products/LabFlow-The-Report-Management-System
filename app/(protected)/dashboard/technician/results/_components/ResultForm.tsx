@@ -2,16 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  X,
   Plus,
   Trash2,
   AlertCircle,
   CheckCircle2,
   Loader2,
-  Building2,
-  FlaskConical,
-  ClipboardList,
-  UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,7 +14,17 @@ import { departmentService } from "@/services/department.service";
 import { testCatalogService } from "@/services/test-catalog.service";
 import { testParameterService } from "@/services/test-parameter.service";
 import { resultService } from "@/services/result.service";
+
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const extractArray = (res: any): any[] => {
   if (!res) return [];
@@ -30,7 +35,7 @@ const extractArray = (res: any): any[] => {
   return [];
 };
 
-export type FlagType = "low" | "normal" | "high" | "critical" | "na";
+export type FlagType = "low" | "normal" | "high" | "critical" | "na" | "";
 
 export interface ParameterRow {
   id: string;
@@ -47,9 +52,12 @@ interface ResultFormProps {
   orderId?: string;
   technicianId?: string;
   technicianName?: string;
-  isOpen?: boolean;
-  onClose?: () => void;
+  open?: boolean;
+  isOpen?: boolean; 
+  onOpenChange?: (open: boolean) => void;
+  onClose?: () => void; 
   onSuccess?: () => void;
+  showTrigger?: boolean;
 }
 
 export default function ResultForm({
@@ -57,13 +65,28 @@ export default function ResultForm({
   orderId,
   technicianId,
   technicianName = "Technician",
-  isOpen: controlledIsOpen,
-  onClose: controlledOnClose,
+  open: externalOpen,
+  isOpen: legacyIsOpen,
+  onOpenChange: externalOnOpenChange,
+  onClose: legacyOnClose,
   onSuccess,
+  showTrigger = true,
 }: ResultFormProps) {
-  const [internalIsOpen, setInternalIsOpen] = useState(false);
-  const isControlled = typeof controlledIsOpen !== "undefined";
-  const isModalOpen = isControlled ? controlledIsOpen : internalIsOpen;
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const isControlled = externalOpen !== undefined || legacyIsOpen !== undefined;
+  const isOpen = externalOpen ?? legacyIsOpen ?? internalOpen;
+
+  const setIsOpen = (value: boolean) => {
+    if (isControlled) {
+      externalOnOpenChange?.(value);
+      if (!value && legacyOnClose) {
+        legacyOnClose();
+      }
+    } else {
+      setInternalOpen(value);
+    }
+  };
 
   const activeOrderId = orderId || defaultOrderId || "";
 
@@ -85,7 +108,7 @@ export default function ResultForm({
       parameter_name: "",
       unit: "",
       result_value: "",
-      flag: "normal",
+      flag: "",
       remarks: "",
     },
   ]);
@@ -114,38 +137,16 @@ export default function ResultForm({
         setDepartments(deptList);
       } catch (err: any) {
         console.error("Failed to load departments:", err);
-        setErrorMsg("Failed to load departments. Please check backend connection.");
+        setErrorMsg("Failed to load departments. Please try again later.");
       } finally {
         setLoadingDepts(false);
       }
     };
 
-    if (isModalOpen) {
+    if (isOpen) {
       fetchDepartments();
     }
-  }, [isModalOpen]);
-
-  const handleClose = () => {
-    if (!isControlled) {
-      setInternalIsOpen(false);
-    }
-    setErrorMsg(null);
-    setSuccessMsg(null);
-    setSelectedDeptId("");
-    setSelectedCatalogId("");
-    setTestCatalogs([]);
-    setAvailableParameters([]);
-    resetParameterRows();
-    if (controlledOnClose) controlledOnClose();
-  };
-
-  const handleOpenModal = () => {
-    if (!activeOrderId) {
-      toast.error("Please select a Work Order before adding diagnostic results.");
-      return;
-    }
-    setInternalIsOpen(true);
-  };
+  }, [isOpen]);
 
   const resetParameterRows = () => {
     setParameterRows([
@@ -155,10 +156,30 @@ export default function ResultForm({
         parameter_name: "",
         unit: "",
         result_value: "",
-        flag: "normal",
+        flag: "",
         remarks: "",
       },
     ]);
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setSelectedDeptId("");
+    setSelectedCatalogId("");
+    setTestCatalogs([]);
+    setAvailableParameters([]);
+    resetParameterRows();
+    if (legacyOnClose) legacyOnClose();
+  };
+
+  const handleOpenModal = () => {
+    if (!activeOrderId) {
+      toast.error("Please select a Work Order before adding diagnostic results.");
+      return;
+    }
+    setIsOpen(true);
   };
 
   const handleDepartmentChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -213,7 +234,7 @@ export default function ResultForm({
           parameter_name: param.parameter_name || param.name || "",
           unit: param.unit || "",
           result_value: "",
-          flag: "normal",
+          flag: "",
           remarks: "",
         }));
         setParameterRows(initialRows);
@@ -237,7 +258,7 @@ export default function ResultForm({
         parameter_name: "",
         unit: "",
         result_value: "",
-        flag: "normal",
+        flag: "",
         remarks: "",
       },
     ]);
@@ -278,9 +299,13 @@ export default function ResultForm({
       return;
     }
 
-    const invalidRow = parameterRows.find((r) => !r.parameter_id || !r.result_value.trim());
+    const invalidRow = parameterRows.find(
+      (r) => !r.parameter_id || !r.result_value.trim() || !r.flag
+    );
     if (invalidRow) {
-      setErrorMsg("Please ensure all parameter rows have a parameter selected and result value entered.");
+      setErrorMsg(
+        "Please ensure all parameter rows have a parameter, result value, and result status selected."
+      );
       return;
     }
 
@@ -288,7 +313,6 @@ export default function ResultForm({
     setErrorMsg(null);
 
     try {
-      // Key updated from 'parameters' to 'results'
       const payload = {
         order_id: activeOrderId,
         verified_by: verifiedByUuid,
@@ -329,189 +353,155 @@ export default function ResultForm({
 
   return (
     <>
-      {!isControlled && (
+      {showTrigger && !isControlled && (
         <Button
           type="button"
           onClick={handleOpenModal}
-          className="rounded-xl h-10 bg-emerald-600 hover:bg-emerald-600 text-white font-medium text-sm shadow-xs flex items-center gap-2 px-4 cursor-pointer"
+          className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl font-medium shadow-xs text-sm h-10 px-4 transition-colors cursor-pointer inline-flex items-center justify-center gap-2"
         >
           <Plus className="h-4 w-4" />
           <span>Add Result</span>
         </Button>
       )}
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
-            <div className="p-6 border-b border-slate-100 flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100">
-                  <ClipboardList className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">Commit Diagnostic Dataset</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Populate parameter values and flags for order #{activeOrderId}.
-                  </p>
-                </div>
+      <Dialog open={isOpen} onOpenChange={(open) => (!open ? handleClose() : setIsOpen(true))}>
+        <DialogContent className="sm:max-w-4xl bg-white rounded-2xl border border-slate-200 p-6 max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div>
+                <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight">
+                  Add New Result
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-500 mt-0.5">
+                  Enter the required information to create a new result in the system.
+                </DialogDescription>
               </div>
-              <button
-                type="button"
-                onClick={handleClose}
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+            </div>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-6 mt-2">
+            {errorMsg && (
+              <div className="p-3.5 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-2.5 text-rose-700 text-xs font-medium">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            {successMsg && (
+              <div className="p-3.5 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-2.5 text-emerald-600 text-xs font-medium">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                <span>{successMsg}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  Department
+                </Label>
+                <select
+                  value={selectedDeptId}
+                  onChange={handleDepartmentChange}
+                  disabled={loadingDepts}
+                  className="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white text-slate-900 cursor-pointer disabled:bg-slate-100"
+                >
+                  <option value="">
+                    {loadingDepts ? "Loading Departments..." : "Select Department"}
+                  </option>
+                  {departments.map((dept) => (
+                    <option key={dept.dept_id || dept.id} value={dept.dept_id || dept.id}>
+                      {dept.dept_name || dept.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  Test Catalog
+                </Label>
+                <select
+                  value={selectedCatalogId}
+                  onChange={handleCatalogChange}
+                  disabled={!selectedDeptId || loadingCatalogs}
+                  className="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white text-slate-800 cursor-pointer disabled:bg-slate-100"
+                >
+                  <option value="">
+                    {!selectedDeptId
+                      ? "Select a Department First"
+                      : loadingCatalogs
+                      ? "Loading Test Catalogs..."
+                      : testCatalogs.length === 0
+                      ? "No test catalogs found"
+                      : "Select a Test Catalog"}
+                  </option>
+                  {testCatalogs.map((cat) => (
+                    <option
+                      key={cat.test_catalog_id || cat.id}
+                      value={cat.test_catalog_id || cat.id}
+                    >
+                      {cat.test_name || cat.name} {cat.test_code ? `(${cat.test_code})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                    Target Order ID
-                  </span>
-                  <span className="text-xs font-semibold text-slate-800 mt-0.5 block">
-                    {activeOrderId || "No Order Selected"}
-                  </span>
-                </div>
-
-                <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                    Verified By (Technician)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={verifiedByName}
-                      onChange={(e) => setVerifiedByName(e.target.value)}
-                      className="w-full h-9 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-slate-800"
-                    />
-                    <UserCheck className="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
-                  </div>
-                </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handleAddRow}
+                  disabled={!selectedCatalogId || loadingParams}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 px-3 py-1.5 rounded-xl border border-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Parameter Row
+                </button>
               </div>
 
-              {errorMsg && (
-                <div className="p-3.5 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-2.5 text-rose-700 text-xs font-medium">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-                  <span>{errorMsg}</span>
+              {loadingParams ? (
+                <div className="flex h-32 items-center justify-center text-xs font-medium text-slate-400 bg-slate-50 border rounded-2xl animate-pulse">
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Fetching test parameters...
                 </div>
-              )}
-
-              {successMsg && (
-                <div className="p-3.5 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-2.5 text-emerald-700 text-xs font-medium">
-                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-                  <span>{successMsg}</span>
-                </div>
-              )}
-
-              <div className="p-5 bg-blue-50/30 rounded-2xl border border-blue-100/80 space-y-4">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-700">
-                  <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">
-                    1
-                  </span>
-                  Department & Test Catalog Scope
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                      Department
-                    </label>
-                    <select
-                      value={selectedDeptId}
-                      onChange={handleDepartmentChange}
-                      disabled={loadingDepts}
-                      className="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-slate-800 cursor-pointer disabled:bg-slate-100"
+              ) : (
+                <div className="space-y-4">
+                  {parameterRows.map((row, index) => (
+                    <div
+                      key={row.id}
+                      className="p-4 bg-slate-50/70 border border-slate-200/80 rounded-2xl space-y-3"
                     >
-                      <option value="">
-                        {loadingDepts ? "Loading Departments..." : "Select Department"}
-                      </option>
-                      {departments.map((dept) => (
-                        <option key={dept.dept_id || dept.id} value={dept.dept_id || dept.id}>
-                          {dept.dept_name || dept.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                      <FlaskConical className="w-3.5 h-3.5 text-slate-400" />
-                      Test Catalog
-                    </label>
-                    <select
-                      value={selectedCatalogId}
-                      onChange={handleCatalogChange}
-                      disabled={!selectedDeptId || loadingCatalogs}
-                      className="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-slate-800 cursor-pointer disabled:bg-slate-100"
-                    >
-                      <option value="">
-                        {!selectedDeptId
-                          ? "Select Department First"
-                          : loadingCatalogs
-                          ? "Loading Test Catalogs..."
-                          : testCatalogs.length === 0
-                          ? "No catalogs found"
-                          : "Select Test Catalog"}
-                      </option>
-                      {testCatalogs.map((cat) => (
-                        <option
-                          key={cat.test_catalog_id || cat.id}
-                          value={cat.test_catalog_id || cat.id}
+                      <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                          Diagnostic Details #{index + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRow(row.id)}
+                          disabled={parameterRows.length === 1}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors disabled:opacity-30 cursor-pointer"
                         >
-                          {cat.test_name || cat.name} {cat.test_code ? `(${cat.test_code})` : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700">
-                    <span className="text-slate-400">📊</span>
-                    Diagnostic Parameters ({parameterRows.length})
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAddRow}
-                    disabled={!selectedCatalogId || loadingParams}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Add Parameter Row
-                  </button>
-                </div>
-
-                {loadingParams ? (
-                  <div className="flex h-32 items-center justify-center text-xs font-medium text-slate-400 bg-slate-50 border rounded-2xl animate-pulse">
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Fetching test parameters...
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {parameterRows.map((row) => (
-                      <div
-                        key={row.id}
-                        className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center p-3.5 bg-slate-50/60 border border-slate-200/80 rounded-2xl"
-                      >
-                        <div className="sm:col-span-4 space-y-1">
-                          <label className="text-[10px] font-bold uppercase text-slate-500 sm:hidden">
-                            Parameter
-                          </label>
+                      {/* Row 1: Test Parameter & Result Value */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold text-slate-700">
+                            Test Parameter
+                          </Label>
                           <select
                             value={row.parameter_id}
                             onChange={(e) => handleRowChange(row.id, "parameter_id", e.target.value)}
                             disabled={availableParameters.length === 0}
-                            className="w-full h-9 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-slate-800 cursor-pointer disabled:bg-slate-100"
+                            className="w-full h-9 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white text-slate-800 cursor-pointer disabled:bg-slate-100"
                           >
                             <option value="">
                               {availableParameters.length === 0
-                                ? "Select Catalog First"
-                                : "-- Select Parameter --"}
+                                ? "Select a Test Catalog First"
+                                : "Select a Test Parameter"}
                             </option>
                             {availableParameters.map((param) => (
                               <option
@@ -525,100 +515,94 @@ export default function ResultForm({
                           </select>
                         </div>
 
-                        <div className="sm:col-span-3 space-y-1">
-                          <label className="text-[10px] font-bold uppercase text-slate-500 sm:hidden">
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold text-slate-700">
                             Result Value
-                          </label>
+                          </Label>
                           <div className="relative">
-                            <input
+                            <Input
                               type="text"
                               placeholder="Result value"
                               value={row.result_value}
                               onChange={(e) => handleRowChange(row.id, "result_value", e.target.value)}
-                              className="w-full h-9 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-slate-800"
+                              className="h-9 text-xs font-medium rounded-xl border-slate-200 bg-white text-slate-800 pr-12"
                             />
                             {row.unit && (
-                              <span className="absolute right-3 top-2 text-[10px] font-mono text-slate-400 pointer-events-none">
+                              <span className="absolute right-3 top-2 text-[11px] font-mono text-slate-400 pointer-events-none">
                                 {row.unit}
                               </span>
                             )}
                           </div>
                         </div>
+                      </div>
 
-                        <div className="sm:col-span-2 space-y-1">
-                          <label className="text-[10px] font-bold uppercase text-slate-500 sm:hidden">
-                            Flag
-                          </label>
+                      {/* Row 2: Flag & Remarks */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold text-slate-700">
+                            Result Status
+                          </Label>
                           <select
                             value={row.flag}
                             onChange={(e) => handleRowChange(row.id, "flag", e.target.value as FlagType)}
-                            className="w-full h-9 px-2 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-slate-800 cursor-pointer"
+                            className="w-full h-9 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white text-slate-800 cursor-pointer"
                           >
-                            <option value="low">Low</option>
+                            <option value="">Select a Result Status</option>
                             <option value="normal">Normal</option>
+                            <option value="low">Low</option>
                             <option value="high">High</option>
                             <option value="critical">Critical</option>
                             <option value="na">N/A</option>
                           </select>
                         </div>
 
-                        <div className="sm:col-span-2 space-y-1">
-                          <label className="text-[10px] font-bold uppercase text-slate-500 sm:hidden">
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold text-slate-700">
                             Remarks
-                          </label>
-                          <input
+                          </Label>
+                          <Input
                             type="text"
                             placeholder="Remarks"
                             value={row.remarks}
                             onChange={(e) => handleRowChange(row.id, "remarks", e.target.value)}
-                            className="w-full h-9 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-slate-800"
+                            className="h-9 text-xs font-medium rounded-xl border-slate-200 bg-white text-slate-800"
                           />
                         </div>
-
-                        <div className="sm:col-span-1 flex justify-center">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveRow(row.id)}
-                            disabled={parameterRows.length === 1}
-                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors disabled:opacity-30 cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={submitting}
+                className="rounded-xl text-xs h-10 px-5"
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="submit"
+                disabled={submitting || !selectedCatalogId || loadingParams}
+                className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs h-10 px-6 font-bold shadow-xs min-w-28"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                  </>
+                ) : (
+                  "Save"
                 )}
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="px-5 h-10 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={submitting || !selectedCatalogId || loadingParams}
-                  className="px-6 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-colors shadow-xs flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Committing...
-                    </>
-                  ) : (
-                    "Save"
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

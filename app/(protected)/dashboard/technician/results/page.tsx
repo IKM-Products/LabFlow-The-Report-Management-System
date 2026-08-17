@@ -52,7 +52,6 @@ const isUUID = (str: string) =>
 
 // Helper to safely extract technician name while hiding raw user IDs
 const getVerifierName = (item: any): string => {
-  // 1. If verified_by is populated as an object by the backend
   if (item.verified_by && typeof item.verified_by === "object") {
     return (
       item.verified_by.full_name ||
@@ -62,7 +61,6 @@ const getVerifierName = (item: any): string => {
     );
   }
 
-  // 2. Check explicitly returned name fields from the API payload
   const explicitName =
     item.verified_by_name ||
     item.technician_name ||
@@ -72,7 +70,6 @@ const getVerifierName = (item: any): string => {
 
   if (explicitName) return explicitName;
 
-  // 3. Fallback for string value: hide if it's a raw UUID/ID string
   if (typeof item.verified_by === "string" && item.verified_by.trim()) {
     const rawVal = item.verified_by.trim();
     if (isUUID(rawVal) || rawVal.startsWith("usr_") || rawVal.startsWith("user_")) {
@@ -99,36 +96,41 @@ export default function ResultsPage() {
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [isLoadingResults, setIsLoadingResults] = useState(false);
 
+  // Derive selected entity names/labels instead of raw IDs
+  const selectedPatient = patients.find((p) => p.id === selectedPatientId);
+  const selectedVisit = visits.find((v) => v.id === selectedVisitId);
+  const selectedOrder = orders.find((o) => o.id === selectedOrderId);
+
   // 1. Fetch initial patient list on mount
-  useEffect(() => {
-    const loadPatients = async () => {
-      setIsLoadingPatients(true);
-      try {
-        const response: any = await patientService.getPatients();
+  const loadPatients = useCallback(async () => {
+    setIsLoadingPatients(true);
+    try {
+      const response: any = await patientService.getPatients();
 
-        const rawPatients = Array.isArray(response)
-          ? response
-          : response?.data || response?.patients || [];
+      const rawPatients = Array.isArray(response)
+        ? response
+        : response?.data || response?.patients || [];
 
-        const formatted = rawPatients.map((p: any) => ({
-          id: p.patient_id || p.id,
-          name:
-            p.full_name ||
-            `${p.first_name || ""} ${p.last_name || ""}`.trim() ||
-            "Patient Record",
-        }));
+      const formatted = rawPatients.map((p: any) => ({
+        id: p.patient_id || p.id,
+        name:
+          p.full_name ||
+          `${p.first_name || ""} ${p.last_name || ""}`.trim() ||
+          "Patient Record",
+      }));
 
-        setPatients(formatted);
-      } catch (error) {
-        console.error("Error loading patient list:", error);
-        toast.error("Failed to load patient directories.");
-      } finally {
-        setIsLoadingPatients(false);
-      }
-    };
-
-    loadPatients();
+      setPatients(formatted);
+    } catch (error) {
+      console.error("Error loading patient list:", error);
+      toast.error("Failed to load patient directories.");
+    } finally {
+      setIsLoadingPatients(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadPatients();
+  }, [loadPatients]);
 
   // 2. Fetch visits when a patient is selected
   const fetchVisitsByPatient = useCallback(async (patientId: string) => {
@@ -251,8 +253,17 @@ export default function ResultsPage() {
   const handleRefresh = () => {
     if (selectedOrderId) {
       fetchResultsByOrder(selectedOrderId);
+    } else if (selectedVisitId) {
+      fetchOrdersByVisit(selectedVisitId);
+    } else if (selectedPatientId) {
+      fetchVisitsByPatient(selectedPatientId);
+    } else {
+      loadPatients();
     }
   };
+
+  const isAnyLoading =
+    isLoadingPatients || isLoadingVisits || isLoadingOrders || isLoadingResults;
 
   return (
     <div className="space-y-8 p-6">
@@ -268,20 +279,18 @@ export default function ResultsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {selectedOrderId && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isLoadingResults}
-              className="rounded-xl h-10 border-slate-200 text-slate-600"
-            >
-              <RefreshCw
-                className={`h-3.5 w-3.5 ${isLoadingResults ? "animate-spin" : ""}`}
-              />
-              <span>Refresh</span>
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isAnyLoading}
+            className="rounded-xl h-10 border-slate-200 text-slate-600"
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${isAnyLoading ? "animate-spin" : ""}`}
+            />
+            <span>Refresh</span>
+          </Button>
 
           <ResultForm
             defaultOrderId={selectedOrderId}
@@ -354,16 +363,16 @@ export default function ResultsPage() {
                 ? "Loading orders..."
                 : orders.length === 0
                 ? "No orders found"
-                : "Select a Order"}
+                : "Select an Order"}
             </option>
             {orders.map((order) => {
               const refLabel = order.orderRef.toLowerCase().startsWith("order#")
                 ? order.orderRef
-                : `order#${order.orderRef}`;
+                : `Order #${order.orderRef}`;
 
               return (
                 <option key={order.id} value={order.id}>
-                  {refLabel}({order.status})
+                  {refLabel}
                 </option>
               );
             })}
@@ -380,20 +389,23 @@ export default function ResultsPage() {
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
-              {selectedOrderId
-                ? `Showing result records for Work Order ID: ${selectedOrderId}`
-                : selectedVisitId
-                ? `Showing order choices for Visit ID: ${selectedVisitId}`
-                : selectedPatientId
-                ? `Showing visit choices for Patient ID: ${selectedPatientId}`
-                : "List of all Results."}
+              {selectedOrder
+                ? `List of all Result for ${
+                    selectedOrder.orderRef.toLowerCase().startsWith("order#")
+                      ? selectedOrder.orderRef
+                      : `Order #${selectedOrder.orderRef}`
+                  }`
+                : selectedVisit
+                ? `List of all Visit #${selectedVisit.visitNo}`
+                : selectedPatient
+                ? `List of all Visit Choices for ${selectedPatient.name}`
+                : "Select a patient, visit, and order above to view results."}
             </TableCaption>
             <TableHeader>
               <TableRow className="bg-slate-50 border-b border-slate-200">
                 <TableHead className="w-16 font-bold text-slate-600">S.N.</TableHead>
                 <TableHead className="font-bold text-slate-600">Result Value</TableHead>
-                <TableHead className="font-bold text-slate-600">Priority Level</TableHead>
-                <TableHead className="font-bold text-slate-600">Verified By</TableHead>
+                <TableHead className="font-bold text-slate-600">Result Status</TableHead>
                 <TableHead className="font-bold text-slate-600">Remarks</TableHead>
                 <TableHead className="text-right font-bold text-slate-600">Actions</TableHead>
               </TableRow>
@@ -401,16 +413,16 @@ export default function ResultsPage() {
             <TableBody className="divide-y divide-slate-150">
               {results.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-12 text-center text-sm text-slate-400">
+                  <TableCell colSpan={5} className="py-12 text-center text-sm text-slate-400">
                     <div className="flex flex-col items-center justify-center space-y-1">
                       <ShieldAlert className="h-6 w-6 text-slate-300" />
                       <p className="font-medium text-slate-500">
                         {!selectedPatientId
                           ? "Select a patient, visit, and order above to view results."
                           : !selectedVisitId
-                          ? "Select a visit, and order above to view results."
+                          ? "Select a visit and order above to view results."
                           : !selectedOrderId
-                          ? "Select a order above to view results."
+                          ? "Select an order above to view results."
                           : "No result records found for the selected work order."}
                       </p>
                     </div>
@@ -436,19 +448,21 @@ export default function ResultsPage() {
                       <TableCell>
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
-                            item.flag === "normal"
-                              ? "bg-slate-50 text-slate-600 border-slate-50/60"
-                              : item.flag === "critical"
+                            item.flag?.toLowerCase() === "normal"
+                              ? "bg-emerald-50 text-slate-600 border-emerald-50/60"
+                              : item.flag?.toLowerCase() === "critical"
                               ? "bg-rose-50 text-slate-600 border-rose-50/60 animate-pulse"
-                              : "bg-amber-50 text-slate-600 border-amber-50/60"
+                              : item.flag?.toLowerCase() === "high"
+                              ? "bg-amber-50 text-slate-600 border-amber-50/60"
+                              : item.flag?.toLowerCase() === "low"
+                              ? "bg-sky-50 text-slate-600 border-sky-50/60"
+                              : item.flag?.toLowerCase() === "n/a"
+                              ? "bg-slate-100 text-slate-600 border-slate-50/60"
+                              : "bg-slate-50 text-slate-600 border-slate-50/60"
                           }`}
                         >
                           {item.flag || "normal"}
                         </span>
-                      </TableCell>
-
-                      <TableCell className="text-xs font-medium text-slate-700">
-                        {getVerifierName(item)}
                       </TableCell>
 
                       <TableCell className="text-xs text-slate-500 max-w-xs truncate">
