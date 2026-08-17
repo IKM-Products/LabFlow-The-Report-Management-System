@@ -223,7 +223,7 @@ export default function ReportsPage() {
             {patients.map((patient: any, index: number) => {
               const pId = getEntityId(patient);
               return (
-                <option key={pId || `patient-${index}`} value={pId}>
+                <option key={`patient-${pId || "item"}-${index}`} value={pId}>
                   {getPatientDisplayName(patient)}{" "}
                   {patient.patient_code ? `(${patient.patient_code})` : ""}
                 </option>
@@ -253,7 +253,7 @@ export default function ReportsPage() {
             {visits.map((visit, index) => {
               const vId = getEntityId(visit);
               return (
-                <option key={vId || `visit-${index}`} value={vId}>
+                <option key={`visit-${vId || "item"}-${index}`} value={vId}>
                   {visit.visit_no ? `Visit #${visit.visit_no}` : `Visit #${index + 1}`}
                 </option>
               );
@@ -272,9 +272,9 @@ export default function ReportsPage() {
           <Table>
             <TableCaption className="text-xs text-slate-400 pb-4">
               {selectedVisitId
-                ? `Showing report records for ${currentPatientName ? `${currentPatientName} (${currentVisitNo})` : currentVisitNo}`
+                ? `List of all Report for ${currentPatientName ? `${currentPatientName} (${currentVisitNo})` : currentVisitNo}`
                 : selectedPatientId
-                ? `Showing visit choices for Patient: ${currentPatientName}`
+                ? `List of all Visit Choices for ${currentPatientName}`
                 : "List of all Reports."}
             </TableCaption>
             <TableHeader>
@@ -303,10 +303,12 @@ export default function ReportsPage() {
                 </TableRow>
               ) : (
                 reports.map((report, idx) => {
-                  const reportKey = getEntityId(report) || `report-${idx}`;
+                  const reportKey = getEntityId(report);
+                  const statusLower = report.status?.toLowerCase();
+
                   return (
                     <TableRow
-                      key={reportKey}
+                      key={`report-${reportKey || "item"}-${idx}`}
                       className="hover:bg-slate-50/60 transition-colors group"
                     >
                       <TableCell className="font-mono text-xs text-slate-400">
@@ -319,16 +321,14 @@ export default function ReportsPage() {
 
                       <TableCell>
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
-                            report.status?.toLowerCase() === "verified" ||
-                            report.status?.toLowerCase() === "completed"
+                          className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold border ${
+                            statusLower === "draft"
+                              ? "bg-emerald-50 text-slate-600 border-emerald-50/60"
+                              : statusLower === "final" || statusLower === "active"
                               ? "bg-slate-50 text-slate-600 border-slate-50/60"
-                              : report.status?.toLowerCase() === "in_progress" ||
-                                report.status?.toLowerCase() === "active"
-                              ? "bg-emerald-50 text-slate-600 border-slate-50/60"
-                              : report.status?.toLowerCase() === "cancelled"
-                              ? "bg-rose-50 text-slate-600 border-slate-50/60"
-                              : "bg-amber-50 text-slate-600 border-slate-50/60"
+                              : statusLower === "amended"
+                              ? "bg-rose-50 text-slate-600 border-rose-50/60"
+                              : "bg-amber-50 text-slate-600 border-amber-50/60"
                           }`}
                         >
                           {report.status || "N/A"}
@@ -339,6 +339,7 @@ export default function ReportsPage() {
                         <ReportPrint
                           reportId={report.id}
                           reportNo={report.report_no}
+                          onSuccess={() => fetchReports(selectedVisitId)}
                         />
                         <EditReport
                           report={report}

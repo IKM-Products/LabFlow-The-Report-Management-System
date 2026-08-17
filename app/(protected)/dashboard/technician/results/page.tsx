@@ -6,7 +6,7 @@ import {
   ShieldAlert,
   UserRound,
   MapPin,
-  ClipboardList,
+  Package,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -340,7 +340,7 @@ export default function ResultsPage() {
 
         {/* Step 3: Work Order Selection */}
         <div className="relative">
-          <ClipboardList className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
+          <Package className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
           <select
             value={selectedOrderId}
             onChange={handleOrderSelect}
@@ -354,7 +354,7 @@ export default function ResultsPage() {
                 ? "Loading orders..."
                 : orders.length === 0
                 ? "No orders found"
-                : "Select a Work Order"}
+                : "Select a Order"}
             </option>
             {orders.map((order) => {
               const refLabel = order.orderRef.toLowerCase().startsWith("order#")
@@ -437,10 +437,10 @@ export default function ResultsPage() {
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
                             item.flag === "normal"
-                              ? "bg-slate-50 text-slate-600 border-slate-200"
+                              ? "bg-slate-50 text-slate-600 border-slate-50/60"
                               : item.flag === "critical"
-                              ? "bg-rose-50 text-rose-600 border-rose-100 animate-pulse"
-                              : "bg-amber-50 text-amber-600 border-amber-100"
+                              ? "bg-rose-50 text-slate-600 border-rose-50/60 animate-pulse"
+                              : "bg-amber-50 text-slate-600 border-amber-50/60"
                           }`}
                         >
                           {item.flag || "normal"}

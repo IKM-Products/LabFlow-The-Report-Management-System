@@ -1,4 +1,3 @@
-// app/(dashboard)/technician/reports/_components/ReportPrint.tsx
 "use client";
 
 import { useState } from "react";
@@ -26,9 +25,10 @@ import {
 interface ReportPrintProps {
   reportId: string;
   reportNo: string;
+  onSuccess?: () => void;
 }
 
-export default function ReportPrint({ reportId, reportNo }: ReportPrintProps) {
+export default function ReportPrint({ reportId, reportNo, onSuccess }: ReportPrintProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logs, setLogs] = useState<PrintLog[]>([]);
@@ -65,9 +65,14 @@ export default function ReportPrint({ reportId, reportNo }: ReportPrintProps) {
     setIsSubmitting(true);
     try {
       await reportService.createReportPrint(reportId, values);
+      await reportService.updateReport(reportId, {
+        status: "final",
+        pdf_path: ""
+      });
       toast.success("Physical allocation print matrix initialized.");
       reset({ copy_number: 1 });
       fetchPrintLogs();
+      onSuccess?.();
     } catch (error: any) {
       const serverMessages = error.response?.data?.messages;
       const errorMsg = serverMessages ? serverMessages.join(", ") : "Operation failed.";
@@ -79,15 +84,8 @@ export default function ReportPrint({ reportId, reportNo }: ReportPrintProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (!open ? setIsOpen(false) : handleOpenTimeline())}>
-      <DialogTrigger>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 h-8 px-2 border border-transparent hover:border-emerald-100"
-        >
-          <Printer className="h-3.5 w-3.5" />
-        </Button>
+      <DialogTrigger className="inline-flex items-center justify-center rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 h-8 w-8 p-0 border border-transparent hover:border-emerald-100 transition-colors cursor-pointer bg-transparent">
+        <Printer className="h-3.5 w-3.5" />
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-lg bg-white rounded-2xl border border-slate-200 p-6">
@@ -96,13 +94,13 @@ export default function ReportPrint({ reportId, reportNo }: ReportPrintProps) {
             Print Report
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Execute copies logging infrastructure tracking validation rules for {reportNo}.
+            Prepare {reportNo} for printing after validation.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-3 gap-2 items-end mt-2 pb-4 border-b border-slate-100">
           <div className="col-span-2 space-y-1">
-            <Label className="text-xs font-semibold text-slate-700">Copy Quantity Identity</Label>
+            <Label className="text-xs font-semibold text-slate-700">Number of Copies</Label>
             <Input type="number" {...register("copy_number")} disabled={isSubmitting} className="rounded-xl border-slate-200 text-xs" />
           </div>
           <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs h-9 font-bold tracking-wide">
@@ -114,18 +112,17 @@ export default function ReportPrint({ reportId, reportNo }: ReportPrintProps) {
         <div className="mt-2 space-y-2">
           <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
             <History className="h-3.5 w-3.5 text-slate-500" />
-            Historical Output Sequences
+            Output History
           </h3>
           <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
             {isLoadingLogs ? (
               <div className="flex justify-center p-6"><Loader2 className="h-4 w-4 text-slate-400 animate-spin" /></div>
             ) : logs.length === 0 ? (
-              <p className="text-[11px] text-slate-400 font-medium p-4 text-center">No structural print sequences cataloged.</p>
+              <p className="text-[11px] text-slate-400 font-medium p-4 text-center">No Output History Found</p>
             ) : (
               logs.map((log) => (
                 <div key={log.id} className="flex justify-between items-center text-[11px] border border-slate-100 p-2 rounded-xl bg-slate-50/50">
-                  <span className="font-medium text-slate-700">Copy Number ID: <strong className="text-slate-900 font-mono">#{log.copy_number}</strong></span>
-                  <span className="text-slate-400 font-mono text-[10px]">{log.printed_at}</span>
+                  <span className="font-medium text-slate-700">Copy Number: <strong className="text-slate-900 font-mono">#{log.copy_number}</strong></span>
                 </div>
               ))
             )}

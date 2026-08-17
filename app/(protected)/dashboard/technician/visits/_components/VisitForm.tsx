@@ -51,7 +51,7 @@ export default function VisitForm({ defaultPatientId = "", onSuccess }: VisitFor
     defaultValues: {
       doctor_id: "",
       patient_id: defaultPatientId,
-      status: "registered",
+      status: "",
       visit_no: "",
     },
   });
@@ -143,7 +143,7 @@ export default function VisitForm({ defaultPatientId = "", onSuccess }: VisitFor
     reset({
       doctor_id: "",
       patient_id: defaultPatientId,
-      status: "registered",
+      status: "",
       visit_no: "",
     });
   };
@@ -264,6 +264,7 @@ export default function VisitForm({ defaultPatientId = "", onSuccess }: VisitFor
                   disabled={isSubmitting}
                   className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-slate-950 cursor-pointer"
                 >
+                  <option value="">Select a Visit Status</option>
                   <option value="registered">Registered</option>
                   <option value="in_progress">In Progress</option>
                   <option value="completed">Completed</option>

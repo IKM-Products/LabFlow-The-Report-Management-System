@@ -333,10 +333,10 @@ export default function ResultForm({
         <Button
           type="button"
           onClick={handleOpenModal}
-          className="rounded-xl h-10 bg-emerald-600 hover:bg-emerald-600 text-white font-medium text-xs shadow-xs flex items-center gap-2 px-4 cursor-pointer"
+          className="rounded-xl h-10 bg-emerald-600 hover:bg-emerald-600 text-white font-medium text-sm shadow-xs flex items-center gap-2 px-4 cursor-pointer"
         >
           <Plus className="h-4 w-4" />
-          <span>Add Diagnostic Result</span>
+          <span>Add Result</span>
         </Button>
       )}
 

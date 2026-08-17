@@ -75,7 +75,7 @@ export default function OrderForm({ defaultVisitId = "", onSuccess }: OrderFormP
     defaultValues: {
       panel_id: "",
       price: 0,
-      status: "collected",
+      status: "",
       test_id: "",
       visit_id: defaultVisitId,
     },
@@ -188,7 +188,7 @@ export default function OrderForm({ defaultVisitId = "", onSuccess }: OrderFormP
     reset({
       panel_id: "",
       price: 0,
-      status: "collected",
+      status: "",
       test_id: "",
       visit_id: defaultVisitId,
     });
@@ -350,6 +350,7 @@ export default function OrderForm({ defaultVisitId = "", onSuccess }: OrderFormP
                 disabled={isSubmitting}
                 className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white outline-hidden cursor-pointer disabled:opacity-50"
               >
+                <option value="">Select a Order Status</option>
                 <option value="collected">Collected</option>
                 <option value="result_entered">Result Entered</option>
                 <option value="completed">Completed</option>

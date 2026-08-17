@@ -2,10 +2,10 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Edit3, Loader2 } from "lucide-react";
+import { Edit2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { editResultSchema, EditResultFormValues } from "@/schemas/result.schema";
@@ -125,8 +125,8 @@ export default function EditResult({ result, onSuccess }: EditResultProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger className="inline-flex items-center justify-center rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 h-8 w-8 p-0 border border-transparent hover:border-blue-100 transition-colors cursor-pointer">
-        <Edit3 className="h-3.5 w-3.5" />
+      <DialogTrigger className="inline-flex items-center justify-center rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 h-8 w-8 p-0 border border-transparent hover:border-blue-100 transition-colors cursor-pointer">
+        <Edit2 className="h-3.5 w-3.5" />
       </DialogTrigger>
 
       <DialogContent className="max-w-md bg-white rounded-2xl border border-slate-200 p-6 shadow-xl">
