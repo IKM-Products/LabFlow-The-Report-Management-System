@@ -413,7 +413,7 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
           <button
             onClick={() => setActiveModal("department")}
-            className="inline-flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
+            className="h-10 inline-flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
             <div className="p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
               <Plus className="w-4 h-4" />
@@ -423,7 +423,7 @@ export default function AdminDashboardPage() {
 
           <button
             onClick={() => setActiveModal("doctor")}
-            className="flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
+            className="h-10 flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
             <div className="p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
               <Plus className="w-4 h-4" />
@@ -433,7 +433,7 @@ export default function AdminDashboardPage() {
 
           <button
             onClick={() => setActiveModal("lab")}
-            className="flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
+            className="h-10 flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
             <div className="p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
               <Plus className="w-4 h-4" />
@@ -443,7 +443,7 @@ export default function AdminDashboardPage() {
 
           <button
             onClick={() => setActiveModal("user")}
-            className="flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
+            className="h-10 flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
             <div className="p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
               <Plus className="w-4 h-4" />

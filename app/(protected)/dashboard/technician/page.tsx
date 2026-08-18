@@ -21,6 +21,17 @@ interface TechnicianMetrics {
   visits: number;
 }
 
+interface DropdownOption {
+  id: string;
+  name: string;
+}
+
+interface TestOption {
+  id: string;
+  name: string;
+  price: number;
+}
+
 type QuickActionType = "patient" | "visit" | "order" | null;
 
 export default function TechnicianDashboardPage() {
@@ -38,30 +49,47 @@ export default function TechnicianDashboardPage() {
   const [formError, setFormError] = useState<string>("");
   const [formSuccess, setFormSuccess] = useState<string>("");
 
+  // Options State for Visit Form Dropdowns
+  const [patientsOptions, setPatientsOptions] = useState<DropdownOption[]>([]);
+  const [doctorsOptions, setDoctorsOptions] = useState<DropdownOption[]>([]);
+  const [isLoadingVisitOptions, setIsLoadingVisitOptions] = useState<boolean>(false);
+
+  // Options & Selection State for Order Form Dropdowns (Matched with orderForm.tsx)
+  const [departmentsOptions, setDepartmentsOptions] = useState<DropdownOption[]>([]);
+  const [panelsOptions, setPanelsOptions] = useState<DropdownOption[]>([]);
+  const [testsOptions, setTestsOptions] = useState<TestOption[]>([]);
+  const [selectedDeptId, setSelectedDeptId] = useState<string>("");
+  const [isLoadingDepts, setIsLoadingDepts] = useState<boolean>(false);
+  const [isLoadingPanels, setIsLoadingPanels] = useState<boolean>(false);
+  const [isLoadingTests, setIsLoadingTests] = useState<boolean>(false);
+
   // Patient Form Fields State
   const [patientData, setPatientData] = useState({
     first_name: "",
     last_name: "",
-    gender: "",
-    age: "",
-    phone: "",
+    mrn: "",
+    dob: "",
     email: "",
+    phone: "",
+    gender: "ALL",
+    address: "",
   });
 
   // Visit Form Fields State
   const [visitData, setVisitData] = useState({
+    visit_no: "",
     patient_id: "",
     doctor_id: "",
-    visit_type: "",
-    notes: "",
+    status: "",
   });
 
-  // Order Form Fields State
+  // Order Form Fields State (Matched with orderForm.tsx)
   const [orderData, setOrderData] = useState({
-    patient_id: "",
-    doctor_id: "",
-    priority: "ROUTINE",
-    notes: "",
+    visit_id: "",
+    panel_id: "",
+    test_id: "",
+    price: 0,
+    status: "",
   });
 
   const BASE_URL = (
@@ -94,6 +122,170 @@ export default function TechnicianDashboardPage() {
     return null;
   }, [session]);
 
+  // Fetch dropdown options for Visit form (Patients & Doctors)
+  useEffect(() => {
+    if (activeModal !== "visit") return;
+
+    const fetchVisitDropdownOptions = async () => {
+      setIsLoadingVisitOptions(true);
+      const token = getAuthToken();
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      try {
+        const [patientsRes, doctorsRes] = await Promise.allSettled([
+          fetch(`${BASE_URL}/patient`, { headers }),
+          fetch(`${BASE_URL}/doctor`, { headers }),
+        ]);
+
+        if (patientsRes.status === "fulfilled" && patientsRes.value.ok) {
+          const data = await patientsRes.value.json();
+          const rawPatients = Array.isArray(data) ? data : data?.data || [];
+          const formattedPatients = rawPatients.map((p: any) => ({
+            id: p.patient_id || p.id,
+            name:
+              p.full_name ||
+              p.patient_name ||
+              (p.first_name ? `${p.first_name} ${p.last_name || ""}`.trim() : null) ||
+              p.name ||
+              "Unknown Patient",
+          }));
+          setPatientsOptions(formattedPatients);
+        }
+
+        if (doctorsRes.status === "fulfilled" && doctorsRes.value.ok) {
+          const data = await doctorsRes.value.json();
+          const rawDoctors = Array.isArray(data) ? data : data?.data || [];
+          const formattedDoctors = rawDoctors.map((d: any) => {
+            const doctorName =
+              d.full_name ||
+              d.doctor_name ||
+              (d.first_name ? `${d.first_name} ${d.last_name || ""}`.trim() : null) ||
+              d.name ||
+              "Unknown Doctor";
+            return {
+              id: d.doctor_id || d.id,
+              name: doctorName.startsWith("Dr.") ? doctorName : `Dr. ${doctorName}`,
+            };
+          });
+          setDoctorsOptions(formattedDoctors);
+        }
+      } catch (err) {
+        console.error("Failed to load options for visit dropdowns:", err);
+      } finally {
+        setIsLoadingVisitOptions(false);
+      }
+    };
+
+    fetchVisitDropdownOptions();
+  }, [activeModal, BASE_URL, getAuthToken]);
+
+  // Fetch departments when Order Modal opens (Matched with orderForm.tsx)
+  useEffect(() => {
+    if (activeModal !== "order") return;
+
+    const fetchDepartments = async () => {
+      setIsLoadingDepts(true);
+      const token = getAuthToken();
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      try {
+        const res = await fetch(`${BASE_URL}/department`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          const rawDepts = Array.isArray(data)
+            ? data
+            : data?.data || data?.departments || [];
+          setDepartmentsOptions(
+            rawDepts.map((d: any) => ({
+              id: String(d.dept_id || d.id || ""),
+              name: String(d.dept_name || d.name || ""),
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Error loading departments:", err);
+        setDepartmentsOptions([]);
+      } finally {
+        setIsLoadingDepts(false);
+      }
+    };
+
+    fetchDepartments();
+  }, [activeModal, BASE_URL, getAuthToken]);
+
+  // Fetch Test Panels & Test Catalogs based on selected department (Matched with orderForm.tsx)
+  useEffect(() => {
+    if (activeModal !== "order" || !selectedDeptId) {
+      setPanelsOptions([]);
+      setTestsOptions([]);
+      setOrderData((prev) => ({ ...prev, panel_id: "", test_id: "" }));
+      return;
+    }
+
+    const fetchDataByDepartment = async () => {
+      setIsLoadingPanels(true);
+      setIsLoadingTests(true);
+      setPanelsOptions([]);
+      setTestsOptions([]);
+      setOrderData((prev) => ({ ...prev, panel_id: "", test_id: "" }));
+
+      const token = getAuthToken();
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      // Fetch Panels for selected department
+      try {
+        const res = await fetch(`${BASE_URL}/panel/department/${selectedDeptId}`, { headers })
+          .then((r) => (r.ok ? r : fetch(`${BASE_URL}/panel?dept_id=${selectedDeptId}`, { headers })));
+        if (res.ok) {
+          const data = await res.json();
+          const rawPanels = Array.isArray(data) ? data : data?.data || [];
+          setPanelsOptions(
+            rawPanels.map((p: any) => ({
+              id: String(p.panel_id || p.id || ""),
+              name: String(p.panel_name || p.name || ""),
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Error loading panels for department:", err);
+      } finally {
+        setIsLoadingPanels(false);
+      }
+
+      // Fetch Test Catalog for selected department
+      try {
+        const res = await fetch(`${BASE_URL}/test-catalog/department/${selectedDeptId}`, { headers })
+          .then((r) => (r.ok ? r : fetch(`${BASE_URL}/test-catalog?dept_id=${selectedDeptId}`, { headers })));
+        if (res.ok) {
+          const data = await res.json();
+          const rawCatalogs = Array.isArray(data) ? data : data?.data || [];
+          setTestsOptions(
+            rawCatalogs.map((item: any) => ({
+              id: String(item.test_catalog_id || item.id || ""),
+              name: String(item.test_name || item.name || ""),
+              price: Number(item.test_price || item.price || 0),
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Error loading test catalog by department:", err);
+      } finally {
+        setIsLoadingTests(false);
+      }
+    };
+
+    fetchDataByDepartment();
+  }, [activeModal, selectedDeptId, BASE_URL, getAuthToken]);
+
   const parseCount = async (
     res: PromiseSettledResult<Response>,
     endpointName: string
@@ -107,31 +299,9 @@ export default function TechnicianDashboardPage() {
         if (Array.isArray(data?.data)) return data.data.length;
         if (Array.isArray(data?.content)) return data.content.length;
         if (Array.isArray(data?.result)) return data.result.length;
-        if (Array.isArray(data?.patients)) return data.patients.length;
-        if (Array.isArray(data?.orders)) return data.orders.length;
-        if (Array.isArray(data?.visits)) return data.visits.length;
-        if (Array.isArray(data?.tests)) return data.tests.length;
       } catch (err) {
-        console.error(
-          `[Technician Dashboard Debug] Error parsing JSON for ${endpointName}:`,
-          err
-        );
+        console.error(`Error parsing JSON for ${endpointName}:`, err);
       }
-    } else if (res.status === "fulfilled") {
-      if (res.value.status === 401) {
-        console.warn(
-          `[Technician Dashboard Debug] ${endpointName} request unauthenticated (401).`
-        );
-      } else {
-        console.warn(
-          `[Technician Dashboard Debug] ${endpointName} returned status ${res.value.status}`
-        );
-      }
-    } else {
-      console.error(
-        `[Technician Dashboard Debug] ${endpointName} request failed:`,
-        res.reason
-      );
     }
     return 0;
   };
@@ -166,7 +336,7 @@ export default function TechnicianDashboardPage() {
         visits: visitsCount,
       });
     } catch (error) {
-      console.error("[Technician Dashboard Debug] Fetch error:", error);
+      console.error("Fetch dashboard stats error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -176,13 +346,8 @@ export default function TechnicianDashboardPage() {
     if (sessionStatus === "loading") return;
 
     fetchDashboardStats();
-
-    const interval = setInterval(() => {
-      fetchDashboardStats();
-    }, 10000);
-
+    const interval = setInterval(fetchDashboardStats, 10000);
     const handleSync = () => fetchDashboardStats();
-
     window.addEventListener("focus", handleSync);
 
     return () => {
@@ -195,25 +360,31 @@ export default function TechnicianDashboardPage() {
     setActiveModal(null);
     setFormError("");
     setFormSuccess("");
+    setSelectedDeptId("");
+    setPanelsOptions([]);
+    setTestsOptions([]);
     setPatientData({
       first_name: "",
       last_name: "",
-      gender: "",
-      age: "",
-      phone: "",
+      mrn: "",
+      dob: "",
       email: "",
+      phone: "",
+      gender: "ALL",
+      address: "",
     });
     setVisitData({
+      visit_no: "",
       patient_id: "",
       doctor_id: "",
-      visit_type: "",
-      notes: "",
+      status: "",
     });
     setOrderData({
-      patient_id: "",
-      doctor_id: "",
-      priority: "ROUTINE",
-      notes: "",
+      visit_id: "",
+      panel_id: "",
+      test_id: "",
+      price: 0,
+      status: "",
     });
   };
 
@@ -253,12 +424,13 @@ export default function TechnicianDashboardPage() {
         break;
       case "order":
         endpoint = `${BASE_URL}/order`;
-        payload = Object.fromEntries(
-          Object.entries(orderData).map(([key, val]) => [
-            key,
-            typeof val === "string" && val.trim() === "" ? null : val,
-          ])
-        );
+        payload = {
+          visit_id: orderData.visit_id || null,
+          panel_id: orderData.panel_id || null,
+          test_id: orderData.test_id || null,
+          price: Number(orderData.price) || 0,
+          status: orderData.status || null,
+        };
         break;
       default:
         setIsSubmitting(false);
@@ -392,7 +564,7 @@ export default function TechnicianDashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
           <button
             onClick={() => setActiveModal("patient")}
-            className="flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
+            className="h-10 flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
             <div className="p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
               <Plus className="w-4 h-4" />
@@ -402,7 +574,7 @@ export default function TechnicianDashboardPage() {
 
           <button
             onClick={() => setActiveModal("visit")}
-            className="flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
+            className="h-10 flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
             <div className="p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
               <Plus className="w-4 h-4" />
@@ -412,7 +584,7 @@ export default function TechnicianDashboardPage() {
 
           <button
             onClick={() => setActiveModal("order")}
-            className="flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
+            className="h-10 flex items-center gap-3 p-3 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white text-xs font-semibold transition-all group cursor-pointer shadow-xs"
           >
             <div className="p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
               <Plus className="w-4 h-4" />
@@ -431,13 +603,16 @@ export default function TechnicianDashboardPage() {
               <div>
                 <h3 className="text-xl font-bold text-slate-900 tracking-tight">
                   {activeModal === "patient" && "Add New Patient"}
-                  {activeModal === "visit" && "Record New Visit"}
-                  {activeModal === "order" && "Create New Lab Order"}
+                  {activeModal === "visit" && "Add New Visit"}
+                  {activeModal === "order" && "Add New Order"}
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  {activeModal === "patient" && "Enter the required information to create a new patient record in the system."}
-                  {activeModal === "visit" && "Log a new visit entry for a patient."}
-                  {activeModal === "order" && "Generate a new laboratory order."}
+                  {activeModal === "patient" &&
+                    "Enter the required information to create a new patient in the system."}
+                  {activeModal === "visit" &&
+                    "Enter the required information to create a new visit in the system."}
+                  {activeModal === "order" &&
+                    "Enter the required information to create a new order in the system."}
                 </p>
               </div>
               <button
@@ -477,7 +652,10 @@ export default function TechnicianDashboardPage() {
                         required
                         value={patientData.first_name}
                         onChange={(e) =>
-                          setPatientData({ ...patientData, first_name: e.target.value })
+                          setPatientData({
+                            ...patientData,
+                            first_name: e.target.value,
+                          })
                         }
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
@@ -491,7 +669,10 @@ export default function TechnicianDashboardPage() {
                         required
                         value={patientData.last_name}
                         onChange={(e) =>
-                          setPatientData({ ...patientData, last_name: e.target.value })
+                          setPatientData({
+                            ...patientData,
+                            last_name: e.target.value,
+                          })
                         }
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
@@ -500,52 +681,107 @@ export default function TechnicianDashboardPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-700">Gender</label>
-                      <select
-                        value={patientData.gender}
-                        onChange={(e) =>
-                          setPatientData({ ...patientData, gender: e.target.value })
-                        }
-                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
-                      >
-                        <option value="">Select Gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-700">Age</label>
-                      <input
-                        type="number"
-                        value={patientData.age}
-                        onChange={(e) =>
-                          setPatientData({ ...patientData, age: e.target.value })
-                        }
-                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-700">Phone</label>
+                      <label className="text-xs font-semibold text-slate-700">
+                        Medical Record Number (MRN)
+                      </label>
                       <input
                         type="text"
-                        value={patientData.phone}
+                        value={patientData.mrn}
                         onChange={(e) =>
-                          setPatientData({ ...patientData, phone: e.target.value })
+                          setPatientData({
+                            ...patientData,
+                            mrn: e.target.value,
+                          })
+                        }
+                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-[#00a66c]"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Date of Birth
+                      </label>
+                      <input
+                        type="date"
+                        value={patientData.dob}
+                        onChange={(e) =>
+                          setPatientData({
+                            ...patientData,
+                            dob: e.target.value,
+                          })
                         }
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-700">Email</label>
+                      <label className="text-xs font-semibold text-slate-700">
+                        Email
+                      </label>
                       <input
                         type="email"
                         value={patientData.email}
                         onChange={(e) =>
-                          setPatientData({ ...patientData, email: e.target.value })
+                          setPatientData({
+                            ...patientData,
+                            email: e.target.value,
+                          })
+                        }
+                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Contact
+                      </label>
+                      <input
+                        type="text"
+                        value={patientData.phone}
+                        onChange={(e) =>
+                          setPatientData({
+                            ...patientData,
+                            phone: e.target.value,
+                          })
+                        }
+                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-1 space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Gender
+                      </label>
+                      <select
+                        value={patientData.gender}
+                        onChange={(e) =>
+                          setPatientData({
+                            ...patientData,
+                            gender: e.target.value,
+                          })
+                        }
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#00a66c]"
+                      >
+                        <option value="ALL">Select a Gender</option>
+                        <option value="M">Male</option>
+                        <option value="F">Female</option>
+                        <option value="O">Other</option>
+                      </select>
+                    </div>
+                    <div className="col-span-2 space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Address
+                      </label>
+                      <input
+                        type="text"
+                        value={patientData.address}
+                        onChange={(e) =>
+                          setPatientData({
+                            ...patientData,
+                            address: e.target.value,
+                          })
                         }
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
@@ -554,124 +790,266 @@ export default function TechnicianDashboardPage() {
                 </div>
               )}
 
-              {/* 2. Record Visit Modal */}
+              {/* 2. Add Visit Modal */}
               {activeModal === "visit" && (
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Patient ID</label>
+                    <label className="text-xs font-semibold text-slate-700">
+                      Visit No.
+                    </label>
                     <input
                       type="text"
-                      required
-                      placeholder="e.g. PAT-1002"
+                      placeholder="V-XXXX"
+                      value={visitData.visit_no}
+                      onChange={(e) =>
+                        setVisitData({
+                          ...visitData,
+                          visit_no: e.target.value,
+                        })
+                      }
+                      className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-[#00a66c]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">
+                      Patient Name
+                    </label>
+                    <select
                       value={visitData.patient_id}
+                      disabled={isLoadingVisitOptions}
                       onChange={(e) =>
-                        setVisitData({ ...visitData, patient_id: e.target.value })
+                        setVisitData({
+                          ...visitData,
+                          patient_id: e.target.value,
+                        })
                       }
-                      className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
-                    />
+                      className="w-full h-10 px-3.5 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-[#00a66c] disabled:opacity-50 cursor-pointer"
+                    >
+                      <option value="">
+                        {isLoadingVisitOptions
+                          ? "Loading patients..."
+                          : "Select a Patient"}
+                      </option>
+                      {patientsOptions.map((patient) => (
+                        <option key={patient.id} value={patient.id}>
+                          {patient.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Doctor ID</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. DOC-301"
-                      value={visitData.doctor_id}
-                      onChange={(e) =>
-                        setVisitData({ ...visitData, doctor_id: e.target.value })
-                      }
-                      className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Visit Type</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Regular Checkup / Emergency"
-                      value={visitData.visit_type}
-                      onChange={(e) =>
-                        setVisitData({ ...visitData, visit_type: e.target.value })
-                      }
-                      className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Notes</label>
-                    <input
-                      type="text"
-                      placeholder="Additional visit notes..."
-                      value={visitData.notes}
-                      onChange={(e) =>
-                        setVisitData({ ...visitData, notes: e.target.value })
-                      }
-                      className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
-                    />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Referring Doctor
+                      </label>
+                      <select
+                        value={visitData.doctor_id}
+                        disabled={isLoadingVisitOptions}
+                        onChange={(e) =>
+                          setVisitData({
+                            ...visitData,
+                            doctor_id: e.target.value,
+                          })
+                        }
+                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-[#00a66c] disabled:opacity-50 cursor-pointer"
+                      >
+                        <option value="">
+                          {isLoadingVisitOptions
+                            ? "Loading..."
+                            : "Select a Doctor"}
+                        </option>
+                        {doctorsOptions.map((doctor) => (
+                          <option key={doctor.id} value={doctor.id}>
+                            {doctor.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Visit Status
+                      </label>
+                      <select
+                        value={visitData.status}
+                        onChange={(e) =>
+                          setVisitData({ ...visitData, status: e.target.value })
+                        }
+                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-[#00a66c] cursor-pointer"
+                      >
+                        <option value="">Select a Visit Status</option>
+                        <option value="registered">Registered</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* 3. Create Order Modal */}
+              {/* 3. Add Order Modal (Matched with orderForm.tsx) */}
               {activeModal === "order" && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-700">Patient ID</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. PAT-1002"
-                        value={orderData.patient_id}
-                        onChange={(e) =>
-                          setOrderData({ ...orderData, patient_id: e.target.value })
-                        }
-                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-700">Doctor ID</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. DOC-301"
-                        value={orderData.doctor_id}
-                        onChange={(e) =>
-                          setOrderData({ ...orderData, doctor_id: e.target.value })
-                        }
-                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
-                      />
-                    </div>
+                  {/* Visit ID Field */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">
+                      Visit ID
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. VIS-1002"
+                      value={orderData.visit_id}
+                      onChange={(e) =>
+                        setOrderData({
+                          ...orderData,
+                          visit_id: e.target.value,
+                        })
+                      }
+                      className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-[#00a66c]"
+                    />
                   </div>
 
+                  {/* Department Select */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Priority</label>
+                    <label className="text-xs font-semibold text-slate-700">
+                      Department
+                    </label>
                     <select
-                      value={orderData.priority}
-                      onChange={(e) =>
-                        setOrderData({ ...orderData, priority: e.target.value })
-                      }
-                      className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
+                      value={selectedDeptId}
+                      disabled={isLoadingDepts}
+                      onChange={(e) => setSelectedDeptId(e.target.value)}
+                      className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white focus:outline-none focus:border-[#00a66c] cursor-pointer disabled:opacity-50"
                     >
-                      <option value="ROUTINE">Routine</option>
-                      <option value="URGENT">Urgent</option>
-                      <option value="STAT">STAT / Emergency</option>
+                      <option value="">
+                        {isLoadingDepts
+                          ? "Loading departments..."
+                          : "Select a Department"}
+                      </option>
+                      {departmentsOptions.map((dept) => (
+                        <option key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
+                  {/* Test Panel Select */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Order Notes</label>
-                    <input
-                      type="text"
-                      placeholder="Lab test details or instructions..."
-                      value={orderData.notes}
+                    <label className="text-xs font-semibold text-slate-700">
+                      Test Panel
+                    </label>
+                    <select
+                      value={orderData.panel_id}
+                      disabled={isLoadingPanels || !selectedDeptId}
                       onChange={(e) =>
-                        setOrderData({ ...orderData, notes: e.target.value })
+                        setOrderData({
+                          ...orderData,
+                          panel_id: e.target.value,
+                        })
                       }
-                      className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
-                    />
+                      className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white focus:outline-none focus:border-[#00a66c] cursor-pointer disabled:opacity-50"
+                    >
+                      <option value="">
+                        {!selectedDeptId
+                          ? "Select Department First"
+                          : isLoadingPanels
+                          ? "Loading panels..."
+                          : "Select a Test Panel"}
+                      </option>
+                      {panelsOptions.map((panel) => (
+                        <option key={panel.id} value={panel.id}>
+                          {panel.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Test Catalog Select */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">
+                      Test Catalog
+                    </label>
+                    <select
+                      value={orderData.test_id}
+                      disabled={isLoadingTests || !selectedDeptId}
+                      onChange={(e) => {
+                        const testId = e.target.value;
+                        const foundTest = testsOptions.find(
+                          (t) => t.id === testId
+                        );
+                        setOrderData({
+                          ...orderData,
+                          test_id: testId,
+                          price: foundTest?.price ?? orderData.price,
+                        });
+                      }}
+                      className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white focus:outline-none focus:border-[#00a66c] cursor-pointer disabled:opacity-50"
+                    >
+                      <option value="">
+                        {!selectedDeptId
+                          ? "Select a Department First"
+                          : isLoadingTests
+                          ? "Loading tests..."
+                          : "Select a Test Catalog"}
+                      </option>
+                      {testsOptions.map((test) => (
+                        <option key={test.id} value={test.id}>
+                          {test.name}{" "}
+                          {test.price ? `($${test.price.toFixed(2)})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Price & Order Status */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Price
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={orderData.price}
+                        onChange={(e) =>
+                          setOrderData({
+                            ...orderData,
+                            price: parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Order Status
+                      </label>
+                      <select
+                        value={orderData.status}
+                        onChange={(e) =>
+                          setOrderData({
+                            ...orderData,
+                            status: e.target.value,
+                          })
+                        }
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white focus:outline-none focus:border-[#00a66c] cursor-pointer"
+                      >
+                        <option value="">Select a Order Status</option>
+                        <option value="collected">Collected</option>
+                        <option value="result_entered">Result Entered</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Modal Footer Actions */}
-              <div className="flex items-center justify-end gap-2 pt-4">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={closeModal}
@@ -683,7 +1061,7 @@ export default function TechnicianDashboardPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center justify-center gap-2 px-6 h-9 rounded-xl bg-[#00a66c] hover:bg-[#008f5d] text-white text-xs font-medium transition-all cursor-pointer disabled:opacity-50 min-w-17.5"
+                  className="inline-flex items-center justify-center gap-2 px-6 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-all cursor-pointer disabled:opacity-50 min-w-17.5"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
