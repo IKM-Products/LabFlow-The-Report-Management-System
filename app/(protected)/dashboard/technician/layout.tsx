@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { 
@@ -12,8 +12,11 @@ import {
   FileText,
   FileSpreadsheet,
   MapPin,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from "lucide-react";
+import { profileService } from "@/services/profile.service";
+import type { Profile } from "@/types/profile.types";
 
 interface TechnicianLayoutProps {
   children: React.ReactNode;
@@ -23,6 +26,25 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+
+  // Dynamic header profile state
+  const [userProfile, setUserProfile] = useState<Profile | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTechnicianProfile = async () => {
+      try {
+        const data: Profile = await profileService.getMe();
+        setUserProfile(data);
+      } catch (error) {
+        console.error("Error fetching technician profile:", error);
+      } finally {
+        setIsProfileLoading(false);
+      }
+    };
+
+    fetchTechnicianProfile();
+  }, []);
 
   const navigationGroups = [
     {
@@ -57,6 +79,29 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
     }
   };
 
+  const getHeaderTitle = (path: string) => {
+    if (path === "/dashboard/technician") return "Technician Workspace";
+    if (path === "/dashboard/technician/technician-profile" || path === "/dashboard/technician/user-profile") return "My Profile";
+    const segment = path.split("/").pop()?.replace(/-/g, " ") || "";
+    return segment;
+  };
+
+  // Helper to construct full name dynamically
+  const getFullName = () => {
+    if (!userProfile) return "Technician User";
+    const name = `${userProfile.first_name || ""} ${userProfile.last_name || ""}`.trim();
+    return name || "Technician User";
+  };
+
+  // Helper to generate dynamic initials for the rounded rectangle avatar
+  const getInitials = () => {
+    if (!userProfile) return "TU";
+    const firstInitial = userProfile.first_name?.[0] || "";
+    const lastInitial = userProfile.last_name?.[0] || "";
+    const initials = `${firstInitial}${lastInitial}`.toUpperCase();
+    return initials || "TU";
+  };
+
   const renderNavLinks = () => {
     return navigationGroups.map((group) => (
       <div key={group.groupName} className="space-y-1 pt-4 first:pt-0">
@@ -65,7 +110,6 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
         </h4>
         <div className="space-y-0.5 mt-1">
           {group.items.map((item) => {
-            // Strict exact match for the main Overview dashboard path, prefix match for sub-routes
             const isActive = item.href === "/dashboard/technician" 
               ? pathname === "/dashboard/technician" 
               : pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -143,21 +187,34 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
           
           <div className="text-xs font-semibold text-slate-400 tracking-wide uppercase">
             <span className="text-slate-700 font-bold text-lg italic capitalize">
-              {pathname === "/dashboard/technician" ? "Technician Workspace" : pathname.split("/").pop()?.replace("-", " ")}
+              {getHeaderTitle(pathname)}
             </span>
           </div>
           
           <div className="flex items-center gap-4 ml-auto">
-            {/* Account Identity Segment */}
-            <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-full bg-linear-to-br from-emerald-600 to-teal-600 text-white flex items-center justify-center text-xs font-bold shadow-sm shadow-emerald-600/10 select-none">
-                RS
+            {/* Clickable Link to Technician Profile */}
+            <Link
+              href="/dashboard/technician/technician-profile"
+              className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-100/80 transition-all duration-150 cursor-pointer group"
+            >
+              {/* Rounded Rectangle Avatar */}
+              <div className="h-9 w-9 rounded-xl bg-linear-to-br from-emerald-600 to-teal-600 text-white flex items-center justify-center text-xs font-bold shadow-sm shadow-emerald-600/10 select-none group-hover:scale-105 transition-transform duration-150 shrink-0">
+                {isProfileLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                ) : (
+                  getInitials()
+                )}
               </div>
+
               <div className="block text-left">
-                <p className="text-xs font-bold text-slate-800 leading-none">Rishan Shrestha</p>
-                <p className="text-[10px] font-semibold text-emerald-600 mt-0.5">Technician</p>
+                <p className="text-xs font-bold text-slate-800 leading-none group-hover:text-emerald-700 transition-colors duration-150">
+                  {isProfileLoading ? "Loading..." : getFullName()}
+                </p>
+                <p className="text-[10px] font-semibold text-emerald-600 mt-1 uppercase tracking-wider">
+                  {isProfileLoading ? "..." : "Technician"}
+                </p>
               </div>
-            </div>
+            </Link>
           </div>
         </header>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { 
@@ -15,8 +15,11 @@ import {
   BookOpen,
   Ruler,
   SlidersHorizontal,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from "lucide-react";
+import { profileService } from "@/services/profile.service";
+import type { Profile } from "@/types/profile.types";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -26,6 +29,25 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+  
+  // Dynamic header profile state
+  const [userProfile, setUserProfile] = useState<Profile | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAdminProfile = async () => {
+      try {
+        const data: Profile = await profileService.getMe();
+        setUserProfile(data);
+      } catch (error) {
+        console.error("Error fetching header user profile:", error);
+      } finally {
+        setIsProfileLoading(false);
+      }
+    };
+
+    fetchAdminProfile();
+  }, []);
 
   const navigationGroups = [
     {
@@ -70,11 +92,29 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const getHeaderTitle = (path: string) => {
     if (path === "/dashboard/admin") return "Admin Workspace";
+    if (path === "/dashboard/admin/admin-profile") return "My Profile";
+    if (path === "/dashboard/admin/profiles") return "Profiles";
     const segment = path.split("/").pop()?.replace(/-/g, " ") || "";
     if (segment.toLowerCase() === "labs") return "Laboratories";
     if (segment.toLowerCase() === "panels") return "Test Panels";
     if (segment.toLowerCase() === "reference ranges") return "Test Reference Ranges";
     return segment;
+  };
+
+  // Helper to construct full name dynamically
+  const getFullName = () => {
+    if (!userProfile) return "Admin User";
+    const name = `${userProfile.first_name || ""} ${userProfile.last_name || ""}`.trim();
+    return name || "Admin User";
+  };
+
+  // Helper to generate dynamic initials for the rounded rectangle avatar
+  const getInitials = () => {
+    if (!userProfile) return "AU";
+    const firstInitial = userProfile.first_name?.[0] || "";
+    const lastInitial = userProfile.last_name?.[0] || "";
+    const initials = `${firstInitial}${lastInitial}`.toUpperCase();
+    return initials || "AU";
   };
 
   const renderNavLinks = () => {
@@ -167,16 +207,29 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
           
           <div className="flex items-center gap-4 ml-auto">
-            {/* Account Identity Segment */}
-            <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-full bg-linear-to-br from-emerald-600 to-teal-600 text-white flex items-center justify-center text-xs font-bold shadow-sm shadow-emerald-600/10 select-none">
-                IKM
+            {/* Clickable Link to Individual User Profile */}
+            <Link
+              href="/dashboard/admin/admin-profile"
+              className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-100/80 transition-all duration-150 cursor-pointer group"
+            >
+              {/* Rounded Rectangle Avatar */}
+              <div className="h-9 w-9 rounded-xl bg-linear-to-br from-emerald-600 to-teal-600 text-white flex items-center justify-center text-xs font-bold shadow-sm shadow-emerald-600/10 select-none group-hover:scale-105 transition-transform duration-150 shrink-0">
+                {isProfileLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                ) : (
+                  getInitials()
+                )}
               </div>
+
               <div className="block text-left">
-                <p className="text-xs font-bold text-slate-800 leading-none">Ismael Karki Manaay</p>
-                <p className="text-[10px] font-semibold text-emerald-600 mt-0.5">Admin</p>
+                <p className="text-xs font-bold text-slate-800 leading-none group-hover:text-emerald-700 transition-colors duration-150">
+                  {isProfileLoading ? "Loading..." : getFullName()}
+                </p>
+                <p className="text-[10px] font-semibold text-emerald-600 mt-1 uppercase tracking-wider">
+                  {isProfileLoading ? "..." : "Admin"}
+                </p>
               </div>
-            </div>
+            </Link>
           </div>
         </header>
 
