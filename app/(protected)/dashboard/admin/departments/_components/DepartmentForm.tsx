@@ -77,7 +77,7 @@ export default function DepartmentForm({ onSuccess }: DepartmentFormProps) {
             Add New Department
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Create a new department in the system.
+            Enter the required information to create a new department in the system.
           </DialogDescription>
         </DialogHeader>
 

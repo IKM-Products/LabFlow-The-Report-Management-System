@@ -54,7 +54,7 @@ export default function TechnicianDashboardPage() {
   const [doctorsOptions, setDoctorsOptions] = useState<DropdownOption[]>([]);
   const [isLoadingVisitOptions, setIsLoadingVisitOptions] = useState<boolean>(false);
 
-  // Options & Selection State for Order Form Dropdowns (Matched with orderForm.tsx)
+  // Options & Selection State for Order Form Dropdowns
   const [departmentsOptions, setDepartmentsOptions] = useState<DropdownOption[]>([]);
   const [panelsOptions, setPanelsOptions] = useState<DropdownOption[]>([]);
   const [testsOptions, setTestsOptions] = useState<TestOption[]>([]);
@@ -62,6 +62,11 @@ export default function TechnicianDashboardPage() {
   const [isLoadingDepts, setIsLoadingDepts] = useState<boolean>(false);
   const [isLoadingPanels, setIsLoadingPanels] = useState<boolean>(false);
   const [isLoadingTests, setIsLoadingTests] = useState<boolean>(false);
+
+  // Order Patient & Visit Dropdown States
+  const [selectedOrderPatientId, setSelectedOrderPatientId] = useState<string>("");
+  const [visitsOptions, setVisitsOptions] = useState<DropdownOption[]>([]);
+  const [isLoadingVisits, setIsLoadingVisits] = useState<boolean>(false);
 
   // Patient Form Fields State
   const [patientData, setPatientData] = useState({
@@ -83,7 +88,7 @@ export default function TechnicianDashboardPage() {
     status: "",
   });
 
-  // Order Form Fields State (Matched with orderForm.tsx)
+  // Order Form Fields State
   const [orderData, setOrderData] = useState({
     visit_id: "",
     panel_id: "",
@@ -122,9 +127,9 @@ export default function TechnicianDashboardPage() {
     return null;
   }, [session]);
 
-  // Fetch dropdown options for Visit form (Patients & Doctors)
+  // Fetch dropdown options for Visit & Order forms (Patients & Doctors)
   useEffect(() => {
-    if (activeModal !== "visit") return;
+    if (activeModal !== "visit" && activeModal !== "order") return;
 
     const fetchVisitDropdownOptions = async () => {
       setIsLoadingVisitOptions(true);
@@ -144,7 +149,7 @@ export default function TechnicianDashboardPage() {
           const data = await patientsRes.value.json();
           const rawPatients = Array.isArray(data) ? data : data?.data || [];
           const formattedPatients = rawPatients.map((p: any) => ({
-            id: p.patient_id || p.id,
+            id: String(p.patient_id || p.id || ""),
             name:
               p.full_name ||
               p.patient_name ||
@@ -166,14 +171,14 @@ export default function TechnicianDashboardPage() {
               d.name ||
               "Unknown Doctor";
             return {
-              id: d.doctor_id || d.id,
+              id: String(d.doctor_id || d.id || ""),
               name: doctorName.startsWith("Dr.") ? doctorName : `Dr. ${doctorName}`,
             };
           });
           setDoctorsOptions(formattedDoctors);
         }
       } catch (err) {
-        console.error("Failed to load options for visit dropdowns:", err);
+        console.error("Failed to load options for dropdowns:", err);
       } finally {
         setIsLoadingVisitOptions(false);
       }
@@ -182,7 +187,54 @@ export default function TechnicianDashboardPage() {
     fetchVisitDropdownOptions();
   }, [activeModal, BASE_URL, getAuthToken]);
 
-  // Fetch departments when Order Modal opens (Matched with orderForm.tsx)
+  // Fetch visits dynamically based on selected patient in Order form
+  useEffect(() => {
+    if (activeModal !== "order" || !selectedOrderPatientId) {
+      setVisitsOptions([]);
+      setOrderData((prev) => ({ ...prev, visit_id: "" }));
+      return;
+    }
+
+    const fetchVisitsByPatient = async () => {
+      setIsLoadingVisits(true);
+      const token = getAuthToken();
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      try {
+        const res = await fetch(`${BASE_URL}/visit/patient/${selectedOrderPatientId}`, { headers })
+          .then((r) => (r.ok ? r : fetch(`${BASE_URL}/visit?patient_id=${selectedOrderPatientId}`, { headers })))
+          .then((r) => (r.ok ? r : fetch(`${BASE_URL}/visit`, { headers })));
+
+        if (res.ok) {
+          const data = await res.json();
+          const rawVisits = Array.isArray(data) ? data : data?.data || [];
+          
+          const filteredVisits = rawVisits.filter((v: any) => {
+            const pId = String(v.patient_id || v.patient?.id || v.patient?.patient_id || "");
+            return !pId || pId === selectedOrderPatientId;
+          });
+
+          setVisitsOptions(
+            filteredVisits.map((v: any) => ({
+              id: String(v.visit_id || v.id || ""),
+              name: String(v.visit_no || v.visit_number || `Visit #${v.visit_id || v.id}`),
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Error loading visits for selected patient:", err);
+      } finally {
+        setIsLoadingVisits(false);
+      }
+    };
+
+    fetchVisitsByPatient();
+  }, [activeModal, selectedOrderPatientId, BASE_URL, getAuthToken]);
+
+  // Fetch departments when Order Modal opens
   useEffect(() => {
     if (activeModal !== "order") return;
 
@@ -195,7 +247,7 @@ export default function TechnicianDashboardPage() {
       };
 
       try {
-        const res = await fetch(`${BASE_URL}/department`, { headers });
+        const res = await fetch(`${BASE_URL}/lab-test/list-department`, { headers });
         if (res.ok) {
           const data = await res.json();
           const rawDepts = Array.isArray(data)
@@ -219,7 +271,7 @@ export default function TechnicianDashboardPage() {
     fetchDepartments();
   }, [activeModal, BASE_URL, getAuthToken]);
 
-  // Fetch Test Panels & Test Catalogs based on selected department (Matched with orderForm.tsx)
+  // Fetch Test Panels & Test Catalogs based on selected department
   useEffect(() => {
     if (activeModal !== "order" || !selectedDeptId) {
       setPanelsOptions([]);
@@ -241,9 +293,8 @@ export default function TechnicianDashboardPage() {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
 
-      // Fetch Panels for selected department
       try {
-        const res = await fetch(`${BASE_URL}/panel/department/${selectedDeptId}`, { headers })
+        const res = await fetch(`${BASE_URL}/lab-test/list-panel/${selectedDeptId}`, { headers })
           .then((r) => (r.ok ? r : fetch(`${BASE_URL}/panel?dept_id=${selectedDeptId}`, { headers })));
         if (res.ok) {
           const data = await res.json();
@@ -261,9 +312,8 @@ export default function TechnicianDashboardPage() {
         setIsLoadingPanels(false);
       }
 
-      // Fetch Test Catalog for selected department
       try {
-        const res = await fetch(`${BASE_URL}/test-catalog/department/${selectedDeptId}`, { headers })
+        const res = await fetch(`${BASE_URL}/lab-test/list-catalog/${selectedDeptId}`, { headers })
           .then((r) => (r.ok ? r : fetch(`${BASE_URL}/test-catalog?dept_id=${selectedDeptId}`, { headers })));
         if (res.ok) {
           const data = await res.json();
@@ -361,6 +411,8 @@ export default function TechnicianDashboardPage() {
     setFormError("");
     setFormSuccess("");
     setSelectedDeptId("");
+    setSelectedOrderPatientId("");
+    setVisitsOptions([]);
     setPanelsOptions([]);
     setTestsOptions([]);
     setPatientData({
@@ -890,26 +942,65 @@ export default function TechnicianDashboardPage() {
                 </div>
               )}
 
-              {/* 3. Add Order Modal (Matched with orderForm.tsx) */}
+              {/* 3. Add Order Modal */}
               {activeModal === "order" && (
                 <div className="space-y-4">
-                  {/* Visit ID Field */}
+                  {/* Select Patient Dropdown */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-700">
-                      Visit ID
+                      Select Patient
                     </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. VIS-1002"
+                    <select
+                      value={selectedOrderPatientId}
+                      disabled={isLoadingVisitOptions}
+                      onChange={(e) => {
+                        setSelectedOrderPatientId(e.target.value);
+                        setOrderData({ ...orderData, visit_id: "" });
+                      }}
+                      className="w-full h-10 px-3.5 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-[#00a66c] cursor-pointer disabled:opacity-50"
+                    >
+                      <option value="">
+                        {isLoadingVisitOptions
+                          ? "Loading patients..."
+                          : "Select a Patient"}
+                      </option>
+                      {patientsOptions.map((patient) => (
+                        <option key={patient.id} value={patient.id}>
+                          {patient.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Select Visit Dropdown */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">
+                      Select Visit
+                    </label>
+                    <select
                       value={orderData.visit_id}
+                      disabled={isLoadingVisits || !selectedOrderPatientId}
                       onChange={(e) =>
                         setOrderData({
                           ...orderData,
                           visit_id: e.target.value,
                         })
                       }
-                      className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-[#00a66c]"
-                    />
+                      className="w-full h-10 px-3.5 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-[#00a66c] cursor-pointer disabled:opacity-50"
+                    >
+                      <option value="">
+                        {!selectedOrderPatientId
+                          ? "Select a Patient First"
+                          : isLoadingVisits
+                          ? "Loading visits..."
+                          : "Select a Visit"}
+                      </option>
+                      {visitsOptions.map((visit) => (
+                        <option key={visit.id} value={visit.id}>
+                          {visit.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Department Select */}

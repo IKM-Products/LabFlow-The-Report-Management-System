@@ -132,7 +132,7 @@ export default function PanelComponentForm({
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-800">Panel Catalog Component</h2>
+              <h2 className="text-base font-bold text-slate-800">Test Panel Component</h2>
               <p className="text-slate-600 text-xs">{panelName}</p>
             </div>
           </div>
@@ -155,7 +155,7 @@ export default function PanelComponentForm({
 
         {/* Add Component Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="bg-slate-50 p-4 rounded-xl space-y-3 border border-slate-100">
-          <span className="text-xs font-bold text-slate-700 block">Add New Panel Catalog Component</span>
+          <span className="text-xs font-bold text-slate-700 block">Add New Test Panel Component</span>
 
           <div className="grid grid-cols-3 gap-2">
             {/* Dropdown Select for Test Catalog */}
@@ -167,10 +167,10 @@ export default function PanelComponentForm({
               >
                 <option value="">
                   {fetchingTests
-                    ? "Loading tests..."
+                    ? "Loading test catalogs..."
                     : testCatalogError
                     ? "Unable to load tests"
-                    : "Select Test Catalog"}
+                    : "Select a Test Catalog"}
                 </option>
                 {availableTests.map((test) => (
                   <option key={test.test_catalog_id} value={test.test_catalog_id}>
@@ -219,15 +219,15 @@ export default function PanelComponentForm({
         {/* Catalog List display */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs font-bold text-slate-600">
-            <span>Added Tests Catalog</span>
-            <span className="text-slate-400 font-medium">{catalog.length} Components</span>
+            <span>Added Test Catalogs</span>
+            <span className="text-slate-400 font-medium">{catalog.length} Test Panel Components</span>
           </div>
 
           <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
             {fetchingCatalog ? (
               <div className="flex items-center justify-center py-8 text-slate-400 text-xs gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
-                Fetching Catalog...
+                Fetching Test Catalogs...
               </div>
             ) : catalog.length === 0 ? (
               <p className="text-center py-6 text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">

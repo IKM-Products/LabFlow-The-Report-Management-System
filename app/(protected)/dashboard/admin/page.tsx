@@ -467,10 +467,10 @@ export default function AdminDashboardPage() {
                   {activeModal === "user" && "Add New User"}
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  {activeModal === "department" && "Create a new department in the system."}
+                  {activeModal === "department" && "Enter the required information to create a new department in the system."}
                   {activeModal === "doctor" && "Enter the required information to create a new doctor in the system."}
                   {activeModal === "lab" && "Enter the required information to create a new lab in the system."}
-                  {activeModal === "user" && "Enter the required details to create and provision a new user in the system."}
+                  {activeModal === "user" && "Enter the required information to create a new user in the system."}
                 </p>
               </div>
               <button
@@ -734,7 +734,6 @@ export default function AdminDashboardPage() {
                         onChange={(e) =>
                           setUserData({ ...userData, first_name: e.target.value })
                         }
-                        placeholder="First name"
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
                     </div>
@@ -749,7 +748,6 @@ export default function AdminDashboardPage() {
                         onChange={(e) =>
                           setUserData({ ...userData, last_name: e.target.value })
                         }
-                        placeholder="Last name"
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
                     </div>
@@ -758,7 +756,7 @@ export default function AdminDashboardPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-slate-700">
-                        Email Address
+                        Email
                       </label>
                       <input
                         type="email"
@@ -767,13 +765,12 @@ export default function AdminDashboardPage() {
                         onChange={(e) =>
                           setUserData({ ...userData, email: e.target.value })
                         }
-                        placeholder="operator@example.com"
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-slate-700">
-                        Phone Contact
+                        Contact
                       </label>
                       <input
                         type="text"
@@ -781,7 +778,6 @@ export default function AdminDashboardPage() {
                         onChange={(e) =>
                           setUserData({ ...userData, phone: e.target.value })
                         }
-                        placeholder="+123456789"
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
                     </div>
@@ -799,7 +795,6 @@ export default function AdminDashboardPage() {
                         onChange={(e) =>
                           setUserData({ ...userData, password: e.target.value })
                         }
-                        placeholder="••••••••"
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
                     </div>
@@ -813,7 +808,7 @@ export default function AdminDashboardPage() {
                         onChange={(e) =>
                           setUserData({ ...userData, role_name: e.target.value })
                         }
-                        placeholder="E.g., TECHNICIAN"
+                        placeholder="E.g., ROLE_TECHNICIAN"
                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#00a66c]"
                       />
                     </div>

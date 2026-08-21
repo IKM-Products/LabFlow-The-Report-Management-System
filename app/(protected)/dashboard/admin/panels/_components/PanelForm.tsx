@@ -138,17 +138,17 @@ export default function PanelForm({
               Add New Panel
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Enter the required information to create a new panel in the system.
+              Enter the required information to create a new test panel in the system.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">Panel Code</Label>
+                <Label className="text-xs font-semibold text-slate-700">Test Panel Code</Label>
                 <Input
                   {...register("panel_code")}
-                  placeholder="e.g. CBC-01"
+                  placeholder="E.g., CBC"
                   disabled={isSubmitting}
                   className="rounded-xl border-slate-200"
                 />
@@ -167,7 +167,7 @@ export default function PanelForm({
                   className="w-full h-9 px-3 text-xs font-medium rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 cursor-pointer disabled:bg-slate-50"
                 >
                   <option value="">
-                    {loadingDepts ? "Loading..." : "Select Department"}
+                    {loadingDepts ? "Loading..." : "Select a Department"}
                   </option>
                   {departments.map((dept) => (
                     <option key={dept.dept_id} value={dept.dept_id}>
@@ -184,10 +184,10 @@ export default function PanelForm({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Panel Name</Label>
+              <Label className="text-xs font-semibold text-slate-700">Test Panel Name</Label>
               <Input
                 {...register("panel_name")}
-                placeholder="e.g. Complete Blood Count"
+                placeholder="E.g., Complete Blood Count"
                 disabled={isSubmitting}
                 className="rounded-xl border-slate-200"
               />
@@ -199,7 +199,7 @@ export default function PanelForm({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Price ($)</Label>
+              <Label className="text-xs font-semibold text-slate-700">Price (Rs)</Label>
               <Input
                 type="number"
                 step="0.01"

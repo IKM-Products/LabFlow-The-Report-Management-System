@@ -204,7 +204,7 @@ export default function PanelsPage() {
                       </span>
                     </TableCell>
                     <TableCell className="font-semibold text-slate-900">{panel.panel_name}</TableCell>
-                    <TableCell className="font-semibold text-emerald-600">${panel.panel_price.toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold text-emerald-600">Rs {panel.panel_price.toFixed(2)}</TableCell>
                     <TableCell className="text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
                         <Button

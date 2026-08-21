@@ -157,14 +157,14 @@ export default function EditPanel({
               Edit Panel Details
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Update the panel information in the system.
+              Edit the test panel information in the system.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">Panel Code</Label>
+                <Label className="text-xs font-semibold text-slate-700">Test Panel Code</Label>
                 <Input
                   {...register("panel_code")}
                   disabled={isSubmitting}
@@ -224,7 +224,7 @@ export default function EditPanel({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Panel Name</Label>
+              <Label className="text-xs font-semibold text-slate-700">Test Panel Name</Label>
               <Input
                 {...register("panel_name")}
                 disabled={isSubmitting}
@@ -238,7 +238,7 @@ export default function EditPanel({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Price ($)</Label>
+              <Label className="text-xs font-semibold text-slate-700">Price (Rs)</Label>
               <Input
                 type="number"
                 step="0.01"

@@ -99,7 +99,7 @@ export default function UserForm({ onSuccess }: UserFormProps) {
               Add New User
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Enter the required details to create and provision a new user in the system.
+              Enter the required information to create a new user in the system.
             </DialogDescription>
           </DialogHeader>
 
@@ -111,7 +111,6 @@ export default function UserForm({ onSuccess }: UserFormProps) {
                   type="text"
                   {...register("first_name")}
                   disabled={isSubmitting}
-                  placeholder="First name"
                   className="rounded-xl border-slate-200"
                 />
                 {errors.first_name && (
@@ -125,7 +124,6 @@ export default function UserForm({ onSuccess }: UserFormProps) {
                   type="text"
                   {...register("last_name")}
                   disabled={isSubmitting}
-                  placeholder="Last name"
                   className="rounded-xl border-slate-200"
                 />
                 {errors.last_name && (
@@ -141,7 +139,6 @@ export default function UserForm({ onSuccess }: UserFormProps) {
                   type="email"
                   {...register("email")}
                   disabled={isSubmitting}
-                  placeholder="operator@example.com"
                   className="rounded-xl border-slate-200"
                 />
                 {errors.email && (
@@ -155,7 +152,6 @@ export default function UserForm({ onSuccess }: UserFormProps) {
                   type="text"
                   {...register("phone")}
                   disabled={isSubmitting}
-                  placeholder="+123456789"
                   className="rounded-xl border-slate-200"
                 />
                 {errors.phone && (
@@ -171,7 +167,6 @@ export default function UserForm({ onSuccess }: UserFormProps) {
                   type="password"
                   {...register("password")}
                   disabled={isSubmitting}
-                  placeholder="••••••••"
                   className="rounded-xl border-slate-200"
                 />
                 {errors.password && (
@@ -185,7 +180,7 @@ export default function UserForm({ onSuccess }: UserFormProps) {
                   type="text"
                   {...register("role_name")}
                   disabled={isSubmitting}
-                  placeholder="E.g., TECHNICIAN"
+                  placeholder="E.g., ROLE_TECHNICIAN"
                   className="rounded-xl border-slate-200"
                 />
                 {errors.role_name && (
