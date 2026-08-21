@@ -77,10 +77,10 @@ export default function EditProfile({ profile, onSuccess }: EditProfileProps) {
       <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight">
-            Modify Account Profile
+            Edit User
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Edit parameters to update credentials or structural scopes for this specific entity.
+            Edit the user information in the system.
           </DialogDescription>
         </DialogHeader>
 
@@ -99,19 +99,19 @@ export default function EditProfile({ profile, onSuccess }: EditProfileProps) {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs font-semibold text-slate-700">Email Address</Label>
+            <Label className="text-xs font-semibold text-slate-700">Email</Label>
             <Input type="email" {...register("email")} disabled={isSubmitting} className="rounded-xl border-slate-200" />
             {errors.email && <p className="text-[10px] text-red-500 font-medium">{errors.email.message}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Phone Contact</Label>
+              <Label className="text-xs font-semibold text-slate-700">Contact</Label>
               <Input {...register("phone")} disabled={isSubmitting} className="rounded-xl border-slate-200" />
               {errors.phone && <p className="text-[10px] text-red-500 font-medium">{errors.phone.message}</p>}
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Role Designation</Label>
+              <Label className="text-xs font-semibold text-slate-700">User Role</Label>
               <Input {...register("role_name")} disabled={isSubmitting} className="rounded-xl border-slate-200" />
               {errors.role_name && <p className="text-[10px] text-red-500 font-medium">{errors.role_name.message}</p>}
             </div>

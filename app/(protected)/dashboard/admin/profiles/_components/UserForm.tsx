@@ -134,7 +134,7 @@ export default function UserForm({ onSuccess }: UserFormProps) {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">Email Address</Label>
+                <Label className="text-xs font-semibold text-slate-700">Email</Label>
                 <Input
                   type="email"
                   {...register("email")}
@@ -147,7 +147,7 @@ export default function UserForm({ onSuccess }: UserFormProps) {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">Phone Contact</Label>
+                <Label className="text-xs font-semibold text-slate-700">Contact</Label>
                 <Input
                   type="text"
                   {...register("phone")}
@@ -175,7 +175,7 @@ export default function UserForm({ onSuccess }: UserFormProps) {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">Role Designation</Label>
+                <Label className="text-xs font-semibold text-slate-700">User Role</Label>
                 <Input
                   type="text"
                   {...register("role_name")}

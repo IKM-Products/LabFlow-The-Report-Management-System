@@ -800,7 +800,7 @@ export default function AdminDashboardPage() {
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-slate-700">
-                        Role Designation
+                        User Role
                       </label>
                       <input
                         type="text"
