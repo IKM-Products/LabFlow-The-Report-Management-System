@@ -91,11 +91,9 @@ The objective of **LabFlow** is to digitize and simplify laboratory report manag
 * ☁️ Cloud-based document storage
 * 🤖 AI-assisted report analysis and feedback
 
-## 👨‍💻 Developer
+## 📧 Contact
+For questions or feedback, please open an issue on GitHub.
 
-**Ismael Karki Manaay**
-Computer Engineering Student | Full-Stack Developer | Mobile App Developer | AI/ML Enthusiast
+----
 
----
-
-> "Streamlining laboratory reporting through smarter digital workflows."
+⭐ If you found this project helpful, please consider giving it a star!
