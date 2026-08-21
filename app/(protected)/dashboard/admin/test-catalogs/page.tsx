@@ -442,7 +442,7 @@ export default function TestCatalogPage() {
                             {item.sample_type}
                           </span>
                         </TableCell>
-                        <TableCell className="font-semibold text-emerald-600">${item.test_price.toFixed(2)}</TableCell>
+                        <TableCell className="font-semibold text-emerald-600">Rs {item.test_price.toFixed(2)}</TableCell>
                         <TableCell className="text-slate-500">
                           <span className="flex items-center gap-1 text-xs">
                             <Clock className="w-3.5 h-3.5 text-slate-400" />
@@ -527,7 +527,7 @@ export default function TestCatalogPage() {
                         </TableCell>
                         <TableCell className="font-semibold text-slate-900">{panelDetails.panel_name}</TableCell>
                         <TableCell className="font-semibold text-emerald-600">
-                          ${panelDetails.panel_price.toFixed(2)}
+                          Rs {panelDetails.panel_price.toFixed(2)}
                         </TableCell>
                         <TableCell>
                           <span className="px-2.5 py-1 bg-emerald-50 text-slate-600 rounded-md text-[11px] font-medium">
@@ -536,7 +536,7 @@ export default function TestCatalogPage() {
                         </TableCell>
                         <TableCell className="font-semibold text-slate-900">{item.test_catalog_name}</TableCell>
                         <TableCell className="font-semibold text-emerald-600">
-                          ${item.test_catalog_price.toFixed(2)}
+                          Rs {item.test_catalog_price.toFixed(2)}
                         </TableCell>
                       </TableRow>
                     ))

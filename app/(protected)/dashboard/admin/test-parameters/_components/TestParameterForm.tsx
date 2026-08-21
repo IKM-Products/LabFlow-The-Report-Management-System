@@ -142,7 +142,7 @@ export default function TestParameterForm({
               Add New Test Parameter
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Enter the required information to create a new parameter for this test catalog in the system.
+              Enter the required information to create a new test parameter in the system.
             </DialogDescription>
           </DialogHeader>
 
@@ -152,10 +152,10 @@ export default function TestParameterForm({
 
             {/* Parameter Name */}
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Parameter Name</Label>
+              <Label className="text-xs font-semibold text-slate-700">Test Parameter Name</Label>
               <Input
                 {...register("parameter_name")}
-                placeholder="e.g. Hemoglobin"
+                placeholder="E.g., Hemoglobin"
                 disabled={isSubmitting}
                 className="rounded-xl border-slate-200"
               />
@@ -187,7 +187,7 @@ export default function TestParameterForm({
                 <Label className="text-xs font-semibold text-slate-700">Unit</Label>
                 <Input
                   {...register("unit")}
-                  placeholder="e.g. g/dL"
+                  placeholder="E.g., g/dL"
                   disabled={isSubmitting}
                   className="rounded-xl border-slate-200"
                 />
@@ -197,23 +197,6 @@ export default function TestParameterForm({
                   </p>
                 )}
               </div>
-            </div>
-
-            {/* Sequence Number */}
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Sequence Number</Label>
-              <Input
-                type="number"
-                {...register("sequence_no", { valueAsNumber: true })}
-                placeholder="1"
-                disabled={isSubmitting}
-                className="rounded-xl border-slate-200"
-              />
-              {errors.sequence_no && (
-                <p className="text-[10px] text-red-500 font-medium">
-                  {errors.sequence_no.message}
-                </p>
-              )}
             </div>
 
             {/* Action Buttons */}

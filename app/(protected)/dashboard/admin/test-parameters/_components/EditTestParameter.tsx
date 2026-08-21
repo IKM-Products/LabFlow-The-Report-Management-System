@@ -134,7 +134,7 @@ export default function EditTestParameter({
               Edit Test Parameter
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Update the test parameter details in the system.
+              Edit the test parameter information in the system.
             </DialogDescription>
           </DialogHeader>
 
@@ -145,7 +145,7 @@ export default function EditTestParameter({
 
             {/* Parameter Name */}
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Parameter Name</Label>
+              <Label className="text-xs font-semibold text-slate-700">Test Parameter Name</Label>
               <Input
                 {...register("parameter_name")}
                 disabled={isSubmitting}
@@ -187,22 +187,6 @@ export default function EditTestParameter({
                   </p>
                 )}
               </div>
-            </div>
-
-            {/* Sequence Number */}
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Sequence Number</Label>
-              <Input
-                type="number"
-                {...register("sequence_no", { valueAsNumber: true })}
-                disabled={isSubmitting}
-                className="rounded-xl border-slate-200"
-              />
-              {errors.sequence_no && (
-                <p className="text-[10px] text-red-500 font-medium">
-                  {errors.sequence_no.message}
-                </p>
-              )}
             </div>
 
             {/* Action Buttons */}

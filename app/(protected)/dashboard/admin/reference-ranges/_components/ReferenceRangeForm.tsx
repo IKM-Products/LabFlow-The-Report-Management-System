@@ -155,7 +155,7 @@ export default function ReferenceRangeForm({
               Add New Reference Range
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Configure biological reference ranges, demographic rules, and clinical values.
+              Enter the required information to create a new test reference range in the system. 
             </DialogDescription>
           </DialogHeader>
 
@@ -172,7 +172,7 @@ export default function ReferenceRangeForm({
                 className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:opacity-50"
               >
                 <option value="" disabled>
-                  Select Gender
+                  Select a Gender
                 </option>
                 <option value="M">Male</option>
                 <option value="F">Female</option>
@@ -262,30 +262,13 @@ export default function ReferenceRangeForm({
               <Label className="text-xs font-semibold text-slate-700">Text Range (Qualitative)</Label>
               <Input
                 {...register("text_range")}
-                placeholder="e.g. Negative / Normal"
+                placeholder="E.g., Negative / Normal"
                 disabled={isSubmitting}
                 className="rounded-xl border-slate-200"
               />
               {errors.text_range && (
                 <p className="text-[10px] text-red-500 font-medium">
                   {errors.text_range.message}
-                </p>
-              )}
-            </div>
-
-            {/* Note */}
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Note / Remarks</Label>
-              <textarea
-                {...register("note")}
-                placeholder="e.g. Applicable for fasting patients..."
-                rows={2}
-                disabled={isSubmitting}
-                className="w-full p-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none resize-none disabled:opacity-50 text-slate-800"
-              />
-              {errors.note && (
-                <p className="text-[10px] text-red-500 font-medium">
-                  {errors.note.message}
                 </p>
               )}
             </div>

@@ -192,7 +192,7 @@ export default function EditReferenceRange({
               Edit Reference Range
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Configure biological reference ranges, demographic rules, and clinical values.
+              Edit the test reference range in the system.
             </DialogDescription>
           </DialogHeader>
 
@@ -206,7 +206,7 @@ export default function EditReferenceRange({
                 className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-800 disabled:opacity-50 cursor-pointer"
               >
                 <option value="" disabled>
-                  Select Gender
+                  Select a Gender
                 </option>
                 <option value="M">Male</option>
                 <option value="F">Female</option>
@@ -308,22 +308,6 @@ export default function EditReferenceRange({
               {errors.text_range && (
                 <p className="text-[10px] text-red-500 font-medium">
                   {errors.text_range.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Note / Remarks</Label>
-              <textarea
-                {...register("note")}
-                placeholder="e.g. Applicable for fasting patients..."
-                rows={2}
-                disabled={isSubmitting || disabled}
-                className="w-full p-3 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none resize-none disabled:opacity-50 text-slate-800"
-              />
-              {errors.note && (
-                <p className="text-[10px] text-red-500 font-medium">
-                  {errors.note.message}
                 </p>
               )}
             </div>

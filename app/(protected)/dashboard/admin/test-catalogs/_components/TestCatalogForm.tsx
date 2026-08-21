@@ -175,7 +175,7 @@ export default function TestCatalogForm({
                       <SelectTrigger className="w-full h-9 rounded-xl border-slate-200 text-xs bg-white">
                         <SelectValue
                           placeholder={
-                            loadingDepts ? "Loading..." : "Select Department"
+                            loadingDepts ? "Loading..." : "Select a Department"
                           }
                         >
                           {selectedDept ? selectedDept.dept_name : undefined}
@@ -204,10 +204,10 @@ export default function TestCatalogForm({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">Test Code</Label>
+                <Label className="text-xs font-semibold text-slate-700">Test Catalog Code</Label>
                 <Input
                   {...register("test_code")}
-                  placeholder="e.g. GLU-01"
+                  placeholder="E.g., GLU"
                   disabled={isSubmitting}
                   className="rounded-xl border-slate-200"
                 />
@@ -222,7 +222,7 @@ export default function TestCatalogForm({
                 <Label className="text-xs font-semibold text-slate-700">Sample Type</Label>
                 <Input
                   {...register("sample_type")}
-                  placeholder="e.g. Serum / Plasma"
+                  placeholder="E.g., Serum / Plasma"
                   disabled={isSubmitting}
                   className="rounded-xl border-slate-200"
                 />
@@ -235,10 +235,10 @@ export default function TestCatalogForm({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Test Name</Label>
+              <Label className="text-xs font-semibold text-slate-700">Test Catalog Name</Label>
               <Input
                 {...register("test_name")}
-                placeholder="e.g. Fasting Blood Glucose"
+                placeholder="E.g., Fasting Blood Glucose"
                 disabled={isSubmitting}
                 className="rounded-xl border-slate-200"
               />
@@ -251,7 +251,7 @@ export default function TestCatalogForm({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">Price ($)</Label>
+                <Label className="text-xs font-semibold text-slate-700">Price (Rs)</Label>
                 <Input
                   type="number"
                   step="0.01"
